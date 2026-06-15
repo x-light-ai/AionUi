@@ -5,6 +5,8 @@
  */
 
 import { ipcBridge } from '@/common';
+// FORK-CUSTOM: 品牌配置，见 src/common/config/forkBrand.ts
+import { FORK_BRAND } from '@/common/config/forkBrand';
 import type {
   UpdateCheckResult,
   UpdateDownloadProgressEvent,
@@ -54,8 +56,8 @@ interface AutoUpdateCheckParams {
   includePrerelease?: boolean;
 }
 
-const DEFAULT_REPO = 'iOfficeAI/AionUi';
-const DEFAULT_USER_AGENT = 'AionUi';
+const DEFAULT_REPO = FORK_BRAND.updateRepo;
+const DEFAULT_USER_AGENT = FORK_BRAND.appName;
 const ALLOWED_ASSET_EXTS = new Set(['.exe', '.msi', '.dmg', '.zip', '.deb', '.rpm']);
 const CDN_HOST = 'static.aionui.com';
 const CDN_BASE_URL = `https://${CDN_HOST}/releases`;

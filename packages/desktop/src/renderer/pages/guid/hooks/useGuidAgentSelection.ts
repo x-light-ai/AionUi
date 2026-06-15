@@ -24,6 +24,7 @@ import { savePreferredMode, savePreferredModelId, getAgentKey as getAgentKeyUtil
 import { usePresetAssistantResolver } from './usePresetAssistantResolver';
 import { useAgentAvailability } from './useAgentAvailability';
 import { useCustomAgentsLoader } from './useCustomAgentsLoader';
+import { useForkConfig } from '@/renderer/hooks/useForkConfig';
 import { isSupportedNewConversationAgent } from '@/renderer/utils/model/agentTypeSupportPolicy';
 
 export type GuidAgentSelectionResult = {
@@ -126,11 +127,16 @@ export const useGuidAgentSelection = ({
   preselectAgentKey,
   locationKey,
 }: UseGuidAgentSelectionOptions): GuidAgentSelectionResult => {
+  const { showAionCliInUi } = useForkConfig();
   const [selectedAgentKey, _setSelectedAgentKey] = useState<string>(() => {
     try {
-      return configService.get('guid.lastSelectedAgent') || 'aionrs';
+      const savedKey = configService.get('guid.lastSelectedAgent');
+      if (!showAionCliInUi && savedKey === 'aionrs') {
+        return '';
+      }
+      return savedKey || (showAionCliInUi ? 'aionrs' : '');
     } catch {
-      return 'aionrs';
+      return showAionCliInUi ? 'aionrs' : '';
     }
   });
   const [availableAgents, setAvailableAgents] = useState<AvailableAgent[]>();
@@ -283,7 +289,11 @@ export const useGuidAgentSelection = ({
     // exposed as `avatar` so AgentPillBar renders the glyph directly
     // instead of mistaking it for a logo URL.
     const normalisedDetected: AvailableAgent[] = availableAgentsData
-      .filter(isSupportedNewConversationAgent)
+      .filter(
+        (a) =>
+          isSupportedNewConversationAgent(a) &&
+          (showAionCliInUi || (a.agent_type !== 'aionrs' && a.backend !== 'aionrs'))
+      )
       .map((a) => {
         const asAgent = a as AgentMetadata;
         const isCustomRow = asAgent.agent_source === 'custom';
@@ -294,7 +304,7 @@ export const useGuidAgentSelection = ({
         });
       });
     setAvailableAgents(normalisedDetected);
-  }, [availableAgentsData]);
+  }, [availableAgentsData, showAionCliInUi]);
 
   // Track whether the resetAssistant flag has been consumed so it only fires once
   // per navigation. Use locationKey (changes on every navigate()) to reset the guard,
@@ -336,7 +346,7 @@ export const useGuidAgentSelection = ({
       const currentIsPreset = selectedAgentKey.startsWith('custom:');
       if (currentIsPreset) {
         const firstCliAgent = availableAgents.find((a) => !a.is_preset);
-        const fallbackKey = firstCliAgent ? getAgentKey(firstCliAgent) : 'aionrs';
+        const fallbackKey = firstCliAgent ? getAgentKey(firstCliAgent) : showAionCliInUi ? 'aionrs' : '';
         _setSelectedAgentKey(fallbackKey);
         configService.set('guid.lastSelectedAgent', fallbackKey).catch((error) => {
           console.error('Failed to save reset agent key:', error);
@@ -522,8 +532,8 @@ export const useGuidAgentSelection = ({
   // Key of the first non-preset CLI agent (used as fallback when leaving preset mode)
   const defaultAgentKey = useMemo(() => {
     const firstCliAgent = availableAgents?.find((a) => !a.is_preset);
-    return firstCliAgent ? getAgentKey(firstCliAgent) : 'aionrs';
-  }, [availableAgents]);
+    return firstCliAgent ? getAgentKey(firstCliAgent) : showAionCliInUi ? 'aionrs' : '';
+  }, [availableAgents, showAionCliInUi]);
 
   return {
     selectedAgentKey,

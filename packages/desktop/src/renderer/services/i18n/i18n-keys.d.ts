@@ -1102,6 +1102,8 @@ export type I18nKey =
   | 'settings.agentModelValidateFailed'
   | 'settings.agentModelValidateSuccess'
   | 'settings.agentNamePlaceholder'
+  | 'settings.agentSelectorEnable'
+  | 'settings.agentSelectorEnableDesc'
   | 'settings.agent_name'
   | 'settings.agents'
   | 'settings.apiEndpoint'

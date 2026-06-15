@@ -12,6 +12,8 @@ import classNames from 'classnames';
 import { useSettingsViewMode } from '../settingsViewContext';
 import { isElectronDesktop, openExternalUrl } from '@/renderer/utils/platform';
 import FeedbackReportModal from './FeedbackReportModal';
+// FORK-CUSTOM: 品牌链接集中管理，见 src/common/config/forkBrand.ts
+import { FORK_BRAND } from '@/common/config/forkBrand';
 
 // __APP_VERSION__ is injected by electron.vite.config.ts `define:` from the
 // repo-root package.json. The previous `import packageJson from
@@ -59,12 +61,12 @@ const AboutModalContent: React.FC = () => {
   const linkItems: LinkItem[] = [
     {
       title: t('settings.helpDocumentation'),
-      url: 'https://github.com/iOfficeAI/AionUi/wiki',
+      url: FORK_BRAND.helpDocsUrl,
       icon: <Right theme='outline' size='16' />,
     },
     {
       title: t('settings.updateLog'),
-      url: 'https://github.com/iOfficeAI/AionUi/releases',
+      url: FORK_BRAND.changelogUrl,
       icon: <Right theme='outline' size='16' />,
     },
     {
@@ -74,12 +76,12 @@ const AboutModalContent: React.FC = () => {
     },
     {
       title: t('settings.contactMe'),
-      url: 'https://x.com/WailiVery',
+      url: FORK_BRAND.contactUrl,
       icon: <Right theme='outline' size='16' />,
     },
     {
       title: t('settings.officialWebsite'),
-      url: 'https://www.aionui.com',
+      url: FORK_BRAND.officialWebsite,
       icon: <Right theme='outline' size='16' />,
     },
   ];
@@ -109,7 +111,7 @@ const AboutModalContent: React.FC = () => {
               <div
                 className='text-t-primary cursor-pointer hover:text-t-secondary transition-colors p-4px'
                 onClick={() =>
-                  openLink('https://github.com/iOfficeAI/AionUi').catch((error) =>
+                  openLink(FORK_BRAND.repoUrl).catch((error) =>
                     console.error('Failed to open link:', error)
                   )
                 }

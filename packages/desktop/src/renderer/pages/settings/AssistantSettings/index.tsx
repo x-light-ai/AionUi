@@ -94,6 +94,14 @@ const AssistantSettings: React.FC = () => {
     message,
   });
 
+  useEffect(() => {
+    if (availableBackends.length === 0) return;
+    if (availableBackends.some((backend) => backend.id === editor.editAgent)) {
+      return;
+    }
+    editor.setEditAgent(availableBackends[0].id);
+  }, [availableBackends, editor.editAgent, editor.setEditAgent]);
+
   const editAvatarImage = editor.editAvatarPreview || resolveAvatarImageSrc(editor.editAvatar, avatarImageMap);
   const hasConsumedNavigationIntentRef = useRef(false);
   const showEditor = editor.editVisible && (editor.isCreating || activeAssistantId !== null);

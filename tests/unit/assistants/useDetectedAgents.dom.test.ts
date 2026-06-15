@@ -58,6 +58,7 @@ describe('useDetectedAgents', () => {
     // id (e.g. "2d23ff1c") as `preset_agent_type`, which later resolves to no
     // agent.
     const mockAgents: AgentMetadata[] = [
+      { id: 'a0', name: 'Aion CLI', agent_type: 'aionrs', agent_source: 'builtin', backend: 'aionrs' },
       { id: 'a1', name: 'ClaudeCode', agent_type: 'acp', agent_source: 'builtin', backend: 'claude' },
       { id: 'a2', name: 'ExtAgent', agent_type: 'local', agent_source: 'extension' },
       { id: 'a3', name: 'RemoteAgent', agent_type: 'remote', agent_source: 'builtin' },
@@ -66,7 +67,7 @@ describe('useDetectedAgents', () => {
 
     const { result } = renderHook(() => useDetectedAgents());
 
-    expect(result.current.availableBackends).toHaveLength(2); // 'remote' excluded
+    expect(result.current.availableBackends).toHaveLength(2); // 'remote' and hidden aionrs excluded
     // backend slug wins when present
     expect(result.current.availableBackends[0]).toEqual({
       id: 'claude',

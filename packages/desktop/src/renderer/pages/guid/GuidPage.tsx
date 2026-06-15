@@ -33,6 +33,7 @@ import { resolveGuidAssistantDefaults } from './utils/assistantDefaults';
 import SpeechInputButton from '@/renderer/components/chat/SpeechInputButton';
 import { appendSpeechTranscript } from '@/renderer/hooks/system/useSpeechInput';
 import { useLiveTranscriptInsertion } from '@/renderer/hooks/system/useLiveTranscriptInsertion';
+import { useConfig } from '@/renderer/hooks/config/useConfig';
 import { Button, ConfigProvider, Dropdown, Menu, Message } from '@arco-design/web-react';
 import { Down, Left, Robot, Write } from '@icon-park/react';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -52,6 +53,7 @@ const GuidPage: React.FC = () => {
 
   const localeKey = resolveLocaleKey(i18n.language);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [agentSelectorEnabled] = useConfig('ui.agentSelectorEnabled');
 
   // Open external link
   const openLink = useCallback(async (url: string) => {
@@ -820,16 +822,18 @@ const GuidPage: React.FC = () => {
                 ) : null}
               </div>
             ) : null
-          ) : agentSelection.availableAgents === undefined ? (
-            <AgentPillBarSkeleton />
-          ) : agentSelection.availableAgents.length > 0 ? (
-            <AgentPillBar
-              availableAgents={agentSelection.availableAgents}
-              selectedAgentKey={agentSelection.selectedAgentKey}
-              getAgentKey={agentSelection.getAgentKey}
-              onSelectAgent={handleSelectAgentFromPillBar}
-              suppressSelectionAnimation={resetAssistantRequested}
-            />
+          ) : agentSelectorEnabled ? (
+            agentSelection.availableAgents === undefined ? (
+              <AgentPillBarSkeleton />
+            ) : agentSelection.availableAgents.length > 0 ? (
+              <AgentPillBar
+                availableAgents={agentSelection.availableAgents}
+                selectedAgentKey={agentSelection.selectedAgentKey}
+                getAgentKey={agentSelection.getAgentKey}
+                onSelectAgent={handleSelectAgentFromPillBar}
+                suppressSelectionAnimation={resetAssistantRequested}
+              />
+            ) : null
           ) : null}
 
           <GuidInputCard

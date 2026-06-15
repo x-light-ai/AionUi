@@ -254,19 +254,23 @@ const SystemModalContent: React.FC = () => {
 
   const preferenceItems = [
     { key: 'language', label: t('settings.language'), component: <LanguageSwitcher /> },
-    {
-      key: 'startOnBoot',
-      label: t('settings.startOnBoot'),
-      description: startOnBoot.supported ? t('settings.startOnBootDesc') : t('settings.startOnBootUnsupported'),
-      component: (
-        <Switch checked={startOnBoot.enabled} onChange={handleStartOnBootChange} disabled={!startOnBoot.supported} />
-      ),
-    },
-    {
-      key: 'closeToTray',
-      label: t('settings.closeToTray'),
-      component: <Switch checked={closeToTray} onChange={handleCloseToTrayChange} />,
-    },
+    ...(isDesktop
+      ? [
+          {
+            key: 'startOnBoot',
+            label: t('settings.startOnBoot'),
+            description: startOnBoot.supported ? t('settings.startOnBootDesc') : t('settings.startOnBootUnsupported'),
+            component: (
+              <Switch checked={startOnBoot.enabled} onChange={handleStartOnBootChange} disabled={!startOnBoot.supported} />
+            ),
+          },
+          {
+            key: 'closeToTray',
+            label: t('settings.closeToTray'),
+            component: <Switch checked={closeToTray} onChange={handleCloseToTrayChange} />,
+          },
+        ]
+      : []),
     ...(isDesktop && gpuStatus
       ? [
           {

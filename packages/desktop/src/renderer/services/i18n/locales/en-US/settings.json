@@ -49,6 +49,8 @@
   "assistants": "Assistants",
   "assistantBackToList": "All assistants",
   "agents": "Agents",
+  "agentSelectorEnable": "Enable Agent Selector in Chat",
+  "agentSelectorEnableDesc": "When enabled, the agent selection bar appears on the home chat page.",
   "assistantsList": "Available assistants",
   "assistantsEmpty": "No assistants configured.",
   "pdfToPptAssistantName": "PDF to PPT",

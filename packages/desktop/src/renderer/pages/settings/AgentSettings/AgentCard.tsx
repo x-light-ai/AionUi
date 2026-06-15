@@ -38,11 +38,13 @@ type AgentCardProps =
   | {
       type: 'detected';
       agent: DetectedAgent;
+      goToChatDisabled?: boolean;
       onGoToChat: () => void;
     }
   | {
       type: 'custom';
       agent: CustomAgentCardData;
+      goToChatDisabled?: boolean;
       onGoToChat: () => void;
       onEdit: () => void;
       onDelete: () => void;
@@ -54,7 +56,7 @@ const AgentCard: React.FC<AgentCardProps> = (props) => {
   const goToChatButtonClassName = '!w-full !justify-center !rounded-10px !text-12px';
 
   if (props.type === 'detected') {
-    const { agent, onGoToChat } = props;
+    const { agent, goToChatDisabled, onGoToChat } = props;
     const extensionAvatar = resolveExtensionAssetUrl(agent.isExtension ? agent.avatar : undefined);
     const logo =
       extensionAvatar ||
@@ -82,14 +84,20 @@ const AgentCard: React.FC<AgentCardProps> = (props) => {
           </Typography.Text>
         </div>
 
-        <Button size='small' type='secondary' onClick={onGoToChat} className={goToChatButtonClassName}>
+        <Button
+          size='small'
+          type='secondary'
+          disabled={goToChatDisabled}
+          onClick={onGoToChat}
+          className={goToChatButtonClassName}
+        >
           {t('settings.agentManagement.goToChat')}
         </Button>
       </div>
     );
   }
 
-  const { agent, onGoToChat, onEdit, onDelete, onToggle } = props;
+  const { agent, goToChatDisabled, onGoToChat, onEdit, onDelete, onToggle } = props;
 
   return (
     <div className='flex items-center justify-between px-16px py-10px rd-8px bg-aou-1 hover:bg-aou-2'>
@@ -111,7 +119,7 @@ const AgentCard: React.FC<AgentCardProps> = (props) => {
       </div>
       <div className='flex items-center gap-8px'>
         <Switch size='small' checked={agent.enabled !== false} onChange={onToggle} />
-        <Button size='small' type='text' onClick={onGoToChat} disabled={agent.enabled === false}>
+        <Button size='small' type='text' onClick={onGoToChat} disabled={goToChatDisabled || agent.enabled === false}>
           {t('settings.agentManagement.goToChat')}
         </Button>
         <Button size='small' type='text' icon={<EditTwo theme='outline' size='14' />} onClick={onEdit} />

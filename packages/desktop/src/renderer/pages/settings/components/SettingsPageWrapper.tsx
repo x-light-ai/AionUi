@@ -20,7 +20,8 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useExtI18n } from '@/renderer/hooks/system/useExtI18n';
-import { BUILTIN_TAB_IDS, LEGACY_ANCHOR_REMAP } from './SettingsSider';
+import { useForkConfig } from '@/renderer/hooks/useForkConfig';
+import { BUILTIN_TAB_IDS, resolveSettingsAnchor } from './SettingsSider';
 import './settings.css';
 
 interface SettingsPageWrapperProps {
@@ -80,6 +81,7 @@ const SettingsPageWrapper: React.FC<SettingsPageWrapperProps> = ({ children, cla
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { t } = useTranslation();
+  const { hideModelSettingsMenu } = useForkConfig();
   const isDesktop = isElectronDesktop();
 
   const extensionTabs = useExtensionSettingsTabs();
@@ -87,7 +89,7 @@ const SettingsPageWrapper: React.FC<SettingsPageWrapperProps> = ({ children, cla
   const { resolveExtTabName } = useExtI18n();
 
   const menuItems = React.useMemo(() => {
-    const builtins = getBuiltinSettingsNavItems(isDesktop, t);
+    const builtins = getBuiltinSettingsNavItems(isDesktop, t).filter((item) => !hideModelSettingsMenu || item.id !== 'model');
 
     // Insert extension tabs before system (unanchored default) or at anchor position
     const result = [...builtins];
@@ -101,7 +103,7 @@ const SettingsPageWrapper: React.FC<SettingsPageWrapperProps> = ({ children, cla
         continue;
       }
       const { relativeTo: rawAnchor, placement } = tab.position;
-      const anchor = LEGACY_ANCHOR_REMAP[rawAnchor] ?? rawAnchor;
+      const anchor = resolveSettingsAnchor(rawAnchor, hideModelSettingsMenu);
       if (!result.some((item) => item.id === anchor)) {
         unanchored.push(tab);
         continue;
@@ -144,7 +146,7 @@ const SettingsPageWrapper: React.FC<SettingsPageWrapperProps> = ({ children, cla
     }
 
     return result;
-  }, [isDesktop, t, extensionTabs, resolveExtTabName]);
+  }, [isDesktop, t, extensionTabs, resolveExtTabName, hideModelSettingsMenu]);
 
   const containerClass = classNames(
     'settings-page-wrapper w-full min-h-full box-border overflow-y-auto',

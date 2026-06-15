@@ -9,6 +9,7 @@ import { channel } from '@/common/adapter/ipcBridge';
 import { getAgents } from '@/renderer/hooks/agent/useAgents';
 import { configService } from '@/common/config/configService';
 import { openExternalUrl } from '@/renderer/utils/platform';
+import { useForkConfig } from '@/renderer/hooks/useForkConfig';
 import GoogleModelSelector from '@/renderer/pages/conversation/platforms/gemini/GoogleModelSelector';
 import type { GoogleModelSelection } from '@/renderer/pages/conversation/platforms/gemini/useGoogleModelSelection';
 import {
@@ -65,6 +66,7 @@ const DINGTALK_DEV_DOCS_URL = 'https://github.com/iOfficeAI/AionUi/wiki/DingTalk
 
 const DingTalkConfigForm: React.FC<DingTalkConfigFormProps> = ({ pluginStatus, modelSelection, onStatusChange }) => {
   const { t } = useTranslation();
+  const { showAionCliInUi } = useForkConfig();
 
   // DingTalk credentials
   const [clientId, setClientId] = useState('');
@@ -87,7 +89,7 @@ const DingTalkConfigForm: React.FC<DingTalkConfigFormProps> = ({ pluginStatus, m
     backend?: string;
     name?: string;
     id?: string;
-  }>({ agent_type: 'aionrs' });
+  }>({ agent_type: showAionCliInUi ? 'aionrs' : 'acp' });
 
   // Load pending pairings
   const loadPendingPairings = useCallback(async () => {
@@ -132,12 +134,18 @@ const DingTalkConfigForm: React.FC<DingTalkConfigFormProps> = ({ pluginStatus, m
         const [agentsResp, saved] = await Promise.all([getAgents(), configService.get('assistant.dingtalk.agent')]);
 
         if (Array.isArray(agentsResp)) {
-          const list = agentsResp.filter(isSupportedNewConversationAgent).map((a) => ({
-            agent_type: a.agent_type,
-            backend: a.backend,
-            name: a.name,
-            id: a.id,
-          }));
+          const list = agentsResp
+            .filter(
+              (a) =>
+                isSupportedNewConversationAgent(a) &&
+                (showAionCliInUi || (a.agent_type !== 'aionrs' && a.backend !== 'aionrs'))
+            )
+            .map((a) => ({
+              agent_type: a.agent_type,
+              backend: a.backend,
+              name: a.name,
+              id: a.id,
+            }));
           setAvailableAgents(list);
         }
 
@@ -170,6 +178,25 @@ const DingTalkConfigForm: React.FC<DingTalkConfigFormProps> = ({ pluginStatus, m
 
     void loadAgentsAndSelection();
   }, []);
+
+  useEffect(() => {
+    if (availableAgents.length === 0) return;
+
+    const currentKey = selectedAgent.id
+      ? `${selectedAgent.agent_type}|${selectedAgent.id}`
+      : selectedAgent.backend || selectedAgent.agent_type;
+    if (availableAgents.some((a) => (a.id ? `${a.agent_type}|${a.id}` : a.backend || a.agent_type) === currentKey)) {
+      return;
+    }
+
+    const firstAgent = availableAgents[0];
+    setSelectedAgent({
+      agent_type: firstAgent.agent_type,
+      backend: firstAgent.backend,
+      id: firstAgent.id,
+      name: firstAgent.name,
+    });
+  }, [availableAgents, selectedAgent.agent_type, selectedAgent.backend, selectedAgent.id]);
 
   const persistSelectedAgent = async (agent: { agent_type: string; backend?: string; id?: string; name?: string }) => {
     // Write both `id` (new unified AgentMetadata field) and
@@ -349,7 +376,7 @@ const DingTalkConfigForm: React.FC<DingTalkConfigFormProps> = ({ pluginStatus, m
     backend?: string;
     name: string;
     id?: string;
-  }> = availableAgents.length > 0 ? availableAgents : [{ agent_type: 'aionrs', name: 'Aion CLI' }];
+  }> = availableAgents;
 
   return (
     <div className='flex flex-col gap-24px'>
@@ -558,7 +585,7 @@ const DingTalkConfigForm: React.FC<DingTalkConfigFormProps> = ({ pluginStatus, m
                         ? `${selectedAgent.agent_type}|${selectedAgent.id}`
                         : selectedAgent.backend || selectedAgent.agent_type)
                   )?.name ||
-                  selectedAgent.agent_type}
+                  t('settings.noAvailable', 'No available')}
               </span>
               <Down theme='outline' size={14} />
             </Button>

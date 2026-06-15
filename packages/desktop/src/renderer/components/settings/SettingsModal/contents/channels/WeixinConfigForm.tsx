@@ -17,6 +17,7 @@ import {
 } from '@/renderer/utils/model/agentTypeSupportPolicy';
 import { Button, Dropdown, Empty, Menu, Message, Spin, Tooltip } from '@arco-design/web-react';
 import { CheckOne, CloseOne, Copy, Delete, Down, Refresh } from '@icon-park/react';
+import { useForkConfig } from '@/renderer/hooks/useForkConfig';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { QRCodeSVG } from 'qrcode.react';
@@ -62,6 +63,7 @@ const formatTime = (timestamp: number) => new Date(timestamp).toLocaleString();
 
 const WeixinConfigForm: React.FC<WeixinConfigFormProps> = ({ pluginStatus, modelSelection, onStatusChange }) => {
   const { t } = useTranslation();
+  const { showAionCliInUi } = useForkConfig();
 
   const [loginState, setLoginState] = useState<LoginState>(
     pluginStatus?.hasToken && pluginStatus?.enabled ? 'connected' : 'idle'
@@ -85,7 +87,7 @@ const WeixinConfigForm: React.FC<WeixinConfigFormProps> = ({ pluginStatus, model
     backend?: string;
     name?: string;
     id?: string;
-  }>({ agent_type: 'aionrs' });
+  }>({ agent_type: showAionCliInUi ? 'aionrs' : 'acp' });
 
   // Close EventSource on unmount to prevent connection leaks.
   useEffect(() => {
@@ -207,12 +209,18 @@ const WeixinConfigForm: React.FC<WeixinConfigFormProps> = ({ pluginStatus, model
         const [agentsResp, saved] = await Promise.all([getAgents(), configService.get('assistant.weixin.agent')]);
         if (Array.isArray(agentsResp)) {
           setAvailableAgents(
-            agentsResp.filter(isSupportedNewConversationAgent).map((a) => ({
-              agent_type: a.agent_type,
-              backend: a.backend,
-              name: a.name,
-              id: a.id,
-            }))
+            agentsResp
+              .filter(
+                (a) =>
+                  isSupportedNewConversationAgent(a) &&
+                  (showAionCliInUi || (a.agent_type !== 'aionrs' && a.backend !== 'aionrs'))
+              )
+              .map((a) => ({
+                agent_type: a.agent_type,
+                backend: a.backend,
+                name: a.name,
+                id: a.id,
+              }))
           );
         }
         if (saved && typeof saved === 'object') {
@@ -238,6 +246,25 @@ const WeixinConfigForm: React.FC<WeixinConfigFormProps> = ({ pluginStatus, model
     };
     void load();
   }, []);
+
+  useEffect(() => {
+    if (availableAgents.length === 0) return;
+
+    const currentKey = selectedAgent.id
+      ? `${selectedAgent.agent_type}|${selectedAgent.id}`
+      : selectedAgent.backend || selectedAgent.agent_type;
+    if (availableAgents.some((a) => (a.id ? `${a.agent_type}|${a.id}` : a.backend || a.agent_type) === currentKey)) {
+      return;
+    }
+
+    const firstAgent = availableAgents[0];
+    setSelectedAgent({
+      agent_type: firstAgent.agent_type,
+      backend: firstAgent.backend,
+      id: firstAgent.id,
+      name: firstAgent.name,
+    });
+  }, [availableAgents, selectedAgent.agent_type, selectedAgent.backend, selectedAgent.id]);
 
   const persistSelectedAgent = async (agent: { agent_type: string; backend?: string; id?: string; name?: string }) => {
     // Write both `id` (new unified AgentMetadata field) and
@@ -334,7 +361,7 @@ const WeixinConfigForm: React.FC<WeixinConfigFormProps> = ({ pluginStatus, model
     backend?: string;
     name: string;
     id?: string;
-  }> = availableAgents.length > 0 ? availableAgents : [{ agent_type: 'aionrs', name: 'Aion CLI' }];
+  }> = availableAgents;
 
   const handleDisconnect = async () => {
     try {
@@ -480,7 +507,7 @@ const WeixinConfigForm: React.FC<WeixinConfigFormProps> = ({ pluginStatus, model
                       ? `${selectedAgent.agent_type}|${selectedAgent.id}`
                       : selectedAgent.backend || selectedAgent.agent_type)
                 )?.name ||
-                selectedAgent.agent_type}
+                t('settings.noAvailable', 'No available')}
             </span>
             <Down theme='outline' size={14} />
           </Button>

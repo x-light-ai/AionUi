@@ -9,6 +9,8 @@ import { blurActiveElement } from '@renderer/utils/ui/focus';
 import { useThemeContext } from '@renderer/hooks/context/ThemeContext';
 import { useAllCronJobs } from '@renderer/pages/cron/useCronJobs';
 import { useTeamCreatedRedirect } from '@renderer/pages/team/hooks/useTeamCreatedRedirect';
+// FORK-CUSTOM: UI visibility flags
+import { useForkConfig } from '@renderer/hooks/useForkConfig';
 import { SiderToolbar, SiderSearchEntry, SiderScheduledEntry } from './SiderNav';
 import SiderFooter from './SiderFooter';
 import CronJobSiderSection from './CronJobSiderSection';
@@ -36,6 +38,7 @@ const Sider: React.FC<SiderProps> = ({ onSessionClick, collapsed = false }) => {
   const [isBatchMode, setIsBatchMode] = useState(false);
   const { jobs: cronJobs } = useAllCronJobs();
   useTeamCreatedRedirect();
+  const { hideTeamSection, hideModelSettingsMenu } = useForkConfig();
   const isSettings = pathname.startsWith('/settings');
   const lastNonSettingsPathRef = useRef('/guid');
   const showLogout =
@@ -69,7 +72,7 @@ const Sider: React.FC<SiderProps> = ({ onSessionClick, collapsed = false }) => {
         console.error('Navigation failed:', error);
       });
     } else {
-      Promise.resolve(navigate('/settings/model')).catch((error) => {
+      Promise.resolve(navigate(hideModelSettingsMenu ? '/settings/assistants' : '/settings/model')).catch((error) => {
         console.error('Navigation failed:', error);
       });
     }
@@ -200,12 +203,14 @@ const Sider: React.FC<SiderProps> = ({ onSessionClick, collapsed = false }) => {
                   {...workspaceHistoryProps}
                   afterPinnedContent={
                     <>
-                      <TeamSiderSection
-                        collapsed={collapsed}
-                        pathname={pathname}
-                        siderTooltipProps={siderTooltipProps}
-                        onSessionClick={onSessionClick}
-                      />
+                      {!hideTeamSection && (
+                        <TeamSiderSection
+                          collapsed={collapsed}
+                          pathname={pathname}
+                          siderTooltipProps={siderTooltipProps}
+                          onSessionClick={onSessionClick}
+                        />
+                      )}
                       {!collapsed && (
                         <CronJobSiderSection jobs={cronJobs} pathname={pathname} onNavigate={handleCronNavigate} />
                       )}

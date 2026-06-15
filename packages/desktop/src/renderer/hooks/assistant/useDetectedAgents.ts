@@ -3,6 +3,7 @@ import { DEFAULT_CODEX_MODELS } from '@/common/types/codex/codexModels';
 import type { AcpModelInfo } from '@/common/types/platform/acpTypes';
 import type { AgentMetadata } from '@/renderer/utils/model/agentTypes';
 import { DETECTED_AGENTS_SWR_KEY, fetchDetectedAgents } from '@/renderer/utils/model/agentTypes';
+import { useForkConfig } from '@/renderer/hooks/useForkConfig';
 import { useCallback, useMemo } from 'react';
 import useSWR, { mutate } from 'swr';
 
@@ -51,12 +52,17 @@ const resolveBackendModelOptions = (agent: AgentMetadata): AvailableBackendModel
  * and `refreshAgentDetection` to trigger a re-scan.
  */
 export const useDetectedAgents = () => {
+  const { showAionCliInUi } = useForkConfig();
   const { data: rawAgents = [] } = useSWR<AgentMetadata[]>(DETECTED_AGENTS_SWR_KEY, fetchDetectedAgents);
 
   const availableBackends = useMemo<AvailableBackend[]>(
     () =>
       rawAgents
-        .filter((a) => a.agent_type !== 'remote')
+        .filter(
+          (a) =>
+            a.agent_type !== 'remote' &&
+            (showAionCliInUi || (a.agent_type !== 'aionrs' && a.backend !== 'aionrs'))
+        )
         .map((a) => ({
           // `preset_agent_type` stores the backend slug (e.g. "claude", "gemini"),
           // not the AgentMetadata row id. Align the Select value with that contract.
@@ -65,7 +71,7 @@ export const useDetectedAgents = () => {
           isExtension: a.agent_source === 'extension',
           modelOptions: resolveBackendModelOptions(a),
         })),
-    [rawAgents]
+    [rawAgents, showAionCliInUi]
   );
 
   const refreshAgentDetection = useCallback(async () => {
