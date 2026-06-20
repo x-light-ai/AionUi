@@ -91,6 +91,8 @@ export type ConfigKeyMap = {
   'ui.hideTeamSection': boolean | undefined;
   'ui.hideModelSettingsMenu': boolean | undefined;
   'ui.agentSelectorEnabled': boolean | undefined;
+  // FORK-CUSTOM: external admin market host
+  'xaiwork.adminApiHost': string | undefined;
 };
 
 export type ConfigKey = keyof ConfigKeyMap;

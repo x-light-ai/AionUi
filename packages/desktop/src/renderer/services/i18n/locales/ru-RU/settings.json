@@ -1014,7 +1014,8 @@
   "capabilitiesTab": {
     "name": "Возможности",
     "skills": "Навыки",
-    "tools": "Инструменты"
+    "tools": "Инструменты",
+    "market": "Маркет навыков"
   },
   "capabilities": "Возможности",
   "mcpEditNameLocked": "Во время редактирования имя MCP менять нельзя. Сохраните имя сервера верхнего уровня как «{{name}}».",
@@ -1055,5 +1056,11 @@
     "acpTool": "the managed ACP tool",
     "codexAcp": "the Codex ACP runtime component",
     "claudeAgentAcp": "the Claude ACP runtime component"
+  },
+  "skillMarket": {
+    "title": "Маркет навыков",
+    "searchPlaceholder": "Поиск навыков в маркете...",
+    "empty": "В маркете нет доступных навыков.",
+    "notConfigured": "Адрес маркета навыков не настроен. Укажите его в системных настройках."
   }
 }

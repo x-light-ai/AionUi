@@ -305,7 +305,8 @@
   "capabilities": "能力擴展",
   "capabilitiesTab": {
     "skills": "技能",
-    "tools": "工具"
+    "tools": "工具",
+    "market": "技能市集"
   },
   "webui": "遠端連線",
   "installed": "已安裝",
@@ -1055,5 +1056,11 @@
     "acpTool": "受管 ACP 執行元件",
     "codexAcp": "Codex ACP 執行元件",
     "claudeAgentAcp": "Claude ACP 執行元件"
+  },
+  "skillMarket": {
+    "title": "技能市集",
+    "searchPlaceholder": "搜尋市集技能...",
+    "empty": "市集暫無可用技能。",
+    "notConfigured": "尚未設定技能市集位址，請在系統設定中設定。"
   }
 }

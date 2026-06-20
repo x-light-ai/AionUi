@@ -109,5 +109,6 @@
   "unit": {
     "minute_short": "хв",
     "second_short": "с"
-  }
+  },
+  "all": "Усі"
 }

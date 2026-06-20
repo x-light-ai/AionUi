@@ -1,10 +1,11 @@
 import { ipcBridge } from '@/common';
-import { Button, Message, Modal, Typography } from '@arco-design/web-react';
-import { Delete, FolderOpen, Info, Lightning, Puzzle, Search, Refresh } from '@icon-park/react';
+import { Message, Modal } from '@arco-design/web-react';
+import { FolderOpen, Info, Lightning, Puzzle, Search, Refresh } from '@icon-park/react';
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import SettingsPageWrapper from './components/SettingsPageWrapper';
+import SkillCard, { type SkillCardVariant } from './components/SkillCard';
 
 // Skill 信息类型 / Skill info type
 interface SkillInfo {
@@ -26,22 +27,8 @@ const normalizeTestId = (name: string): string => {
   return name.replace(/[:/\s<>"'|?*]/g, '-');
 };
 
-const getAvatarColorClass = (name: string) => {
-  if (!name) return 'bg-[#165DFF] text-white';
-  const colors = [
-    'bg-[#165DFF] text-white', // Blue
-    'bg-[#00B42A] text-white', // Green
-    'bg-[#722ED1] text-white', // Purple
-    'bg-[#F5319D] text-white', // Pink
-    'bg-[#F77234] text-white', // Orange
-    'bg-[#14C9C9] text-white', // Cyan
-  ];
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return colors[Math.abs(hash) % colors.length];
-};
+// Responsive card grid shared by all skill groups.
+const SKILL_GRID_CLASS = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12px relative z-10';
 
 interface SkillsHubSettingsProps {
   /** When false, renders without SettingsPageWrapper — useful for embedding in a tab */
@@ -163,6 +150,24 @@ const SkillsHubSettings: React.FC<SkillsHubSettingsProps> = ({ withWrapper = tru
     }
   };
 
+  const confirmDelete = (skillName: string) => {
+    Modal.confirm({
+      title: t('settings.skillsHub.deleteConfirmTitle', { defaultValue: 'Delete Skill' }),
+      content: t('settings.skillsHub.deleteConfirmContent', {
+        name: skillName,
+        defaultValue: `Are you sure you want to delete "${skillName}"?`,
+      }),
+      okButtonProps: { status: 'danger' },
+      okText: t('common.delete', { defaultValue: 'Delete' }),
+      onOk: () => void handleDelete(skillName),
+      wrapClassName: 'modal-delete-skill',
+    });
+  };
+
+  const setSkillRef = (name: string) => (el: HTMLDivElement | null) => {
+    skillRefs.current[name] = el;
+  };
+
   const mainContent = (
     <div className='flex flex-col h-full w-full'>
       <div className='space-y-16px pb-24px'>
@@ -172,7 +177,7 @@ const SkillsHubSettings: React.FC<SkillsHubSettingsProps> = ({ withWrapper = tru
           className='px-[16px] md:px-[32px] py-32px bg-base rd-16px md:rd-24px shadow-sm border border-b-base relative overflow-hidden transition-all'
         >
           {/* Toolbar for My Skills */}
-          <div className='flex flex-col lg:flex-row lg:items-center justify-between gap-16px mb-24px relative z-10'>
+          <div className='flex items-center justify-between gap-16px mb-16px relative z-10'>
             <div className='flex items-center gap-10px shrink-0'>
               <span className='text-16px md:text-18px text-t-primary font-bold tracking-tight'>
                 {t('settings.skillsHub.mySkillsTitle', { defaultValue: 'My Skills' })}
@@ -180,34 +185,9 @@ const SkillsHubSettings: React.FC<SkillsHubSettingsProps> = ({ withWrapper = tru
               <span className='bg-[rgba(var(--primary-6),0.08)] text-primary-6 text-12px px-10px py-2px rd-[100px] font-medium ml-4px'>
                 {mySkills.length}
               </span>
-              <button
-                data-testid='btn-refresh-my-skills'
-                className='outline-none border-none bg-transparent cursor-pointer p-6px text-t-tertiary hover:text-primary-6 transition-colors rd-full hover:bg-fill-2 ml-4px'
-                onClick={async () => {
-                  await fetchData();
-                  Message.success(t('common.refreshSuccess', { defaultValue: 'Refreshed' }));
-                }}
-                title={t('common.refresh', { defaultValue: 'Refresh' })}
-              >
-                <Refresh theme='outline' size={16} className={loading ? 'animate-spin' : ''} />
-              </button>
             </div>
 
-            <div className='flex flex-col sm:flex-row items-stretch sm:items-center gap-12px w-full lg:w-auto shrink-0'>
-              <div className='relative group shrink-0 w-full sm:w-[200px] lg:w-[240px]'>
-                <div className='absolute left-12px top-1/2 -translate-y-1/2 text-t-tertiary group-focus-within:text-primary-6 flex pointer-events-none transition-colors'>
-                  <Search size={15} />
-                </div>
-                <input
-                  data-testid='input-search-my-skills'
-                  type='text'
-                  className='w-full bg-fill-1 hover:bg-fill-2 border border-border-1 focus:border-primary-5 focus:bg-base outline-none rd-8px py-6px pl-36px pr-12px text-13px text-t-primary placeholder:text-t-tertiary transition-all shadow-sm box-border m-0'
-                  placeholder={t('settings.skillsHub.searchPlaceholder', { defaultValue: 'Search skills...' })}
-                  value={search_query}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-
+            <div className='flex items-center gap-12px shrink-0'>
               <button
                 data-testid='btn-manual-import'
                 className='flex items-center justify-center gap-6px px-16px py-6px bg-base border border-border-1 hover:border-border-2 hover:bg-fill-1 text-t-primary rd-8px shadow-sm transition-all focus:outline-none shrink-0 cursor-pointer whitespace-nowrap'
@@ -218,10 +198,36 @@ const SkillsHubSettings: React.FC<SkillsHubSettingsProps> = ({ withWrapper = tru
                   {t('settings.skillsHub.manualImport', { defaultValue: 'Import Skills' })}
                 </span>
               </button>
+              <button
+                data-testid='btn-refresh-my-skills'
+                className='outline-none border-none bg-transparent cursor-pointer p-6px text-t-tertiary hover:text-primary-6 transition-colors rd-full hover:bg-fill-2'
+                onClick={async () => {
+                  await fetchData();
+                  Message.success(t('common.refreshSuccess', { defaultValue: 'Refreshed' }));
+                }}
+                title={t('common.refresh', { defaultValue: 'Refresh' })}
+              >
+                <Refresh theme='outline' size={16} className={loading ? 'animate-spin' : ''} />
+              </button>
             </div>
           </div>
 
-          {/* Path Display moved below the toolbar */}
+          {/* Search row */}
+          <div className='relative group w-full mb-16px relative z-10'>
+            <div className='absolute left-12px top-1/2 -translate-y-1/2 text-t-tertiary group-focus-within:text-primary-6 flex pointer-events-none transition-colors'>
+              <Search size={15} />
+            </div>
+            <input
+              data-testid='input-search-my-skills'
+              type='text'
+              className='w-full bg-fill-1 hover:bg-fill-2 border border-border-1 focus:border-primary-5 focus:bg-base outline-none rd-8px py-6px pl-36px pr-12px text-13px text-t-primary placeholder:text-t-tertiary transition-all shadow-sm box-border m-0'
+              placeholder={t('settings.skillsHub.searchPlaceholder', { defaultValue: 'Search skills...' })}
+              value={search_query}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          {/* Path Display */}
           {skillPaths && (
             <div className='flex items-center gap-8px text-12px text-t-tertiary font-mono bg-transparent py-4px mb-16px relative z-10 pt-4px border-t border-t-transparent'>
               <FolderOpen size={16} className='shrink-0' />
@@ -232,73 +238,29 @@ const SkillsHubSettings: React.FC<SkillsHubSettingsProps> = ({ withWrapper = tru
           )}
 
           {mySkills.length > 0 ? (
-            <div className='w-full flex flex-col gap-6px relative z-10'>
-              {filteredSkills.map((skill) => (
-                <div
-                  key={skill.name}
-                  data-testid={`my-skill-card-${normalizeTestId(skill.name)}`}
-                  ref={(el) => {
-                    skillRefs.current[skill.name] = el;
-                  }}
-                  className={`group flex flex-col sm:flex-row gap-16px p-16px bg-base border hover:border-border-1 hover:bg-fill-1 hover:shadow-sm rd-12px transition-all duration-200 ${highlightedSkill === skill.name ? 'border-primary-5 bg-primary-1' : 'border-transparent'}`}
-                >
-                  <div className='shrink-0 flex items-start sm:mt-2px'>
-                    <div
-                      className={`w-40px h-40px rd-10px flex items-center justify-center font-bold text-16px shadow-sm text-transform-uppercase ${getAvatarColorClass(skill.name)}`}
-                    >
-                      {skill.name.charAt(0).toUpperCase()}
-                    </div>
-                  </div>
-
-                  <div className='flex-1 min-w-0 flex flex-col justify-center gap-6px'>
-                    <div className='flex items-center gap-10px flex-wrap'>
-                      <h3 className='text-14px font-semibold text-t-primary/90 truncate m-0'>{skill.name}</h3>
-                      {skill.source === 'custom' ? (
-                        <span className='bg-[rgba(var(--orange-6),0.08)] text-orange-6 border border-[rgba(var(--orange-6),0.2)] text-11px px-6px py-1px rd-4px font-medium'>
-                          {t('settings.skillsHub.custom', { defaultValue: 'Custom' })}
-                        </span>
-                      ) : (
-                        <span className='bg-[rgba(var(--blue-6),0.08)] text-blue-6 border border-[rgba(var(--blue-6),0.2)] text-11px px-6px py-1px rd-4px font-medium'>
-                          {t('settings.skillsHub.builtin', { defaultValue: 'Built-in' })}
-                        </span>
-                      )}
-                    </div>
-                    {skill.description && (
-                      <p
-                        className='text-13px text-t-secondary leading-relaxed line-clamp-2 m-0'
-                        title={skill.description}
-                      >
-                        {skill.description}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className='shrink-0 sm:self-center flex items-center justify-end gap-6px mt-12px sm:mt-0 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity pl-4px'>
-                    {skill.source === 'custom' && (
-                      <button
-                        data-testid={`btn-delete-${normalizeTestId(skill.name)}`}
-                        className='p-8px hover:bg-danger-1 hover:text-danger-6 text-t-tertiary rd-6px outline-none flex items-center justify-center border border-transparent cursor-pointer transition-colors shadow-sm bg-base sm:bg-transparent sm:shadow-none'
-                        onClick={() => {
-                          Modal.confirm({
-                            title: t('settings.skillsHub.deleteConfirmTitle', { defaultValue: 'Delete Skill' }),
-                            content: t('settings.skillsHub.deleteConfirmContent', {
-                              name: skill.name,
-                              defaultValue: `Are you sure you want to delete "${skill.name}"?`,
-                            }),
-                            okButtonProps: { status: 'danger' },
-                            okText: t('common.delete', { defaultValue: 'Delete' }),
-                            onOk: () => void handleDelete(skill.name),
-                            wrapClassName: 'modal-delete-skill',
-                          });
-                        }}
-                        title={t('common.delete', { defaultValue: 'Delete' })}
-                      >
-                        <Delete size={16} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
+            <div className={SKILL_GRID_CLASS}>
+              {filteredSkills.map((skill) => {
+                const variant: SkillCardVariant = skill.source === 'custom' ? 'custom' : 'builtin';
+                return (
+                  <SkillCard
+                    key={skill.name}
+                    ref={setSkillRef(skill.name)}
+                    data-testid={`my-skill-card-${normalizeTestId(skill.name)}`}
+                    name={skill.name}
+                    description={skill.description}
+                    variant={variant}
+                    badgeLabel={
+                      skill.source === 'custom'
+                        ? t('settings.skillsHub.custom', { defaultValue: 'Custom' })
+                        : t('settings.skillsHub.builtin', { defaultValue: 'Built-in' })
+                    }
+                    highlighted={highlightedSkill === skill.name}
+                    onDelete={skill.source === 'custom' ? () => confirmDelete(skill.name) : undefined}
+                    deleteTitle={t('common.delete', { defaultValue: 'Delete' })}
+                    deleteTestId={`btn-delete-${normalizeTestId(skill.name)}`}
+                  />
+                );
+              })}
             </div>
           ) : (
             <div className='text-center text-t-secondary text-13px py-40px bg-fill-1 rd-12px border border-b-base border-dashed relative z-10'>
@@ -326,32 +288,17 @@ const SkillsHubSettings: React.FC<SkillsHubSettingsProps> = ({ withWrapper = tru
                 {extensionSkills.length}
               </span>
             </div>
-            <div className='w-full flex flex-col gap-6px'>
+            <div className={SKILL_GRID_CLASS}>
               {extensionSkills.map((skill) => (
-                <div
+                <SkillCard
                   key={skill.name}
-                  ref={(el) => {
-                    skillRefs.current[skill.name] = el;
-                  }}
-                  className={`flex flex-col sm:flex-row gap-16px p-16px bg-base border hover:border-border-1 hover:bg-fill-1 rd-12px transition-all duration-200 ${highlightedSkill === skill.name ? 'border-primary-5 bg-primary-1' : 'border-transparent'}`}
-                >
-                  <div className='shrink-0 flex items-start sm:mt-2px'>
-                    <div className='w-40px h-40px rd-10px bg-[rgba(var(--primary-6),0.08)] flex items-center justify-center shadow-sm'>
-                      <Puzzle theme='filled' size={20} fill='rgb(var(--primary-6))' />
-                    </div>
-                  </div>
-                  <div className='flex-1 min-w-0 flex flex-col justify-center gap-4px'>
-                    <div className='flex items-center gap-10px'>
-                      <h3 className='text-14px font-semibold text-t-primary/90 truncate m-0'>{skill.name}</h3>
-                      <span className='bg-[rgba(var(--primary-6),0.08)] text-primary-6 border border-[rgba(var(--primary-6),0.2)] text-10px px-6px py-1px rd-4px font-medium uppercase'>
-                        {t('settings.extensionSkillsBadge', { defaultValue: 'Extension' })}
-                      </span>
-                    </div>
-                    {skill.description && (
-                      <p className='text-13px text-t-secondary leading-relaxed line-clamp-2 m-0'>{skill.description}</p>
-                    )}
-                  </div>
-                </div>
+                  ref={setSkillRef(skill.name)}
+                  name={skill.name}
+                  description={skill.description}
+                  variant='extension'
+                  badgeLabel={t('settings.extensionSkillsBadge', { defaultValue: 'Extension' })}
+                  highlighted={highlightedSkill === skill.name}
+                />
               ))}
             </div>
           </div>
@@ -372,32 +319,17 @@ const SkillsHubSettings: React.FC<SkillsHubSettingsProps> = ({ withWrapper = tru
                 {builtinAutoSkills.length}
               </span>
             </div>
-            <div className='w-full flex flex-col gap-6px'>
+            <div className={SKILL_GRID_CLASS}>
               {builtinAutoSkills.map((skill) => (
-                <div
+                <SkillCard
                   key={skill.name}
-                  ref={(el) => {
-                    skillRefs.current[skill.name] = el;
-                  }}
-                  className={`flex flex-col sm:flex-row gap-16px p-16px bg-base border hover:border-border-1 hover:bg-fill-1 rd-12px transition-all duration-200 ${highlightedSkill === skill.name ? 'border-primary-5 bg-primary-1' : 'border-transparent'}`}
-                >
-                  <div className='shrink-0 flex items-start sm:mt-2px'>
-                    <div className='w-40px h-40px rd-10px bg-[rgba(var(--success-6),0.08)] flex items-center justify-center shadow-sm'>
-                      <Lightning theme='filled' size={20} fill='rgb(var(--success-6))' />
-                    </div>
-                  </div>
-                  <div className='flex-1 min-w-0 flex flex-col justify-center gap-4px'>
-                    <div className='flex items-center gap-10px'>
-                      <h3 className='text-14px font-semibold text-t-primary/90 truncate m-0'>{skill.name}</h3>
-                      <span className='bg-[rgba(var(--success-6),0.08)] text-[rgb(var(--success-6))] border border-[rgba(var(--success-6),0.2)] text-10px px-6px py-1px rd-4px font-medium uppercase'>
-                        {t('settings.autoInjectedSkillsBadge')}
-                      </span>
-                    </div>
-                    {skill.description && (
-                      <p className='text-13px text-t-secondary leading-relaxed line-clamp-2 m-0'>{skill.description}</p>
-                    )}
-                  </div>
-                </div>
+                  ref={setSkillRef(skill.name)}
+                  name={skill.name}
+                  description={skill.description}
+                  variant='auto'
+                  badgeLabel={t('settings.autoInjectedSkillsBadge')}
+                  highlighted={highlightedSkill === skill.name}
+                />
               ))}
             </div>
           </div>

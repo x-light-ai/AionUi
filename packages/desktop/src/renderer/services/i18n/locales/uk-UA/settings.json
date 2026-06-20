@@ -305,7 +305,8 @@
   "capabilities": "Можливості",
   "capabilitiesTab": {
     "skills": "Навички",
-    "tools": "Інструменти"
+    "tools": "Інструменти",
+    "market": "Маркет навичок"
   },
   "webui": "Віддалений доступ",
   "installed": "Встановлено",
@@ -975,5 +976,11 @@
     "acpTool": "the managed ACP tool",
     "codexAcp": "the Codex ACP runtime component",
     "claudeAgentAcp": "the Claude ACP runtime component"
+  },
+  "skillMarket": {
+    "title": "Маркет навичок",
+    "searchPlaceholder": "Пошук навичок у маркеті...",
+    "empty": "У маркеті немає доступних навичок.",
+    "notConfigured": "Адресу маркету навичок не налаштовано. Вкажіть її в системних налаштуваннях."
   }
 }

@@ -305,7 +305,8 @@
   "capabilities": "能力拡張",
   "capabilitiesTab": {
     "skills": "スキル",
-    "tools": "ツール"
+    "tools": "ツール",
+    "market": "スキルマーケット"
   },
   "webui": "リモート接続",
   "installed": "インストール済み",
@@ -1055,5 +1056,11 @@
     "acpTool": "the managed ACP tool",
     "codexAcp": "the Codex ACP runtime component",
     "claudeAgentAcp": "the Claude ACP runtime component"
+  },
+  "skillMarket": {
+    "title": "スキルマーケット",
+    "searchPlaceholder": "マーケットのスキルを検索...",
+    "empty": "マーケットに利用可能なスキルがありません。",
+    "notConfigured": "スキルマーケットのアドレスが未設定です。システム設定で設定してください。"
   }
 }

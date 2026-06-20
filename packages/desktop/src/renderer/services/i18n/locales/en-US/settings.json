@@ -307,7 +307,8 @@
   "capabilities": "Capabilities",
   "capabilitiesTab": {
     "skills": "Skills",
-    "tools": "Tools"
+    "tools": "Tools",
+    "market": "Skill Market"
   },
   "webui": "Remote",
   "installed": "Installed",
@@ -1055,5 +1056,11 @@
     "conversation": "Conversation",
     "mcp": "MCP",
     "customAgent": "Custom Agent"
+  },
+  "skillMarket": {
+    "title": "Skill Market",
+    "searchPlaceholder": "Search market skills...",
+    "empty": "No skills available in the market.",
+    "notConfigured": "Skill market address is not configured. Set it in System settings."
   }
 }

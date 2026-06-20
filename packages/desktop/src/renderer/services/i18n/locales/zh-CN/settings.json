@@ -307,7 +307,8 @@
   "capabilities": "能力扩展",
   "capabilitiesTab": {
     "skills": "技能",
-    "tools": "工具"
+    "tools": "工具",
+    "market": "技能市场"
   },
   "webui": "远程连接",
   "installed": "已安装",
@@ -1056,5 +1057,11 @@
     "conversation": "对话",
     "mcp": "MCP",
     "customAgent": "自定义 Agent"
+  },
+  "skillMarket": {
+    "title": "技能市场",
+    "searchPlaceholder": "搜索市场技能...",
+    "empty": "市场暂无可用技能。",
+    "notConfigured": "尚未配置技能市场地址，请在系统设置中配置。"
   }
 }

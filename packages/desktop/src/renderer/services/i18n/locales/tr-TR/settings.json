@@ -305,7 +305,8 @@
   "capabilities": "Yetenekler",
   "capabilitiesTab": {
     "skills": "Beceriler",
-    "tools": "Araçlar"
+    "tools": "Araçlar",
+    "market": "Beceri Pazarı"
   },
   "webui": "Uzak Bağlantı",
   "installed": "Yüklü",
@@ -1053,5 +1054,11 @@
     "acpTool": "the managed ACP tool",
     "codexAcp": "the Codex ACP runtime component",
     "claudeAgentAcp": "the Claude ACP runtime component"
+  },
+  "skillMarket": {
+    "title": "Beceri Pazarı",
+    "searchPlaceholder": "Pazar becerilerinde ara...",
+    "empty": "Pazarda kullanılabilir beceri yok.",
+    "notConfigured": "Beceri pazarı adresi yapılandırılmadı. Sistem ayarlarından ayarlayın."
   }
 }

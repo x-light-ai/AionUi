@@ -20,16 +20,18 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import SkillsHubSettings from './SkillsHubSettings';
+import SkillMarketSettings from './SkillMarketSettings';
 import ToolsModalContent from '@/renderer/components/settings/SettingsModal/contents/ToolsModalContent';
 import SettingsPageWrapper from './components/SettingsPageWrapper';
 
-type CapabilitiesTab = 'skills' | 'tools';
+type CapabilitiesTab = 'skills' | 'market' | 'tools';
 
-const isCapabilitiesTab = (value: string | null): value is CapabilitiesTab => value === 'skills' || value === 'tools';
+const isCapabilitiesTab = (value: string | null): value is CapabilitiesTab =>
+  value === 'skills' || value === 'market' || value === 'tools';
 
 const CapabilitiesSettings: React.FC = () => {
   const { t } = useTranslation();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   // Initialize from URL synchronously to avoid a flash of the default tab.
   const [activeTab, setActiveTab] = useState<CapabilitiesTab>(() => {
     const tabParam = searchParams.get('tab');
@@ -47,23 +49,28 @@ const CapabilitiesSettings: React.FC = () => {
   const handleTabChange = (key: string) => {
     if (isCapabilitiesTab(key)) {
       setActiveTab(key);
-      // Preserve any other query params the embedded content may rely on.
+      // FORK-CUSTOM: Avoid React Router navigation on every tab click; router-level
+      // refresh causes visible layout jitter in this settings page.
       const next = new URLSearchParams(searchParams);
       next.set('tab', key);
-      setSearchParams(next, { replace: true });
+      window.history.replaceState(null, '', `${window.location.pathname}?${next.toString()}`);
     }
   };
 
   return (
-    <SettingsPageWrapper contentClassName='max-w-1200px'>
+    <SettingsPageWrapper contentClassName='max-w-1200px' className='[scrollbar-gutter:stable]'>
       <Tabs
         activeTab={activeTab}
         onChange={handleTabChange}
         type='line'
+        animation={false}
         className='flex flex-col flex-1 min-h-0 [&>.arco-tabs-content]:pt-0'
       >
         <Tabs.TabPane key='skills' title={t('settings.capabilitiesTab.skills', { defaultValue: 'Skills' })}>
           <SkillsHubSettings withWrapper={false} />
+        </Tabs.TabPane>
+        <Tabs.TabPane key='market' title={t('settings.capabilitiesTab.market', { defaultValue: 'Skill Market' })}>
+          <SkillMarketSettings />
         </Tabs.TabPane>
         <Tabs.TabPane key='tools' title={t('settings.capabilitiesTab.tools', { defaultValue: 'Tools' })}>
           <ToolsModalContent />

@@ -305,7 +305,8 @@
   "capabilities": "Recursos",
   "capabilitiesTab": {
     "skills": "Habilidades",
-    "tools": "Ferramentas"
+    "tools": "Ferramentas",
+    "market": "Mercado de Habilidades"
   },
   "webui": "Remoto",
   "installed": "Instalado",
@@ -1056,5 +1057,11 @@
   },
   "cdP": {
     "title": "CDP (Chrome DevTools Protocol)"
+  },
+  "skillMarket": {
+    "title": "Mercado de Habilidades",
+    "searchPlaceholder": "Pesquisar habilidades do mercado...",
+    "empty": "Nenhuma habilidade disponível no mercado.",
+    "notConfigured": "O endereço do mercado de habilidades não está configurado. Defina-o nas configurações do sistema."
   }
 }

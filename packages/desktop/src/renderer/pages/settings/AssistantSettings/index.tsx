@@ -1,3 +1,18 @@
+import { Message } from '@arco-design/web-react';
+import coworkSvg from '@/renderer/assets/icons/cowork.svg';
+import { useDetectedAgents, useAssistantEditor, useAssistantList } from '@/renderer/hooks/assistant';
+import SettingsPageWrapper from '../components/SettingsPageWrapper';
+import { resolveAvatarImageSrc } from './assistantUtils';
+import AssistantEditorPage from './AssistantEditorPage';
+import AssistantListPanel from './AssistantListPanel';
+import DeleteAssistantModal from './DeleteAssistantModal';
+import SkillConfirmModals from './SkillConfirmModals';
+import type { AssistantEditorViewModel } from './types';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useLocation, useSearchParams } from 'react-router-dom';
+import { useRemoteMarket } from '@/renderer/hooks/market/useRemoteMarket';
+import MarketCardGrid from '@/renderer/components/market/MarketCardGrid';
+
 /**
  * AssistantSettings — Settings page for managing assistants.
  *
@@ -17,18 +32,6 @@
  * overrides. The full-page editor still renders builtin skills and prompts as
  * read-only so users can inspect what's bundled.
  */
-import { Message } from '@arco-design/web-react';
-import coworkSvg from '@/renderer/assets/icons/cowork.svg';
-import { useDetectedAgents, useAssistantEditor, useAssistantList } from '@/renderer/hooks/assistant';
-import SettingsPageWrapper from '../components/SettingsPageWrapper';
-import { resolveAvatarImageSrc } from './assistantUtils';
-import AssistantEditorPage from './AssistantEditorPage';
-import AssistantListPanel from './AssistantListPanel';
-import DeleteAssistantModal from './DeleteAssistantModal';
-import SkillConfirmModals from './SkillConfirmModals';
-import type { AssistantEditorViewModel } from './types';
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { useLocation, useSearchParams } from 'react-router-dom';
 
 type AssistantNavigationState = {
   openAssistantId?: string;
@@ -63,6 +66,7 @@ const AssistantSettings: React.FC = () => {
     reorderAssistants,
     localeKey,
   } = useAssistantList();
+  const remoteMarket = useRemoteMarket('assistant');
   const builtinAvatarOptions = useMemo(
     () =>
       assistants
@@ -210,10 +214,45 @@ const AssistantSettings: React.FC = () => {
     void editor.handleEdit(targetAssistant);
   }, [assistants, editor, navigationState]);
 
+  const handleRemoteInstall = async (item: any) => {
+    try {
+      await remoteMarket.install(item);
+      await loadAssistants();
+      message.success('助手安装成功');
+    } catch (error) {
+      console.error('Failed to install remote assistant:', error);
+      message.error('安装助手失败');
+    }
+  };
+
+  const handleRemoteRemove = async (item: any) => {
+    try {
+      await remoteMarket.remove(item);
+      await loadAssistants();
+      message.success('助手已删除');
+    } catch (error) {
+      console.error('Failed to remove remote assistant:', error);
+      message.error('删除助手失败');
+    }
+  };
+
   return (
     <SettingsPageWrapper className='!h-full !overflow-hidden' contentClassName='!h-full'>
       <div className='flex flex-col h-full w-full'>
         {messageContext}
+        <div className='px-18px py-18px'>
+          <MarketCardGrid
+            emptyText='暂无远端助手'
+            installText='安装'
+            installedText='已安装'
+            removeText='删除'
+            loading={remoteMarket.loading}
+            items={remoteMarket.items}
+            error={remoteMarket.error}
+            onInstall={handleRemoteInstall}
+            onRemove={handleRemoteRemove}
+          />
+        </div>
         <div className='flex-1 min-h-0'>
           {showEditor ? (
             <AssistantEditorPage

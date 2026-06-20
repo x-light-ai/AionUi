@@ -305,7 +305,8 @@
   "capabilities": "기능 확장",
   "capabilitiesTab": {
     "skills": "스킬",
-    "tools": "도구"
+    "tools": "도구",
+    "market": "스킬 마켓"
   },
   "webui": "원격 연결",
   "installed": "설치됨",
@@ -1055,5 +1056,11 @@
     "acpTool": "the managed ACP tool",
     "codexAcp": "the Codex ACP runtime component",
     "claudeAgentAcp": "the Claude ACP runtime component"
+  },
+  "skillMarket": {
+    "title": "스킬 마켓",
+    "searchPlaceholder": "마켓 스킬 검색...",
+    "empty": "마켓에 사용 가능한 스킬이 없습니다.",
+    "notConfigured": "스킬 마켓 주소가 설정되지 않았습니다. 시스템 설정에서 설정하세요."
   }
 }

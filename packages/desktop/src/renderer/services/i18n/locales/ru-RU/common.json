@@ -108,5 +108,6 @@
   "unit": {
     "minute_short": "мин",
     "second_short": "с"
-  }
+  },
+  "all": "Все"
 }
