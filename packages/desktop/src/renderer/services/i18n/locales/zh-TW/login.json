@@ -15,6 +15,19 @@
   "languageToggle": "切換語言",
   "footerPrimary": "命令列 AI 的現代化體驗",
   "footerSecondary": "高效且優雅",
+  "wechat": {
+    "title": "微信掃碼登入",
+    "generating": "正在產生 QR Code",
+    "loading": "請稍候...",
+    "waiting": "微信掃碼關注【AI微光者】即可快速登入",
+    "confirmed": "登入成功，正在進入系統...",
+    "expired": "QR Code 已失效，請重新整理後再試",
+    "error": "QR Code 載入失敗，請重新整理後再試",
+    "refresh": "重新整理 QR Code",
+    "tip": "使用微信掃碼登入",
+    "agreementPrefix": "掃碼即表示已閱讀並接受",
+    "agreementName": "《使用者協議》"
+  },
   "errors": {
     "empty": "請輸入使用者名稱與密碼",
     "invalidCredentials": "使用者名稱或密碼錯誤",

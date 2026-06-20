@@ -15,6 +15,19 @@
   "languageToggle": "언어 변경",
   "footerPrimary": "명령줄 AI의 혁신",
   "footerSecondary": "현대적이고 효율적인",
+  "wechat": {
+    "title": "WeChat QR Login",
+    "generating": "Generating QR code",
+    "loading": "Please wait...",
+    "waiting": "Scan with WeChat and follow AI微光者 to log in",
+    "confirmed": "Login successful, entering the app...",
+    "expired": "QR code expired, please refresh and try again",
+    "error": "Failed to load QR code, please refresh and try again",
+    "refresh": "Refresh QR code",
+    "tip": "Sign in with WeChat",
+    "agreementPrefix": "By scanning, you confirm that you have read and accepted ",
+    "agreementName": "the User Agreement"
+  },
   "errors": {
     "empty": "사용자 이름과 비밀번호를 입력하세요",
     "invalidCredentials": "잘못된 사용자 이름 또는 비밀번호",

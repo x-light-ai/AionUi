@@ -15,6 +15,19 @@
   "languageToggle": "切换语言",
   "footerPrimary": "命令行 AI 的现代化体验",
   "footerSecondary": "高效且优雅",
+  "wechat": {
+    "title": "微信扫码登录",
+    "generating": "正在生成二维码",
+    "loading": "请稍候...",
+    "waiting": "微信扫码关注【AI微光者】即可快速登录",
+    "confirmed": "登录成功，正在进入系统...",
+    "expired": "二维码已失效，请刷新后重试",
+    "error": "二维码加载失败，请刷新后重试",
+    "refresh": "刷新二维码",
+    "tip": "使用微信扫码登录",
+    "agreementPrefix": "扫码即表示已阅读并接受",
+    "agreementName": "《用户协议》"
+  },
   "errors": {
     "empty": "请输入用户名和密码",
     "invalidCredentials": "用户名或密码错误",

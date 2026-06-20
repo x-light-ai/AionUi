@@ -15,6 +15,19 @@
   "languageToggle": "Сменить язык",
   "footerPrimary": "Преобразуйте свой ИИ командной строки",
   "footerSecondary": "Современно и эффективно",
+  "wechat": {
+    "title": "WeChat QR Login",
+    "generating": "Generating QR code",
+    "loading": "Please wait...",
+    "waiting": "Scan with WeChat and follow AI微光者 to log in",
+    "confirmed": "Login successful, entering the app...",
+    "expired": "QR code expired, please refresh and try again",
+    "error": "Failed to load QR code, please refresh and try again",
+    "refresh": "Refresh QR code",
+    "tip": "Sign in with WeChat",
+    "agreementPrefix": "By scanning, you confirm that you have read and accepted ",
+    "agreementName": "the User Agreement"
+  },
   "errors": {
     "empty": "Введите имя пользователя и пароль",
     "invalidCredentials": "Неверное имя пользователя или пароль",

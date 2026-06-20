@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import AppLoader from '@renderer/components/layout/AppLoader';
 import { useForkConfig } from '@renderer/hooks/useForkConfig';
 import { useAuth } from '@renderer/hooks/context/AuthContext';
@@ -41,6 +41,18 @@ const ProtectedLayout: React.FC<{ layout: React.ReactElement }> = ({ layout }) =
   return React.cloneElement(layout);
 };
 
+const LoginRoute: React.FC = () => {
+  const { status } = useAuth();
+  const location = useLocation();
+  const forceXaiworkLogin = new URLSearchParams(location.search).get('xaiwork') === 'expired';
+
+  if (status === 'authenticated' && !forceXaiworkLogin) {
+    return <Navigate to='/guid' replace />;
+  }
+
+  return withRouteFallback(LoginPage);
+};
+
 const PanelRoute: React.FC<{ layout: React.ReactElement }> = ({ layout }) => {
   const { status } = useAuth();
   const { hideModelSettingsMenu } = useForkConfig();
@@ -48,10 +60,7 @@ const PanelRoute: React.FC<{ layout: React.ReactElement }> = ({ layout }) => {
   return (
     <HashRouter>
       <Routes>
-        <Route
-          path='/login'
-          element={status === 'authenticated' ? <Navigate to='/guid' replace /> : withRouteFallback(LoginPage)}
-        />
+        <Route path='/login' element={<LoginRoute />} />
         <Route element={<ProtectedLayout layout={layout} />}>
           <Route index element={<Navigate to='/guid' replace />} />
           <Route path='/guid' element={withRouteFallback(Guid)} />
@@ -74,7 +83,10 @@ const PanelRoute: React.FC<{ layout: React.ReactElement }> = ({ layout }) => {
           <Route path='/settings/system' element={withRouteFallback(SystemSettings)} />
           <Route path='/settings/about' element={withRouteFallback(SystemSettings)} />
           <Route path='/settings/ext/:tabId' element={withRouteFallback(ExtensionSettingsPage)} />
-          <Route path='/settings' element={<Navigate to={hideModelSettingsMenu ? '/settings/assistants' : '/settings/model'} replace />} />
+          <Route
+            path='/settings'
+            element={<Navigate to={hideModelSettingsMenu ? '/settings/assistants' : '/settings/model'} replace />}
+          />
           <Route path='/test/components' element={withRouteFallback(ComponentsShowcase)} />
           <Route path='/scheduled' element={withRouteFallback(ScheduledTasksPage)} />
           <Route path='/scheduled/:job_id' element={withRouteFallback(TaskDetailPage)} />
