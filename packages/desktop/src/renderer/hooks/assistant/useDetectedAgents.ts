@@ -59,9 +59,7 @@ export const useDetectedAgents = () => {
     () =>
       rawAgents
         .filter(
-          (a) =>
-            a.agent_type !== 'remote' &&
-            (showAionCliInUi || (a.agent_type !== 'aionrs' && a.backend !== 'aionrs'))
+          (a) => a.agent_type !== 'remote' && (showAionCliInUi || (a.agent_type !== 'aionrs' && a.backend !== 'aionrs'))
         )
         .map((a) => ({
           // `preset_agent_type` stores the backend slug (e.g. "claude", "gemini"),

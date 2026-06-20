@@ -35,10 +35,7 @@ const AgentModalContent: React.FC = () => {
                   {t('settings.agentSelectorEnableDesc')}
                 </Typography.Text>
               </div>
-              <Switch
-                checked={agentSelectorEnabled ?? false}
-                onChange={(val) => void setAgentSelectorEnabled(val)}
-              />
+              <Switch checked={agentSelectorEnabled ?? false} onChange={(val) => void setAgentSelectorEnabled(val)} />
             </div>
           </div>
 

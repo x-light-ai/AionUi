@@ -261,7 +261,11 @@ const SystemModalContent: React.FC = () => {
             label: t('settings.startOnBoot'),
             description: startOnBoot.supported ? t('settings.startOnBootDesc') : t('settings.startOnBootUnsupported'),
             component: (
-              <Switch checked={startOnBoot.enabled} onChange={handleStartOnBootChange} disabled={!startOnBoot.supported} />
+              <Switch
+                checked={startOnBoot.enabled}
+                onChange={handleStartOnBootChange}
+                disabled={!startOnBoot.supported}
+              />
             ),
           },
           {
