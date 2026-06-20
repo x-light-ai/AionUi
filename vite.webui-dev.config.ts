@@ -11,6 +11,8 @@ import unoConfig from './uno.config';
 const rootPkg = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8')) as { version: string };
 const rendererRoot = resolve('packages/desktop/src/renderer');
 const WEBHOST_PORT = process.env.AIONUI_PORT ?? '25809';
+// FORK-CUSTOM: XAIWork (WeixinOpenApi) OpenAPI host for the WeChat QR login dev proxy.
+const XAIWORK_TARGET = process.env.AIONUI_XAIWORK_TARGET ?? 'http://localhost:5330';
 
 function iconParkPlugin() {
   return {
@@ -48,6 +50,8 @@ export default defineConfig({
       '/ws': { target: `ws://localhost:${WEBHOST_PORT}`, ws: true, changeOrigin: true },
       '/login': { target: `http://localhost:${WEBHOST_PORT}`, changeOrigin: true },
       '/logout': { target: `http://localhost:${WEBHOST_PORT}`, changeOrigin: true },
+      // FORK-CUSTOM: proxy WeChat QR login OpenAPI calls to XAIWork (WeixinOpenApi).
+      '/openapi': { target: XAIWORK_TARGET, changeOrigin: true },
     },
   },
   resolve: {
@@ -60,7 +64,15 @@ export default defineConfig({
       streamdown: resolve('node_modules/streamdown/dist/index.js'),
     },
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.css'],
-    dedupe: ['react', 'react-dom', 'react-router-dom', '@codemirror/state', '@codemirror/view', '@codemirror/language', '@lezer/highlight'],
+    dedupe: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      '@codemirror/state',
+      '@codemirror/view',
+      '@codemirror/language',
+      '@lezer/highlight',
+    ],
   },
   plugins: [UnoCSS(unoConfig), iconParkPlugin()],
   define: {

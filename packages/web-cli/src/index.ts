@@ -120,6 +120,12 @@ function resolveAllowRemote(flags: Map<string, string | true>): boolean {
   return ['1', 'true', 'yes', 'on'].includes(env.trim().toLowerCase());
 }
 
+function resolveXaiworkTarget(flags: Map<string, string | true>): string | undefined {
+  const cli = flags.get('xaiwork-target');
+  if (typeof cli === 'string') return cli;
+  return process.env.AIONUI_XAIWORK_TARGET;
+}
+
 function readPackageVersion(): string {
   try {
     const pkgPath = path.join(cliRoot, 'package.json');
@@ -139,6 +145,7 @@ async function runStart(flags: Map<string, string | true>): Promise<void> {
   fs.mkdirSync(logDir, { recursive: true });
   const port = resolvePort(flags);
   const allowRemote = resolveAllowRemote(flags);
+  const xaiworkTarget = resolveXaiworkTarget(flags);
   const version = readPackageVersion();
   const autoOpenBrowser = shouldAutoOpenBrowser({
     allowRemote,
@@ -178,6 +185,7 @@ async function runStart(flags: Map<string, string | true>): Promise<void> {
       backendPort: 0, // invalid port → API proxy will fail cleanly
       port,
       allowRemote,
+      xaiworkTarget,
     });
     currentHandle = handle;
 
@@ -206,6 +214,7 @@ async function runStart(flags: Map<string, string | true>): Promise<void> {
       staticDir,
       port,
       allowRemote,
+      xaiworkTarget,
       dataDir,
       logDir,
       dirs: {

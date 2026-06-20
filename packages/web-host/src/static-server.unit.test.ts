@@ -152,6 +152,54 @@ describe('static-server', () => {
     expect(r.headers.get('set-cookie')).toMatch(/Max-Age=0/);
   });
 
+  it('/openapi/* reverse-proxies to xaiwork target', async () => {
+    const backend = await startMockBackend((_req, res) => res.end('nope'));
+    stopBackend = backend.close;
+    const xaiwork = await startMockBackend((req, res) => {
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ path: req.url, method: req.method, host: req.headers.host }));
+    });
+    const stopXaiwork = xaiwork.close;
+    try {
+      handle = await startStaticServer({
+        staticDir,
+        backendPort: backend.port,
+        port: 0,
+        xaiworkTarget: `http://127.0.0.1:${xaiwork.port}`,
+      });
+
+      const r = await fetch(`${handle.localUrl}/openapi/market/assistant/page`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ pageIndex: 1 }),
+      });
+      expect(r.status).toBe(200);
+      const json = (await r.json()) as { path: string; method: string; host: string };
+      expect(json.path).toBe('/openapi/market/assistant/page');
+      expect(json.method).toBe('POST');
+      expect(json.host).toBe(`127.0.0.1:${xaiwork.port}`);
+    } finally {
+      await stopXaiwork();
+    }
+  });
+
+  it('/openapi proxy returns 502 when xaiwork target is unreachable', async () => {
+    const backend = await startMockBackend((_req, res) => res.end('nope'));
+    stopBackend = backend.close;
+    const placeholder = await startMockBackend((_req, res) => res.end());
+    const freePort = placeholder.port;
+    await placeholder.close();
+
+    handle = await startStaticServer({
+      staticDir,
+      backendPort: backend.port,
+      port: 0,
+      xaiworkTarget: `http://127.0.0.1:${freePort}`,
+    });
+    const r = await fetch(`${handle.localUrl}/openapi/market/tag/options`, { method: 'POST' });
+    expect(r.status).toBe(502);
+  });
+
   it('/api proxy returns 502 when backend unreachable', async () => {
     // allocate a port then free it
     const placeholder = await startMockBackend((_req, res) => res.end());

@@ -11,6 +11,7 @@
  */
 
 import http, { type IncomingMessage, type Server, type ServerResponse } from 'node:http';
+import https from 'node:https';
 import { networkInterfaces } from 'node:os';
 import net, { type Socket } from 'node:net';
 import serveHandler from 'serve-handler';
@@ -20,6 +21,7 @@ export type StaticServerOptions = {
   backendPort: number;
   port?: number;
   allowRemote?: boolean;
+  xaiworkTarget?: string;
 };
 
 export type StaticServerHandle = {
@@ -32,6 +34,8 @@ export type StaticServerHandle = {
 };
 
 const DEFAULT_PORT = 25808;
+// FORK-CUSTOM: XAIWork OpenAPI upstream for market and assistant packages.
+const DEFAULT_XAIWORK_TARGET = 'http://localhost:5330';
 
 function getLanIP(): string | null {
   const nets = networkInterfaces();
@@ -59,6 +63,58 @@ function forwardToBackend(req: IncomingMessage, res: ServerResponse, backendPort
     if (!res.headersSent) {
       res.writeHead(502, { 'content-type': 'application/json' });
       res.end(JSON.stringify({ error: 'BACKEND_UNREACHABLE' }));
+    } else {
+      res.destroy();
+    }
+  });
+  req.pipe(proxy);
+}
+
+function resolveXaiworkTarget(target?: string): URL {
+  const raw = (target || process.env.AIONUI_XAIWORK_TARGET || DEFAULT_XAIWORK_TARGET).trim().replace(/\/+$/, '');
+  const url = new URL(raw);
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    throw new Error('AIONUI_XAIWORK_TARGET must use http or https');
+  }
+  return url;
+}
+
+function sanitizeProxyHeaders(headers: IncomingMessage['headers'], target: URL): http.OutgoingHttpHeaders {
+  const next: http.OutgoingHttpHeaders = { host: target.host };
+  const accept = headers.accept;
+  const contentType = headers['content-type'];
+  const userAgent = headers['user-agent'];
+  if (accept) next.accept = accept;
+  if (contentType) next['content-type'] = contentType;
+  if (userAgent) next['user-agent'] = userAgent;
+  return next;
+}
+
+function forwardToXaiwork(req: IncomingMessage, res: ServerResponse, target: URL): void {
+  if (!req.url?.startsWith('/openapi/')) {
+    res.writeHead(404).end();
+    return;
+  }
+
+  const client = target.protocol === 'https:' ? https : http;
+  const basePath = target.pathname.replace(/\/+$/, '');
+  const options: http.RequestOptions = {
+    protocol: target.protocol,
+    hostname: target.hostname,
+    port: target.port || undefined,
+    path: `${basePath}${req.url}`,
+    method: req.method,
+    headers: sanitizeProxyHeaders(req.headers, target),
+  };
+
+  const proxy = client.request(options, (proxyRes) => {
+    res.writeHead(proxyRes.statusCode ?? 502, proxyRes.headers);
+    proxyRes.pipe(res);
+  });
+  proxy.on('error', () => {
+    if (!res.headersSent) {
+      res.writeHead(502, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ error: 'XAIWORK_UNREACHABLE' }));
     } else {
       res.destroy();
     }
@@ -121,6 +177,7 @@ export async function startStaticServer(opts: StaticServerOptions): Promise<Stat
   const port = opts.port ?? DEFAULT_PORT;
   const allowRemote = opts.allowRemote === true;
   const host = allowRemote ? '0.0.0.0' : '127.0.0.1';
+  const xaiworkTarget = resolveXaiworkTarget(opts.xaiworkTarget);
 
   // The HTTP server listens only on loopback — user traffic hits the outer
   // net.Server first. We route to this server for everything except WS
@@ -143,6 +200,12 @@ export async function startStaticServer(opts: StaticServerOptions): Promise<Stat
       // so WebUI browser clients reach the backend without a path-rewrite.
       if (req.url.startsWith('/api/') || req.url.startsWith('/api?') || req.url === '/login' || req.url === '/logout') {
         forwardToBackend(req, res, opts.backendPort);
+        return;
+      }
+
+      // FORK-CUSTOM: /openapi/* — reverse proxy to XAIWork OpenAPI for market and assistant packages.
+      if (req.url.startsWith('/openapi/')) {
+        forwardToXaiwork(req, res, xaiworkTarget);
         return;
       }
 
