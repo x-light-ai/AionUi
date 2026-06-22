@@ -973,6 +973,7 @@
     "addAgent": "Add Agent",
     "installFromMarket": "Install from Market",
     "marketInstall": "Install",
+    "marketUninstall": "Uninstall",
     "marketInstalling": "Installing...",
     "marketUpdate": "Update",
     "marketEmpty": "No installable agents found. Check your network connection and make sure GitHub is reachable.",
@@ -1061,6 +1062,8 @@
     "title": "Skill Market",
     "searchPlaceholder": "Search market skills...",
     "empty": "No skills available in the market.",
-    "notConfigured": "Skill market address is not configured. Set it in System settings."
+    "notConfigured": "Skill market address is not configured. Set it in System settings.",
+    "installSuccess": "Skill installed successfully",
+    "installError": "Failed to install skill"
   }
 }

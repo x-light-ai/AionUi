@@ -26,5 +26,10 @@
     "statusTesting": "Testando latência...",
     "statusUnreachable": "Inacessível",
     "statusAvailable": "Disponível"
+  },
+  "skillSelector": {
+    "title": "Habilidades",
+    "empty": "Nenhuma habilidade disponível",
+    "goToMarket": "Ir para o Mercado de Habilidades"
   }
 }

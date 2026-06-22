@@ -9,6 +9,8 @@ export type SkillInfo = {
   name: string;
   description: string;
   location: string;
+  version?: string;
+  tags?: string[];
   is_custom: boolean;
   source: SkillSource;
 };

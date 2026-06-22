@@ -30,10 +30,12 @@ export type SkillCardVariant = 'custom' | 'builtin' | 'extension' | 'auto';
 type SkillCardProps = {
   name: string;
   description?: string;
-  /** Visual variant — drives icon + badge styling. */
+  /** Visual variant — drives icon styling. */
   variant: SkillCardVariant;
-  /** Localized badge label (e.g. "Custom", "Built-in"). */
-  badgeLabel: string;
+  /** Optional skill package version. */
+  version?: string;
+  /** Optional skill tag labels. */
+  tags?: string[];
   /** Highlight when navigated via ?highlight=. */
   highlighted?: boolean;
   /** Delete handler — only rendered when provided (custom skills). */
@@ -43,15 +45,13 @@ type SkillCardProps = {
   deleteTestId?: string;
 };
 
-const BADGE_STYLE: Record<SkillCardVariant, string> = {
-  custom: 'bg-[rgba(var(--orange-6),0.08)] text-orange-6 border-[rgba(var(--orange-6),0.2)]',
-  builtin: 'bg-[rgba(var(--blue-6),0.08)] text-blue-6 border-[rgba(var(--blue-6),0.2)]',
-  extension: 'bg-[rgba(var(--primary-6),0.08)] text-primary-6 border-[rgba(var(--primary-6),0.2)]',
-  auto: 'bg-[rgba(var(--success-6),0.08)] text-[rgb(var(--success-6))] border-[rgba(var(--success-6),0.2)]',
-};
+const VERSION_CHIP_CLASS =
+  'text-11px px-6px py-1px rd-4px font-medium border border-solid bg-[rgba(var(--primary-6),0.08)] text-primary-6 border-[rgba(var(--primary-6),0.2)]';
+const TAG_CHIP_CLASS =
+  'text-11px px-6px py-1px rd-4px font-medium border border-solid bg-fill-1 text-t-secondary border-border-1';
 
 const SkillCard = React.forwardRef<HTMLDivElement, SkillCardProps>(
-  ({ name, description, variant, badgeLabel, highlighted, onDelete, deleteTitle, deleteTestId, ...rest }, ref) => {
+  ({ name, description, variant, version, tags, highlighted, onDelete, deleteTitle, deleteTestId, ...rest }, ref) => {
     const renderIcon = () => {
       if (variant === 'extension') {
         return (
@@ -80,7 +80,7 @@ const SkillCard = React.forwardRef<HTMLDivElement, SkillCardProps>(
       <div
         ref={ref}
         data-testid={rest['data-testid']}
-        className={`group relative flex flex-col gap-10px p-16px bg-base border hover:border-border-1 hover:bg-fill-1 hover:shadow-sm rd-12px transition-all duration-200 ${highlighted ? 'border-primary-5 bg-primary-1' : 'border-b-base'}`}
+        className={`group relative flex flex-col gap-10px p-16px border hover:shadow-sm rd-12px transition-all duration-200 ${highlighted ? 'border-primary-5 bg-primary-1 hover:border-primary-5 hover:bg-primary-1' : 'border-border-1 bg-fill-1 hover:border-border-2 hover:bg-fill-2'}`}
       >
         <div className='flex items-start gap-12px'>
           <div className='shrink-0'>{renderIcon()}</div>
@@ -88,11 +88,16 @@ const SkillCard = React.forwardRef<HTMLDivElement, SkillCardProps>(
             <h3 className='text-14px font-semibold text-t-primary/90 truncate m-0' title={name}>
               {name}
             </h3>
-            <span
-              className={`self-start text-11px px-6px py-1px rd-4px font-medium border border-solid ${BADGE_STYLE[variant]}`}
-            >
-              {badgeLabel}
-            </span>
+            {(version || (tags && tags.length > 0)) && (
+              <div className='flex flex-wrap gap-6px'>
+                {version && <span className={VERSION_CHIP_CLASS}>{version}</span>}
+                {tags?.map((tag, index) => (
+                  <span key={`${tag}-${index}`} className={TAG_CHIP_CLASS} title={tag}>
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
           {onDelete && (
             <button

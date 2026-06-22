@@ -26,5 +26,10 @@
     "statusTesting": "Тестування затримки...",
     "statusUnreachable": "Недосяжний",
     "statusAvailable": "Доступний"
+  },
+  "skillSelector": {
+    "title": "Навички",
+    "empty": "Немає доступних навичок",
+    "goToMarket": "Перейти до маркету навичок"
   }
 }

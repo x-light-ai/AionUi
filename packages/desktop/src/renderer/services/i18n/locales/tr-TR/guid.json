@@ -26,5 +26,10 @@
     "statusTesting": "Testing latency...",
     "statusUnreachable": "Unreachable",
     "statusAvailable": "Available"
+  },
+  "skillSelector": {
+    "title": "Beceriler",
+    "empty": "Kullanılabilir beceri yok",
+    "goToMarket": "Beceri Pazarına Git"
   }
 }

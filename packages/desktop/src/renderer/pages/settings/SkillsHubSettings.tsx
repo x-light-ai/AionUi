@@ -1,6 +1,6 @@
 import { ipcBridge } from '@/common';
 import { Message, Modal } from '@arco-design/web-react';
-import { FolderOpen, Info, Lightning, Puzzle, Search, Refresh } from '@icon-park/react';
+import { FolderOpen, Info, Puzzle, Search, Refresh } from '@icon-park/react';
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
@@ -18,6 +18,8 @@ interface SkillInfo {
    * export-to-external-source flow still uses absolute `location` paths.
    */
   relative_location?: string;
+  version?: string;
+  tags?: string[];
   is_custom: boolean;
   source?: 'builtin' | 'custom' | 'extension';
 }
@@ -45,7 +47,6 @@ const SkillsHubSettings: React.FC<SkillsHubSettingsProps> = ({ withWrapper = tru
   const [availableSkills, setAvailableSkills] = useState<SkillInfo[]>([]);
   const [skillPaths, setSkillPaths] = useState<{ user_skills_dir: string; builtin_skills_dir: string } | null>(null);
   const [search_query, setSearchQuery] = useState('');
-  const [builtinAutoSkills, setBuiltinAutoSkills] = useState<Array<{ name: string; description: string }>>([]);
 
   const mySkills = useMemo(() => availableSkills.filter((s) => s.source !== 'extension'), [availableSkills]);
   const extensionSkills = useMemo(() => availableSkills.filter((s) => s.source === 'extension'), [availableSkills]);
@@ -67,9 +68,6 @@ const SkillsHubSettings: React.FC<SkillsHubSettingsProps> = ({ withWrapper = tru
 
       const paths = await ipcBridge.fs.getSkillPaths.invoke();
       setSkillPaths(paths);
-
-      const autoSkills = await ipcBridge.fs.listBuiltinAutoSkills.invoke();
-      setBuiltinAutoSkills(autoSkills);
     } catch (error) {
       console.error('Failed to fetch skills:', error);
       Message.error(t('settings.skillsHub.fetchError', { defaultValue: 'Failed to fetch skills' }));
@@ -249,13 +247,10 @@ const SkillsHubSettings: React.FC<SkillsHubSettingsProps> = ({ withWrapper = tru
                     name={skill.name}
                     description={skill.description}
                     variant={variant}
-                    badgeLabel={
-                      skill.source === 'custom'
-                        ? t('settings.skillsHub.custom', { defaultValue: 'Custom' })
-                        : t('settings.skillsHub.builtin', { defaultValue: 'Built-in' })
-                    }
+                    version={skill.version}
+                    tags={skill.tags}
                     highlighted={highlightedSkill === skill.name}
-                    onDelete={skill.source === 'custom' ? () => confirmDelete(skill.name) : undefined}
+                    onDelete={() => confirmDelete(skill.name)}
                     deleteTitle={t('common.delete', { defaultValue: 'Delete' })}
                     deleteTestId={`btn-delete-${normalizeTestId(skill.name)}`}
                   />
@@ -296,38 +291,8 @@ const SkillsHubSettings: React.FC<SkillsHubSettingsProps> = ({ withWrapper = tru
                   name={skill.name}
                   description={skill.description}
                   variant='extension'
-                  badgeLabel={t('settings.extensionSkillsBadge', { defaultValue: 'Extension' })}
-                  highlighted={highlightedSkill === skill.name}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ======== Builtin Auto-injected Skills ======== */}
-        {builtinAutoSkills.length > 0 && (
-          <div
-            data-testid='auto-skills-section'
-            className='px-[16px] md:px-[32px] py-32px bg-base rd-16px md:rd-24px shadow-sm border border-b-base relative overflow-hidden transition-all'
-          >
-            <div className='flex items-center gap-10px mb-24px'>
-              <Lightning theme='filled' size={20} fill='var(--color-primary-6)' />
-              <span className='text-16px md:text-18px text-t-primary font-bold tracking-tight'>
-                {t('settings.autoInjectedSkills')}
-              </span>
-              <span className='bg-[rgba(var(--success-6),0.08)] text-[rgb(var(--success-6))] text-12px px-10px py-2px rd-[100px] font-medium ml-4px'>
-                {builtinAutoSkills.length}
-              </span>
-            </div>
-            <div className={SKILL_GRID_CLASS}>
-              {builtinAutoSkills.map((skill) => (
-                <SkillCard
-                  key={skill.name}
-                  ref={setSkillRef(skill.name)}
-                  name={skill.name}
-                  description={skill.description}
-                  variant='auto'
-                  badgeLabel={t('settings.autoInjectedSkillsBadge')}
+                  version={skill.version}
+                  tags={skill.tags}
                   highlighted={highlightedSkill === skill.name}
                 />
               ))}

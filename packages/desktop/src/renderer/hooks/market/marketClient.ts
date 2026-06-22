@@ -12,7 +12,7 @@ export interface RemoteMarketItem {
   version: string;
   description: string;
   iconText: string;
-  packageUrl: string;
+  storagePath: string;
   downloadCount: number;
   status: number;
   sortOrder: number;
@@ -64,7 +64,7 @@ export function createMarketClient(host: string) {
       return api.post<XHubResponse<RemoteMarketItem>>(`${getBase(type)}/detail/${id}`).then(unwrap);
     },
     downloadItem(type: MarketItemType, id: number | string) {
-      return api.post<XHubResponse<{ packageUrl: string }>>(`${getBase(type)}/download`, { id }).then(unwrap);
+      return api.post<XHubResponse<{ storagePath: string }>>(`${getBase(type)}/download`, { id }).then(unwrap);
     },
     listTags() {
       return api

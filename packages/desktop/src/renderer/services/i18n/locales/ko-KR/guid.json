@@ -26,5 +26,10 @@
     "statusTesting": "Testing latency...",
     "statusUnreachable": "Unreachable",
     "statusAvailable": "Available"
+  },
+  "skillSelector": {
+    "title": "스킬",
+    "empty": "사용 가능한 스킬이 없습니다",
+    "goToMarket": "스킬 마켓으로 이동"
   }
 }

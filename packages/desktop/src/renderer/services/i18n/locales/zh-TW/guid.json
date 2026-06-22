@@ -26,5 +26,10 @@
     "statusTesting": "Testing latency...",
     "statusUnreachable": "Unreachable",
     "statusAvailable": "Available"
+  },
+  "skillSelector": {
+    "title": "技能",
+    "empty": "暫無可用技能",
+    "goToMarket": "前往技能市集"
   }
 }

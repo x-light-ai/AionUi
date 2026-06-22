@@ -578,6 +578,8 @@ export const fs = {
       description: string;
       location: string;
       relative_location?: string;
+      version?: string;
+      tags?: string[];
       is_custom: boolean;
       source: 'builtin' | 'custom' | 'extension';
     }>,
@@ -608,9 +610,10 @@ export const fs = {
   importSkillWithSymlink: httpPost<{ skill_name: string; skill_names?: string[] }, { skill_path: string }>(
     '/api/skills/import-symlink'
   ),
-  importRemoteSkill: httpPost<{ skill_name: string; skill_names?: string[] }, { url: string }>(
-    '/api/skills/import-remote'
-  ),
+  importRemoteSkill: httpPost<
+    { skill_name: string; skill_names?: string[] },
+    { url: string; description?: string; version?: string; tags?: string[] }
+  >('/api/skills/import-remote'),
   deleteSkill: httpDelete<void, { skill_name: string }>((p) => `/api/skills/${p.skill_name}`),
   getSkillPaths: httpGet<{ user_skills_dir: string; builtin_skills_dir: string }, void>('/api/skills/paths'),
   getCustomExternalPaths: httpGet<Array<{ name: string; path: string }>, void>('/api/skills/external-paths'),

@@ -8,8 +8,8 @@ export interface RemoteMarketCard extends RemoteMarketItem {
   installed: boolean;
 }
 
-function resolveDownloadUrl(host: string, packageUrl: string): string {
-  return new URL(packageUrl, host.trim() || window.location.origin).toString();
+function resolveDownloadUrl(host: string, storagePath: string): string {
+  return new URL(storagePath, host.trim() || window.location.origin).toString();
 }
 
 export function useRemoteMarket(type: MarketItemType) {
@@ -79,9 +79,14 @@ export function useRemoteMarket(type: MarketItemType) {
         throw new Error('未配置市场地址');
       }
       const download = await client.downloadItem(type, item.id);
-      const url = resolveDownloadUrl(host, download.packageUrl);
+      const url = resolveDownloadUrl(host, download.storagePath);
       if (type === 'skill') {
-        await ipcBridge.fs.importRemoteSkill.invoke({ url });
+        await ipcBridge.fs.importRemoteSkill.invoke({
+          url,
+          description: item.description,
+          version: item.version,
+          tags: item.tags,
+        });
       } else {
         await ipcBridge.assistants.importRemote.invoke({ url });
       }

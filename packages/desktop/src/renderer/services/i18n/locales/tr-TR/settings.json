@@ -959,6 +959,7 @@
     "addAgent": "Ajan Ekle",
     "installFromMarket": "Marketten Yükle",
     "marketInstall": "Yükle",
+    "marketUninstall": "Kaldır",
     "marketInstalling": "Yükleniyor...",
     "marketUpdate": "Güncelle",
     "marketEmpty": "Yüklenebilir Agent bulunamadı. Ağ bağlantınızı kontrol edin ve GitHub'a erişilebildiğinden emin olun.",
@@ -1059,6 +1060,8 @@
     "title": "Beceri Pazarı",
     "searchPlaceholder": "Pazar becerilerinde ara...",
     "empty": "Pazarda kullanılabilir beceri yok.",
-    "notConfigured": "Beceri pazarı adresi yapılandırılmadı. Sistem ayarlarından ayarlayın."
+    "notConfigured": "Beceri pazarı adresi yapılandırılmadı. Sistem ayarlarından ayarlayın.",
+    "installSuccess": "Beceri yüklendi",
+    "installError": "Beceri yüklenemedi"
   }
 }

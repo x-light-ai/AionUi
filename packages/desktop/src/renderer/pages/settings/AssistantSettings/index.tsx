@@ -9,6 +9,7 @@ import DeleteAssistantModal from './DeleteAssistantModal';
 import SkillConfirmModals from './SkillConfirmModals';
 import type { AssistantEditorViewModel } from './types';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { useRemoteMarket } from '@/renderer/hooks/market/useRemoteMarket';
 import MarketCardGrid from '@/renderer/components/market/MarketCardGrid';
@@ -41,6 +42,7 @@ const OPEN_ASSISTANT_EDITOR_INTENT_KEY = 'guid.openAssistantEditorIntent';
 
 const AssistantSettings: React.FC = () => {
   const [message, messageContext] = Message.useMessage({ maxCount: 10 });
+  const { t } = useTranslation();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigationState = (location.state as AssistantNavigationState | null) ?? null;
@@ -245,7 +247,7 @@ const AssistantSettings: React.FC = () => {
             emptyText='暂无远端助手'
             installText='安装'
             installedText='已安装'
-            removeText='删除'
+            removeText={t('settings.agentManagement.marketUninstall', { defaultValue: 'Uninstall' })}
             loading={remoteMarket.loading}
             items={remoteMarket.items}
             error={remoteMarket.error}

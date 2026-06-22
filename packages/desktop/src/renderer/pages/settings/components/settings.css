@@ -48,3 +48,8 @@
     font-weight: 500;
   }
 }
+
+/* FORK-CUSTOM: Remove the full-width divider under capabilities tabs; keep the active tab ink. */
+.settings-capabilities-tabs .arco-tabs-header-nav::before {
+  display: none;
+}

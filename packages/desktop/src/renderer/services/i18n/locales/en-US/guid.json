@@ -26,5 +26,10 @@
     "statusTesting": "Testing latency...",
     "statusUnreachable": "Unreachable",
     "statusAvailable": "Available"
+  },
+  "skillSelector": {
+    "title": "Skills",
+    "empty": "No skills available",
+    "goToMarket": "Go to Skill Market"
   }
 }

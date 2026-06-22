@@ -1,7 +1,8 @@
 import React from 'react';
 import { Button, Typography } from '@arco-design/web-react';
-import { IconDelete, IconDownload, IconRefresh } from '@arco-design/web-react/icon';
+import { IconDelete, IconDownload } from '@arco-design/web-react/icon';
 import type { RemoteMarketCard } from '@/renderer/hooks/market/useRemoteMarket';
+import { getAvatarColorClass } from '@/renderer/pages/settings/components/SkillCard';
 
 interface MarketCardGridProps {
   emptyText: string;
@@ -11,6 +12,7 @@ interface MarketCardGridProps {
   loading: boolean;
   items: RemoteMarketCard[];
   error?: string;
+  showTags?: boolean;
   onInstall: (item: RemoteMarketCard) => void;
   onRemove: (item: RemoteMarketCard) => void;
 }
@@ -25,6 +27,7 @@ const MarketCardGrid: React.FC<MarketCardGridProps> = ({
   loading,
   items,
   error,
+  showTags = false,
   onInstall,
   onRemove,
 }) => {
@@ -57,33 +60,49 @@ const MarketCardGrid: React.FC<MarketCardGridProps> = ({
   }
 
   return (
-    <div className='grid grid-cols-1 gap-10px sm:grid-cols-2 lg:grid-cols-4'>
+    <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12px'>
       {items.map((item) => (
         <div
           key={`${item.itemType}-${item.id}`}
-          className='flex min-h-[180px] flex-col rounded-12px border border-solid border-[var(--color-border-2)] bg-[var(--color-bg-2)] p-10px transition-colors hover:border-[var(--color-border-3)]'
+          className='group relative flex flex-col gap-10px p-16px bg-fill-1 border border-border-1 hover:border-border-2 hover:bg-fill-2 hover:shadow-sm rd-12px transition-all duration-200'
         >
-          <Typography.Text bold className='mb-6px block min-h-36px text-center text-13px leading-18px line-clamp-2'>
-            {item.name}
-          </Typography.Text>
-
-          <div className='mb-6px flex h-40px items-center justify-center'>
-            <div className='flex h-36px w-36px items-center justify-center rounded-10px bg-fill-2 text-16px font-bold text-t-secondary'>
-              {(item.iconText || item.name.charAt(0) || '?').slice(0, 2)}
+          <div className='flex items-start gap-12px'>
+            <div
+              className={`shrink-0 w-40px h-40px rd-10px flex items-center justify-center font-bold text-16px shadow-sm text-transform-uppercase ${getAvatarColorClass(item.name)}`}
+            >
+              {(item.iconText || item.name.charAt(0) || '?').slice(0, 2).toUpperCase()}
+            </div>
+            <div className='flex-1 min-w-0 flex flex-col gap-4px'>
+              <h3 className='text-14px font-semibold text-t-primary/90 truncate m-0' title={item.name}>
+                {item.name}
+              </h3>
+              <div className='flex flex-wrap gap-6px'>
+                {item.version && (
+                  <span className='text-11px px-6px py-1px rd-4px font-medium border border-solid bg-[rgba(var(--primary-6),0.08)] text-primary-6 border-[rgba(var(--primary-6),0.2)]'>
+                    {item.version}
+                  </span>
+                )}
+                {showTags &&
+                  item.tags?.map((tag, index) => (
+                    <span
+                      key={`${tag}-${index}`}
+                      className='text-11px px-6px py-1px rd-4px font-medium border border-solid bg-fill-1 text-t-secondary border-border-1'
+                      title={tag}
+                    >
+                      {tag}
+                    </span>
+                  ))}
+              </div>
             </div>
           </div>
 
-          <Typography.Text className='mb-10px block min-h-28px text-center text-11px leading-15px text-t-secondary line-clamp-2'>
-            {item.description}
-          </Typography.Text>
+          {item.description && (
+            <p className='text-13px text-t-secondary leading-relaxed line-clamp-2 m-0' title={item.description}>
+              {item.description}
+            </p>
+          )}
 
-          <div className='mb-10px flex flex-wrap justify-center gap-6px'>
-            <span className='rounded-10px bg-[rgba(var(--primary-6),0.08)] px-8px py-1px text-10px font-medium text-primary-6'>
-              {item.version}
-            </span>
-          </div>
-
-          <div className='mt-auto flex justify-center gap-8px'>
+          <div className='mt-auto flex justify-end gap-8px pt-4px'>
             {item.installed ? (
               <>
                 <Button size='small' type='secondary' disabled className={actionButtonClassName}>

@@ -9,4 +9,5 @@ export const FORK_BRAND = {
   officialWebsite: 'https://www.aionui.com', // 官网
   contactUrl: 'https://x.com/WailiVery', // 联系方式
   updateRepo: 'iOfficeAI/AionUi', // 自动更新来源（GitHub repo）
+  wechatAppCode: 'xaiwork', // 微信扫码登录时上报的 app 来源编码，XAIWork 据此建立会员-app 关联
 };

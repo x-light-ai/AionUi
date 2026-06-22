@@ -973,6 +973,7 @@
     "addAgent": "新增 Agent",
     "installFromMarket": "從市場安裝",
     "marketInstall": "安裝",
+    "marketUninstall": "卸載",
     "marketInstalling": "安裝中...",
     "marketUpdate": "更新",
     "marketEmpty": "暫未發現可安裝的 Agent。請檢查網路連線，並確認目前環境可以正常存取 GitHub。",
@@ -1061,6 +1062,8 @@
     "title": "技能市集",
     "searchPlaceholder": "搜尋市集技能...",
     "empty": "市集暫無可用技能。",
-    "notConfigured": "尚未設定技能市集位址，請在系統設定中設定。"
+    "notConfigured": "尚未設定技能市集位址，請在系統設定中設定。",
+    "installSuccess": "技能安裝成功",
+    "installError": "安裝技能失敗"
   }
 }

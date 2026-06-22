@@ -101,20 +101,6 @@ const GuidPage: React.FC = () => {
       });
   }, []);
 
-  const handleToggleSkill = useCallback((skillName: string, isAuto: boolean) => {
-    if (isAuto) {
-      setGuidDisabledBuiltinSkills((prev) => {
-        const list = prev ?? [];
-        return list.includes(skillName) ? list.filter((s) => s !== skillName) : [...list, skillName];
-      });
-    } else {
-      setGuidEnabledSkills((prev) => {
-        const list = prev ?? [];
-        return list.includes(skillName) ? list.filter((s) => s !== skillName) : [...list, skillName];
-      });
-    }
-  }, []);
-
   const handleToggleMcpServer = useCallback((serverId: string) => {
     setGuidSelectedMcpServerIds((prev) => {
       const current = prev ?? [];
@@ -142,6 +128,23 @@ const GuidPage: React.FC = () => {
   const guidInput = useGuidInput({
     locationState: location.state as { workspace?: string } | null,
   });
+
+  // FORK-CUSTOM: bottom-toolbar skill selector — single-select. Clicking a skill
+  // makes it the only skill for this conversation and resets the input prefix to
+  // `/skill-name ` so the selected skill is visible before sending.
+  const handleSelectSkill = useCallback(
+    (skill: { name: string; description: string; isAuto: boolean }) => {
+      // Names of every auto-inject skill — needed to exclude the non-selected ones.
+      const autoNames = allSkills.filter((s) => s.isAuto).map((s) => s.name);
+
+      // Single-select: keep only this skill in the set.
+      setGuidEnabledSkills([skill.name]);
+      setGuidDisabledBuiltinSkills(skill.isAuto ? autoNames.filter((n) => n !== skill.name) : autoNames);
+      // Reset the input's leading `/skill ` tokens to just this one.
+      guidInput.setInput((prev) => `/${skill.name} ${prev.replace(/^(\/\S+\s)+/, '')}`);
+    },
+    [allSkills, guidInput.setInput]
+  );
 
   const mention = useGuidMention({
     availableAgents: agentSelection.availableAgents,
@@ -713,9 +716,7 @@ const GuidPage: React.FC = () => {
         handlePresetAgentTypeSwitch(key).catch((err) => console.error('Failed to switch agent type:', err));
       }}
       allSkills={allSkills}
-      disabledBuiltinSkills={guidDisabledBuiltinSkills ?? []}
-      enabledSkills={guidEnabledSkills ?? []}
-      onToggleSkill={handleToggleSkill}
+      onSelectSkill={handleSelectSkill}
       mcpServers={availableMcpServers}
       selectedMcpServerIds={guidSelectedMcpServerIds ?? []}
       onToggleMcpServer={handleToggleMcpServer}

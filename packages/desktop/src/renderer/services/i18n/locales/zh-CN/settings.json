@@ -9,7 +9,7 @@
     "builtin": "内置",
     "manualImport": "导入技能",
     "tipTitle": "使用贴士：",
-    "tipContent": "此处配置的技能可以在「助手」设置页面为任何助手开启；支持导入单个技能目录、父目录或 zip 压缩包。",
+    "tipContent": "支持导入单个技能目录、父目录或 zip 压缩包。",
     "fetchError": "获取技能失败",
     "importSuccess": "技能导入成功",
     "importSuccessDetailed": "已导入 {{count}} 个技能：{{names}}",
@@ -304,9 +304,9 @@
   "darkMode": "深色",
   "agent": "对话Agent",
   "tools": "工具",
-  "capabilities": "能力扩展",
+  "capabilities": "技能",
   "capabilitiesTab": {
-    "skills": "技能",
+    "skills": "我的技能",
     "tools": "工具",
     "market": "技能市场"
   },
@@ -974,6 +974,7 @@
     "addAgent": "添加 Agent",
     "installFromMarket": "从市场安装",
     "marketInstall": "安装",
+    "marketUninstall": "卸载",
     "marketInstalling": "安装中...",
     "marketUpdate": "更新",
     "marketEmpty": "暂未发现可安装的 Agent。请检查网络连接，并确认当前环境可以正常访问 GitHub。",
@@ -1062,6 +1063,8 @@
     "title": "技能市场",
     "searchPlaceholder": "搜索市场技能...",
     "empty": "市场暂无可用技能。",
-    "notConfigured": "尚未配置技能市场地址，请在系统设置中配置。"
+    "notConfigured": "尚未配置技能市场地址，请在系统设置中配置。",
+    "installSuccess": "技能安装成功",
+    "installError": "安装技能失败"
   }
 }

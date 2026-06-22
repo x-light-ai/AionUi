@@ -26,5 +26,10 @@
     "statusTesting": "正在测试延迟...",
     "statusUnreachable": "不可达",
     "statusAvailable": "可用"
+  },
+  "skillSelector": {
+    "title": "技能",
+    "empty": "暂无可用技能",
+    "goToMarket": "去技能市场"
   }
 }

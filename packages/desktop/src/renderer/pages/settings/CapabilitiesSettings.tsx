@@ -64,7 +64,7 @@ const CapabilitiesSettings: React.FC = () => {
         onChange={handleTabChange}
         type='line'
         animation={false}
-        className='flex flex-col flex-1 min-h-0 [&>.arco-tabs-content]:pt-0'
+        className='settings-capabilities-tabs flex flex-col flex-1 min-h-0 [&>.arco-tabs-content]:pt-0'
       >
         <Tabs.TabPane key='skills' title={t('settings.capabilitiesTab.skills', { defaultValue: 'Skills' })}>
           <SkillsHubSettings withWrapper={false} />

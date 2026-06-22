@@ -961,6 +961,7 @@
     "addAgent": "エージェントを追加",
     "installFromMarket": "マーケットからインストール",
     "marketInstall": "インストール",
+    "marketUninstall": "アンインストール",
     "marketInstalling": "インストール中...",
     "marketUpdate": "更新",
     "marketEmpty": "インストール可能な Agent が見つかりませんでした。ネットワーク接続を確認し、GitHub に正常にアクセスできることを確認してください。",
@@ -1061,6 +1062,8 @@
     "title": "スキルマーケット",
     "searchPlaceholder": "マーケットのスキルを検索...",
     "empty": "マーケットに利用可能なスキルがありません。",
-    "notConfigured": "スキルマーケットのアドレスが未設定です。システム設定で設定してください。"
+    "notConfigured": "スキルマーケットのアドレスが未設定です。システム設定で設定してください。",
+    "installSuccess": "スキルをインストールしました",
+    "installError": "スキルのインストールに失敗しました"
   }
 }

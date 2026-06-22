@@ -12,6 +12,7 @@
 //          refresh pick up the local session.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { FORK_BRAND } from '@/common/config/forkBrand';
 import { saveXaiworkRemoteAuth, type RemoteAuth } from './xaiworkRemoteAuth';
 
 /**
@@ -140,7 +141,8 @@ export function useWechatLogin(onConfirmed: () => void) {
     setStatus('loading');
 
     try {
-      const res = await fetch(`${xaiworkBaseUrl()}/openapi/WeixinAuth/qrcode`, {
+      // FORK-CUSTOM: 带上 app 来源编码，XAIWork 据此为会员建立会员-app 关联
+      const res = await fetch(`${xaiworkBaseUrl()}/openapi/WeixinAuth/qrcode?app=${encodeURIComponent(FORK_BRAND.wechatAppCode)}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });

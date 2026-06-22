@@ -971,6 +971,7 @@
     "addAgent": "Adicionar Agente",
     "installFromMarket": "Instalar do Mercado",
     "marketInstall": "Instalar",
+    "marketUninstall": "Desinstalar",
     "marketInstalling": "Instalando...",
     "marketUpdate": "Atualizar",
     "marketEmpty": "Nenhum agente instalável encontrado. Verifique sua conexão de rede e certifique-se de que o GitHub está acessível.",
@@ -1062,6 +1063,8 @@
     "title": "Mercado de Habilidades",
     "searchPlaceholder": "Pesquisar habilidades do mercado...",
     "empty": "Nenhuma habilidade disponível no mercado.",
-    "notConfigured": "O endereço do mercado de habilidades não está configurado. Defina-o nas configurações do sistema."
+    "notConfigured": "O endereço do mercado de habilidades não está configurado. Defina-o nas configurações do sistema.",
+    "installSuccess": "Habilidade instalada com sucesso",
+    "installError": "Falha ao instalar habilidade"
   }
 }
