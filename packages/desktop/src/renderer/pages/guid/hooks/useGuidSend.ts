@@ -16,6 +16,9 @@ import { type TFunction } from 'i18next';
 import type { NavigateFunction } from 'react-router-dom';
 import { mutate as swrMutate } from 'swr';
 import { getConversationCreateErrorMessage } from '@/renderer/pages/conversation/utils/conversationCreateError';
+// FORK-CUSTOM: XAIWork model config application on new-conversation create.
+import { useXaiworkAgentModels } from '@/renderer/hooks/agent/useXaiworkAgentModels';
+import { applyXaiworkModelConfig } from '@/renderer/hooks/market/applyXaiworkModelConfig';
 import type { AcpModelInfo, AvailableAgent, EffectiveAgentInfo } from '../types';
 
 export type GuidSendDeps = {
@@ -121,6 +124,10 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
     localeKey,
   } = deps;
   const sendingRef = useRef(false);
+
+  // FORK-CUSTOM: distributed models + relay credentials for the active backend.
+  const xaiworkBackend = is_presetAgent ? _currentEffectiveAgentInfo.agent_type : selectedAgent;
+  const { byModelId: xaiworkByModelId, hasModels: xaiworkHasModels } = useXaiworkAgentModels(xaiworkBackend || undefined);
 
   const handleSend = useCallback(async () => {
     const isCustomWorkspace = !!dir;
@@ -297,6 +304,21 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
       });
 
       try {
+        // FORK-CUSTOM: when the selected model is XAIWork-distributed, apply its
+        // config (base url / key / model / config_json) before the session spawns,
+        // so the CLI talks to the relay and uses the model's settings.
+        if (xaiworkHasModels) {
+          const selectedId = selectedAcpModel || currentAcpCachedModelInfo?.current_model_id || undefined;
+          const relayModel = selectedId ? xaiworkByModelId.get(selectedId) : undefined;
+          if (relayModel) {
+            try {
+              await applyXaiworkModelConfig(agentBackend, relayModel);
+            } catch (error) {
+              console.error('Failed to apply XAIWork model config before conversation create:', error);
+            }
+          }
+        }
+
         const conversation = await ipcBridge.conversation.create.invoke(agentConversationParams);
         if (!conversation || !conversation.id) {
           console.error('Failed to create ACP conversation - conversation object is null or missing id');

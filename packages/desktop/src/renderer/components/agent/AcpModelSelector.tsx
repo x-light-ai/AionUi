@@ -4,7 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useAcpModelInfo } from '@/renderer/hooks/agent/useAcpModelInfo';
+// FORK-CUSTOM: use the XAIWork override wrapper (same signature/return as
+// useAcpModelInfo) so the dropdown shows XAIWork-distributed models when
+// configured, and falls back to ACP-handshake models otherwise.
+import { useAcpModelInfoXaiwork as useAcpModelInfo } from '@/renderer/hooks/agent/useAcpModelInfoXaiwork';
+// FORK-CUSTOM: sync server-managed CLI settings.json on mount.
+import { useXaiworkAgentCliConfig } from '@/renderer/hooks/agent/useXaiworkAgentCliConfig';
 import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
 import { warmupConversation } from '@/renderer/pages/conversation/utils/warmupConversation';
 import { getModelDisplayLabel } from '@/renderer/utils/model/agentLogo';
@@ -48,6 +53,8 @@ const AcpModelSelector: React.FC<{
     onSelectModelSuccess: () => Message.success(t('agent.model.switchSuccess')),
     onSelectModelFailed: () => Message.error(t('agent.model.switchFailed')),
   });
+  // FORK-CUSTOM: sync server-managed CLI settings.json once per backend.
+  useXaiworkAgentCliConfig(backend);
 
   const defaultModelLabel = t('common.defaultModel');
   const rawDisplayLabel =

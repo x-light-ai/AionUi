@@ -818,6 +818,16 @@ export const acpConversation = {
     (p) => `/api/agents/${p.id}/enabled`,
     (p) => ({ enabled: p.enabled })
   ),
+  // FORK-CUSTOM: unified model config application for builtin agents (claude / codex).
+  // Supplements config_json.env with base_url/api_key/model_id, writes agent env,
+  // and merges the full config_json into local CLI settings in one operation.
+  setBuiltinAgentConfig: httpPost<
+    void,
+    { backend: string; baseUrl: string; apiKey: string; modelId: string; configJson: string }
+  >(
+    (p) => `/api/agents/builtin/${p.backend}/config`,
+    (p) => ({ base_url: p.baseUrl, api_key: p.apiKey, model_id: p.modelId, config_json: p.configJson })
+  ),
   checkAgentHealth: httpPost<{ available: boolean; latency?: number; error?: string }, { backend: string }>(
     '/api/agents/health-check'
   ),

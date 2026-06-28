@@ -46,9 +46,11 @@ import { mergeFileSelectionItems } from '@/renderer/utils/file/fileSelection';
 import { buildDisplayMessage, collectSelectedFiles } from '@/renderer/utils/file/messageFiles';
 import { mergeWithCapabilities, type AgentModeOption } from '@/renderer/utils/model/agentModes';
 import { Message, Tag } from '@arco-design/web-react';
-import { Brain, MagicHat, Shield } from '@icon-park/react';
+import { Brain, Shield } from '@icon-park/react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+// FORK-CUSTOM: bottom-toolbar skill selector mirrored from the new-conversation page.
+import ConversationSkillSelector from '@/renderer/pages/conversation/components/ConversationSkillSelector';
 import { useAionrsMessage } from './useAionrsMessage';
 import type { AionrsModelSelection } from './useAionrsModelSelection';
 
@@ -110,7 +112,6 @@ const AionrsSendBox: React.FC<{
   const layout = useLayoutContext();
   const isMobile = Boolean(layout?.isMobile);
   const conversationContext = useConversationContextSafe();
-  const loadedSkills = conversationContext?.loadedSkills ?? [];
   const assistantId = conversationContext?.assistantId;
   const loadedMcpStatuses =
     conversationContext?.loadedMcpStatuses ??
@@ -368,6 +369,15 @@ const AionrsSendBox: React.FC<{
     dividerBefore: true,
   });
 
+  // FORK-CUSTOM: bottom-toolbar skill selector — clicking a skill resets the
+  // input's leading `/skill ` tokens to just this one, mirroring GuidPage.
+  const handleSelectSkill = useCallback(
+    (name: string) => {
+      setContent(`/${name} ${(contentRef.current ?? '').replace(/^(\/\S+\s)+/, '')}`);
+    },
+    [setContent, contentRef]
+  );
+
   // Mode switching for the mobile action sheet — mirrors AgentModeSelector's
   // setMode call so the bottom-sheet path stays in lockstep with the desktop dropdown.
   const handleSheetModeChange = useCallback(
@@ -480,27 +490,6 @@ const AionrsSendBox: React.FC<{
       ...attachEntries,
     ];
 
-    if (loadedSkills.length > 0) {
-      const skillOptions: MobileActionSheetOption[] = loadedSkills.map((name) => ({
-        key: name,
-        label: `/${name}`,
-      }));
-      entries.push({
-        key: 'skills',
-        icon: <MagicHat theme='outline' size='16' />,
-        label: t('common.skills', { defaultValue: 'Skills' }),
-        variant: 'muted',
-        submenu: {
-          title: t('common.skills', { defaultValue: 'Skills' }),
-          selectable: false,
-          options: skillOptions,
-          onSelect: (name) => {
-            setContent(`/${name} `);
-          },
-        },
-      });
-    }
-
     if (loadedMcpStatuses.length > 0) {
       const mcpOptions: MobileActionSheetOption[] = loadedMcpStatuses.map((item) => ({
         key: item.id,
@@ -535,9 +524,7 @@ const AionrsSendBox: React.FC<{
     handleSheetModelSelect,
     isMobile,
     loadedMcpStatuses,
-    loadedSkills,
     modelSelection,
-    setContent,
     t,
   ]);
 
@@ -618,11 +605,15 @@ const AionrsSendBox: React.FC<{
         defaultMultiLine={!isMobile}
         lockMultiLine={!isMobile}
         tools={
-          <FileAttachButton
-            openFileSelector={openFileSelector}
-            onLocalFilesAdded={handleFilesAdded}
-            loadedMcpStatuses={loadedMcpStatuses}
-          />
+          <>
+            <FileAttachButton
+              openFileSelector={openFileSelector}
+              onLocalFilesAdded={handleFilesAdded}
+              loadedMcpStatuses={loadedMcpStatuses}
+            />
+            {/* FORK-CUSTOM: skill selector — sits next to the "+" button, mirroring the new-conversation action row. */}
+            <ConversationSkillSelector onSelectSkill={handleSelectSkill} />
+          </>
         }
         rightTools={
           <AgentModeSelector

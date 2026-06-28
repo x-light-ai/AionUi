@@ -43,9 +43,11 @@ import { emitter, useAddEventListener } from '@/renderer/utils/emitter';
 import { mergeFileSelectionItems } from '@/renderer/utils/file/fileSelection';
 import { buildDisplayMessage } from '@/renderer/utils/file/messageFiles';
 import { Message, Tag } from '@arco-design/web-react';
-import { Brain, MagicHat, Shield } from '@icon-park/react';
+import { Brain, Shield } from '@icon-park/react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+// FORK-CUSTOM: bottom-toolbar skill selector mirrored from the new-conversation page.
+import ConversationSkillSelector from '@/renderer/pages/conversation/components/ConversationSkillSelector';
 import { buildSendFailureError } from './buildSendFailureError';
 import { useAcpInitialMessage } from './useAcpInitialMessage';
 import type { UseAcpMessageReturn } from './useAcpMessage';
@@ -123,7 +125,6 @@ const AcpSendBox: React.FC<{
   const layout = useLayoutContext();
   const isMobile = Boolean(layout?.isMobile);
   const conversationContext = useConversationContextSafe();
-  const loadedSkills = conversationContext?.loadedSkills ?? [];
   const assistantId = conversationContext?.assistantId;
   const loadedMcpStatuses =
     conversationContext?.loadedMcpStatuses ??
@@ -452,6 +453,15 @@ Please check your local CLI tool authentication status`,
     onLocalFilesAdded: handleFilesAdded,
   });
 
+  // FORK-CUSTOM: bottom-toolbar skill selector — clicking a skill resets the
+  // input's leading `/skill ` tokens to just this one, mirroring GuidPage.
+  const handleSelectSkill = useCallback(
+    (name: string) => {
+      setContent(`/${name} ${(contentRef.current ?? '').replace(/^(\/\S+\s)+/, '')}`);
+    },
+    [setContent, contentRef]
+  );
+
   const sheetEntries = useMemo<MobileActionSheetEntry[]>(() => {
     if (!isMobile) return [];
 
@@ -514,27 +524,6 @@ Please check your local CLI tool authentication status`,
       });
     });
 
-    if (loadedSkills.length > 0) {
-      const skillOptions: MobileActionSheetOption[] = loadedSkills.map((name) => ({
-        key: name,
-        label: `/${name}`,
-      }));
-      entries.push({
-        key: 'skills',
-        icon: <MagicHat theme='outline' size='16' />,
-        label: t('common.skills', { defaultValue: 'Skills' }),
-        variant: 'muted',
-        submenu: {
-          title: t('common.skills', { defaultValue: 'Skills' }),
-          selectable: false,
-          options: skillOptions,
-          onSelect: (name) => {
-            setContent(`/${name} `);
-          },
-        },
-      });
-    }
-
     if (loadedMcpStatuses.length > 0) {
       const mcpOptions: MobileActionSheetOption[] = loadedMcpStatuses.map((item) => ({
         key: item.id,
@@ -569,10 +558,8 @@ Please check your local CLI tool authentication status`,
     handleSheetModeChange,
     isMobile,
     loadedMcpStatuses,
-    loadedSkills,
     model_info,
     selectModel,
-    setContent,
     t,
   ]);
 
@@ -653,11 +640,15 @@ Please check your local CLI tool authentication status`,
         defaultMultiLine={!isMobile}
         lockMultiLine={!isMobile}
         tools={
-          <FileAttachButton
-            openFileSelector={openFileSelector}
-            onLocalFilesAdded={handleFilesAdded}
-            loadedMcpStatuses={loadedMcpStatuses}
-          />
+          <>
+            <FileAttachButton
+              openFileSelector={openFileSelector}
+              onLocalFilesAdded={handleFilesAdded}
+              loadedMcpStatuses={loadedMcpStatuses}
+            />
+            {/* FORK-CUSTOM: skill selector — sits next to the "+" button, mirroring the new-conversation action row. */}
+            <ConversationSkillSelector onSelectSkill={handleSelectSkill} />
+          </>
         }
         rightTools={
           showModeSelector ? (

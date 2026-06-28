@@ -4,19 +4,33 @@
 // render. Style matches the existing login page (plain elements + login-page__*
 // classes) rather than the Arco convention used elsewhere in the app.
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/context/AuthContext';
 import { useWechatLogin } from '../../hooks/useWechatLogin';
 
 const WechatLoginCard: React.FC = () => {
   const { t } = useTranslation();
   const { refresh } = useAuth();
+  const navigate = useNavigate();
+  // Once login is confirmed, never re-fetch a QR code. A confirmed login briefly
+  // re-validates the session cookie via refresh(); without this guard a remount
+  // would call start() again and spawn a fresh (unscanned -> pending) QR code.
+  const confirmedRef = useRef(false);
   const { status, qrCodeUrl, errorText, start } = useWechatLogin(() => {
-    void refresh();
+    confirmedRef.current = true;
+    // Re-validate the freshly set session cookie, then navigate to a clean
+    // route. A stale `?xaiwork=expired` on the login URL keeps the route guards
+    // from redirecting even once authenticated, so go to /guid explicitly
+    // (after refresh resolves) to drop the expired flag and enter the app.
+    void refresh({ silent: true }).then(() => {
+      navigate('/guid', { replace: true });
+    });
   });
 
   useEffect(() => {
+    if (confirmedRef.current) return;
     void start();
   }, [start]);
 

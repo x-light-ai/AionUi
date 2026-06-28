@@ -20,6 +20,8 @@ import {
 import { getAgentModes } from '@/renderer/utils/model/agentModes';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import useSWR from 'swr';
+// FORK-CUSTOM: XAIWork model distribution — replace the ACP-handshake list.
+import { useXaiworkAgentModels } from '@/renderer/hooks/agent/useXaiworkAgentModels';
 import { savePreferredMode, savePreferredModelId, getAgentKey as getAgentKeyUtil } from './agentSelectionUtils';
 import { usePresetAssistantResolver } from './usePresetAssistantResolver';
 import { useAgentAvailability } from './useAgentAvailability';
@@ -415,10 +417,27 @@ export const useGuidAgentSelection = ({
     return getEffectiveAgentType(selectedAgentInfo);
   }, [is_presetAgent, selectedAgent, selectedAgentInfo, getEffectiveAgentType, isMainAgentAvailable]);
 
+  // FORK-CUSTOM: pull XAIWork-distributed models for the active backend so the
+  // Guid page model list matches AcpModelSelector.
+  const xaiworkBackend = is_presetAgent ? currentEffectiveAgentInfo.agent_type : selectedAgent;
+  const { models: xaiworkModels, hasModels: xaiworkHasModels } = useXaiworkAgentModels(xaiworkBackend || undefined);
+
   // Reset selected ACP model when agent changes: prefer saved preference, fallback to handshake default
   useEffect(() => {
     // For preset agents, resolve to the actual backend type for config lookup
     const backend = is_presetAgent ? currentEffectiveAgentInfo.agent_type : selectedAgent;
+
+    // FORK-CUSTOM: when XAIWork distributes models, default to a distributed
+    // one (saved preference only if it is still in the distributed list).
+    if (xaiworkHasModels && xaiworkModels.length > 0) {
+      const config = configService.get('acp.config');
+      const preferred = (config?.[backend as string] as Record<string, unknown>)?.preferredModelId as
+        | string
+        | undefined;
+      const validPreferred = preferred && xaiworkModels.some((m) => m.modelId === preferred) ? preferred : undefined;
+      _setSelectedAcpModel(validPreferred ?? xaiworkModels[0].modelId);
+      return;
+    }
 
     const config = configService.get('acp.config');
     const preferred = (config?.[backend as string] as Record<string, unknown>)?.preferredModelId as string | undefined;
@@ -431,7 +450,7 @@ export const useGuidAgentSelection = ({
     const matched = metadataAgents?.find((a) => (a.backend ?? a.agent_type) === backend);
     const handshakeModels = matched?.handshake?.available_models as AcpModelInfo | undefined;
     _setSelectedAcpModel(handshakeModels?.current_model_id ?? null);
-  }, [selectedAgentKey, availableAgentsData, is_presetAgent, currentEffectiveAgentInfo.agent_type]);
+  }, [selectedAgentKey, availableAgentsData, is_presetAgent, currentEffectiveAgentInfo.agent_type, xaiworkHasModels, xaiworkModels]);
 
   // Read preferred mode or fallback to legacy yoloMode config
   useEffect(() => {
@@ -500,6 +519,16 @@ export const useGuidAgentSelection = ({
     // For preset agents, resolve to the actual backend type for model list lookup
     const backend = is_presetAgent ? currentEffectiveAgentInfo.agent_type : selectedAgent;
 
+    // FORK-CUSTOM: when XAIWork distributes models for this backend, replace
+    // the ACP-handshake list with the distributed one (same as AcpModelSelector).
+    if (xaiworkHasModels && xaiworkModels.length > 0) {
+      return {
+        current_model_id: xaiworkModels[0].modelId,
+        current_model_label: xaiworkModels[0].name,
+        available_models: xaiworkModels.map((m) => ({ id: m.modelId, label: m.name })),
+      } satisfies AcpModelInfo;
+    }
+
     // Source: `handshake.available_models` from `/api/agents`.
     // The backend persists the last-seen `ModelInfoPayload` (snake_case) on
     // the agent_metadata row, so this is populated across restarts without
@@ -527,7 +556,7 @@ export const useGuidAgentSelection = ({
     }
 
     return null;
-  }, [selectedAgentKey, is_presetAgent, currentEffectiveAgentInfo.agent_type, availableAgentsData]);
+  }, [selectedAgentKey, is_presetAgent, currentEffectiveAgentInfo.agent_type, availableAgentsData, xaiworkHasModels, xaiworkModels]);
 
   // Key of the first non-preset CLI agent (used as fallback when leaving preset mode)
   const defaultAgentKey = useMemo(() => {

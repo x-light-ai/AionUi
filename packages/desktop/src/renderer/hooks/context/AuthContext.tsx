@@ -39,7 +39,10 @@ interface AuthContextValue {
   status: AuthStatus;
   login: (params: LoginParams) => Promise<LoginResult>;
   logout: () => Promise<void>;
-  refresh: () => Promise<void>;
+  // FORK-CUSTOM: `silent` option skips the transient 'checking' state. Used by
+  // the WeChat QR login confirmed flow so the login card isn't unmounted +
+  // re-mounted into a fresh QR fetch while we re-validate the session cookie.
+  refresh: (options?: { silent?: boolean }) => Promise<void>;
   clearAuthCache: () => void;
 }
 
@@ -108,7 +111,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
   const [ready, setReady] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (options?: { silent?: boolean }) => {
     if (isDesktopRuntime) {
       setStatus('authenticated');
       setUser(null);
@@ -119,7 +122,12 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
-    setStatus('checking');
+    // FORK-CUSTOM: in silent mode keep the current status until we know the
+    // outcome, so the login page doesn't flash through 'checking' (which
+    // unmounts the QR card).
+    if (!options?.silent) {
+      setStatus('checking');
+    }
 
     const currentUser = await fetchCurrentUser(controller.signal);
     if (currentUser) {
