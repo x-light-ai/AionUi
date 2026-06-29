@@ -86,8 +86,12 @@ function isBackendStartupFailureEvent(event: { tags?: Record<string, unknown> })
   return event.tags?.['aionui.failure'] === 'backend_startup';
 }
 
+function isUserFeedbackEvent(event: { tags?: Record<string, unknown> }): boolean {
+  return event.tags?.type === 'user-feedback' || event.tags?.['aionui.installation_integrity.user_report'] === 'true';
+}
+
 function isBackendStartupSecondaryEvent(event: { tags?: Record<string, unknown> }, haystacks: string[]): boolean {
-  if (isBackendStartupFailureEvent(event)) {
+  if (isBackendStartupFailureEvent(event) || isUserFeedbackEvent(event)) {
     return false;
   }
   return (
@@ -248,6 +252,15 @@ export async function captureBackendStartupFailure(error: unknown): Promise<void
     }
     if (typeof details?.stage === 'string') {
       scope.setTag('aionui.backend_startup.stage', details.stage);
+    }
+    if (failureInfo.backendBoundaryCode) {
+      scope.setTag('aionui.backend_startup.boundary_code', failureInfo.backendBoundaryCode);
+    }
+    if (failureInfo.backendBoundaryStage) {
+      scope.setTag('aionui.backend_startup.boundary_stage', failureInfo.backendBoundaryStage);
+    }
+    if (failureInfo.localDataIssueKind) {
+      scope.setTag('aionui.backend_startup.local_data_issue_kind', failureInfo.localDataIssueKind);
     }
     if (failureInfo.incompleteInstallationKind) {
       scope.setTag('aionui.backend_startup.incomplete_installation_kind', failureInfo.incompleteInstallationKind);

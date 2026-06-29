@@ -228,6 +228,50 @@ describe('captureBackendStartupFailure', () => {
     expect(scopeSetTag).toHaveBeenCalledWith('aionui.backend_startup.health_timeout_overrun_bucket', 'over_60s');
     expect(scopeSetTag).toHaveBeenCalledWith('aionui.backend_startup.health_max_attempt_gap_bucket', '0ms');
   });
+
+  it('sets backend data migration reason and boundary tags', async () => {
+    scopeSetTag.mockClear();
+    const error = new Error('aioncore exited before health check passed') as Error & {
+      details?: Record<string, unknown>;
+    };
+    error.details = {
+      stage: 'early_exit',
+      backendBoundaryCode: 'BOOTSTRAP_DATA_INIT_FAILED',
+      backendBoundaryStage: 'database.migration',
+      stderrTail:
+        'BOOTSTRAP_DATA_INIT_FAILED stage=database.migration databasePath=/db/aionui-backend.db: failed to initialize application data',
+    };
+
+    await captureBackendStartupFailure(error);
+
+    expect(scopeSetTag).toHaveBeenCalledWith('aionui.backend_startup.reason', 'backend_data_migration_failed');
+    expect(scopeSetTag).toHaveBeenCalledWith('aionui.backend_startup.boundary_code', 'BOOTSTRAP_DATA_INIT_FAILED');
+    expect(scopeSetTag).toHaveBeenCalledWith('aionui.backend_startup.boundary_stage', 'database.migration');
+  });
+
+  it('sets local data repair reason and issue-kind tags', async () => {
+    scopeSetTag.mockClear();
+    const error = new Error('aioncore exited before health check passed') as Error & {
+      details?: Record<string, unknown>;
+    };
+    error.details = {
+      stage: 'early_exit',
+      backendBoundaryCode: 'BOOTSTRAP_SERVICE_INIT_FAILED',
+      backendBoundaryStage: 'services.init',
+      stderrTail:
+        'Failed to hydrate agent registry: Internal error: load agent_metadata: Database query failed: error occurred while decoding column "config_options": invalid utf-8 sequence of 1 bytes from index 793',
+    };
+
+    await captureBackendStartupFailure(error);
+
+    expect(scopeSetTag).toHaveBeenCalledWith('aionui.backend_startup.reason', 'backend_local_data_repair_failed');
+    expect(scopeSetTag).toHaveBeenCalledWith(
+      'aionui.backend_startup.local_data_issue_kind',
+      'agent_metadata_invalid_utf8'
+    );
+    expect(scopeSetTag).toHaveBeenCalledWith('aionui.backend_startup.boundary_code', 'BOOTSTRAP_SERVICE_INIT_FAILED');
+    expect(scopeSetTag).toHaveBeenCalledWith('aionui.backend_startup.boundary_stage', 'services.init');
+  });
 });
 
 describe('initSentry beforeSend', () => {
@@ -292,6 +336,29 @@ describe('initSentry beforeSend', () => {
             value: 'BackendStartupError: connect ECONNREFUSED 127.0.0.1:33334',
           },
         ],
+      },
+    };
+
+    expect(sentryInitOptions?.beforeSend?.(event)).toBe(event);
+
+    delete (globalThis as { __backendStartupFailed?: boolean }).__backendStartupFailed;
+  });
+
+  it('keeps user feedback reports even when diagnostics contain backend secondary text', () => {
+    initSentry();
+    (globalThis as { __backendStartupFailed?: boolean }).__backendStartupFailed = true;
+
+    const event = {
+      tags: {
+        type: 'user-feedback',
+        'aionui.installation_integrity.user_report': 'true',
+      },
+      extra: {
+        installation_integrity: {
+          backendStartupFailure: {
+            message: 'BackendStartupError: connect ECONNREFUSED 127.0.0.1:33334',
+          },
+        },
       },
     };
 

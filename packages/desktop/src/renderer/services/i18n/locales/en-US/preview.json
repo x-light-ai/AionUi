@@ -53,6 +53,10 @@
   "closeAll": "Close All",
   "readOnlyLabel": "Read-only preview",
   "pathLabel": "Path",
+  "missingFile": {
+    "title": "File not found",
+    "openInNewTab": "Try opening in a new tab"
+  },
   "noTabs": "No tabs open",
   "openInPanelTooltip": "View in preview panel",
   "mermaidTitle": "Mermaid Diagram",
@@ -73,6 +77,10 @@
       "portTimeout": "Preview service started but did not become ready in time. Retry.",
       "startFailed": "Failed to start the Office preview service.",
       "outsideSandbox": "This file is outside the current project sandbox."
+    },
+    "serverInstall": {
+      "hint": "AionUi is running on a server. Install the preview component on that server, then retry:",
+      "icuNote": "If it still fails to start, install the ICU library on the server (Debian/Ubuntu: apt-get install -y libicu-dev)."
     }
   },
   "word": {
@@ -130,6 +138,6 @@
     "loading": "Starting PPT preview...",
     "installing": "Installing preview component...",
     "startFailed": "Failed to start PPT preview",
-    "installHint": "Install OfficeCLI from the official iOfficeAI/OfficeCli releases page"
+    "installHint": "Install OfficeCLI from the official iOfficeAI/OfficeCLI releases page"
   }
 }
