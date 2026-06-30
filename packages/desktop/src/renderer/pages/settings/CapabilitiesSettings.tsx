@@ -20,14 +20,12 @@ import React from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import SkillsHubSettings from './SkillsHubSettings';
-import SkillMarketSettings from './SkillMarketSettings';
 import ToolsModalContent from '@/renderer/components/settings/SettingsModal/contents/ToolsModalContent';
 import SettingsPageWrapper from './components/SettingsPageWrapper';
 
-type CapabilitiesTab = 'skills' | 'market' | 'tools';
+type CapabilitiesTab = 'skills' | 'tools';
 
-const isCapabilitiesTab = (value: string | null): value is CapabilitiesTab =>
-  value === 'skills' || value === 'market' || value === 'tools';
+const isCapabilitiesTab = (value: string | null): value is CapabilitiesTab => value === 'skills' || value === 'tools';
 
 const CapabilitiesSettings: React.FC = () => {
   const { t } = useTranslation();
@@ -57,7 +55,7 @@ const CapabilitiesSettings: React.FC = () => {
   };
 
   return (
-    <SettingsPageWrapper contentClassName='max-w-1200px' className='[scrollbar-gutter:stable]'>
+    <SettingsPageWrapper contentClassName='max-w-1200px'>
       <Tabs
         activeTab={activeTab}
         onChange={handleTabChange}
@@ -67,9 +65,6 @@ const CapabilitiesSettings: React.FC = () => {
       >
         <Tabs.TabPane key='skills' title={t('settings.capabilitiesTab.skills', { defaultValue: 'Skills' })}>
           <SkillsHubSettings withWrapper={false} />
-        </Tabs.TabPane>
-        <Tabs.TabPane key='market' title={t('settings.capabilitiesTab.market', { defaultValue: 'Skill Market' })}>
-          <SkillMarketSettings />
         </Tabs.TabPane>
         <Tabs.TabPane key='tools' title={t('settings.capabilitiesTab.tools', { defaultValue: 'Tools' })}>
           <ToolsModalContent />
