@@ -89,7 +89,9 @@ const SettingsPageWrapper: React.FC<SettingsPageWrapperProps> = ({ children, cla
   const { resolveExtTabName } = useExtI18n();
 
   const menuItems = React.useMemo(() => {
-    const builtins = getBuiltinSettingsNavItems(isDesktop, t).filter((item) => !hideModelSettingsMenu || item.id !== 'model');
+    const builtins = getBuiltinSettingsNavItems(isDesktop, t).filter(
+      (item) => !hideModelSettingsMenu || item.id !== 'model'
+    );
 
     // Insert extension tabs before system (unanchored default) or at anchor position
     const result = [...builtins];

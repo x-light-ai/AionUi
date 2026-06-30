@@ -31,7 +31,14 @@ type UseAcpModelInfoParams = {
 };
 
 export const useAcpModelInfoXaiwork = (params: UseAcpModelInfoParams): UseAcpModelInfoResult => {
-  const { backend, initialModelId, enabled = true, persistGlobalPreference = true, onSelectModelSuccess, onSelectModelFailed } = params;
+  const {
+    backend,
+    initialModelId,
+    enabled = true,
+    persistGlobalPreference = true,
+    onSelectModelSuccess,
+    onSelectModelFailed,
+  } = params;
 
   const base = useAcpModelInfo(params);
   const { byModelId, hasModels } = useXaiworkAgentModels(enabled ? backend : undefined);
@@ -75,7 +82,15 @@ export const useAcpModelInfoXaiwork = (params: UseAcpModelInfoParams): UseAcpMod
         }
       })();
     },
-    [enabled, backend, byModelId, persistGlobalPreference, setSelectedModelId, onSelectModelSuccess, onSelectModelFailed]
+    [
+      enabled,
+      backend,
+      byModelId,
+      persistGlobalPreference,
+      setSelectedModelId,
+      onSelectModelSuccess,
+      onSelectModelFailed,
+    ]
   );
 
   if (!hasModels || !xaiworkModelInfo) {

@@ -104,7 +104,9 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
 
   // FORK-CUSTOM: distributed models + relay credentials for the active backend.
   const xaiworkBackend = selectedAssistantBackend;
-  const { byModelId: xaiworkByModelId, hasModels: xaiworkHasModels } = useXaiworkAgentModels(xaiworkBackend || undefined);
+  const { byModelId: xaiworkByModelId, hasModels: xaiworkHasModels } = useXaiworkAgentModels(
+    xaiworkBackend || undefined
+  );
 
   const handleSend = useCallback(async () => {
     if (!selectedAssistantId) {

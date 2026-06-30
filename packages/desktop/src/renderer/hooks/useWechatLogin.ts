@@ -142,10 +142,13 @@ export function useWechatLogin(onConfirmed: () => void) {
 
     try {
       // FORK-CUSTOM: 带上 app 来源编码，XAIWork 据此为会员建立会员-app 关联
-      const res = await fetch(`${xaiworkBaseUrl()}/openapi/WeixinAuth/qrcode?app=${encodeURIComponent(FORK_BRAND.wechatAppCode)}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-      });
+      const res = await fetch(
+        `${xaiworkBaseUrl()}/openapi/WeixinAuth/qrcode?app=${encodeURIComponent(FORK_BRAND.wechatAppCode)}`,
+        {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
       if (!res.ok) throw new Error(`qrcode status ${res.status}`);
 
       const parsed = readQrCode((await res.json()) as QrCodeResponse);

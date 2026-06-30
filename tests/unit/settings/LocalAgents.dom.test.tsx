@@ -57,8 +57,22 @@ describe('LocalAgents', () => {
     vi.clearAllMocks();
     useManagedAgentsMock.mockReturnValue({
       agents: [
-        { id: 'aionrs-1', name: 'Aion CLI', agent_type: 'aionrs', backend: 'aionrs', agent_source: 'builtin', status: 'online' },
-        { id: 'claude-1', name: 'Claude Code', agent_type: 'acp', backend: 'claude', agent_source: 'builtin', status: 'online' },
+        {
+          id: 'aionrs-1',
+          name: 'Aion CLI',
+          agent_type: 'aionrs',
+          backend: 'aionrs',
+          agent_source: 'builtin',
+          status: 'online',
+        },
+        {
+          id: 'claude-1',
+          name: 'Claude Code',
+          agent_type: 'acp',
+          backend: 'claude',
+          agent_source: 'builtin',
+          status: 'online',
+        },
       ],
       isRefreshing: false,
       refreshCatalog: vi.fn(),
