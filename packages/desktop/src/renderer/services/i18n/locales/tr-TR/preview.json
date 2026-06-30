@@ -53,6 +53,10 @@
   "closeAll": "Tümünü Kapat",
   "readOnlyLabel": "Salt okunur önizleme",
   "pathLabel": "Yol",
+  "missingFile": {
+    "title": "Dosya bulunamadı",
+    "openInNewTab": "Yeni sekmede açmayı dene"
+  },
   "noTabs": "Açık sekme yok",
   "openInPanelTooltip": "Önizleme panelinde görüntüle",
   "mermaidTitle": "Mermaid Diyagramı",
@@ -73,6 +77,10 @@
       "portTimeout": "Önizleme servisi başladı ancak zamanında hazır olmadı. Yeniden deneyin.",
       "startFailed": "Office önizleme servisi başlatılamadı.",
       "outsideSandbox": "Bu dosya geçerli çalışma alanı sandbox'ının dışında."
+    },
+    "serverInstall": {
+      "hint": "AionUi bir sunucuda çalışıyor. Önizleme bileşeni o sunucuya kurulmalıdır. Aşağıdaki komutu sunucuda çalıştırıp yeniden deneyin:",
+      "icuNote": "Yine de başlamazsa sunucuya ICU kitaplığını kurun (Debian/Ubuntu: apt-get install -y libicu-dev)."
     }
   },
   "word": {
@@ -130,6 +138,6 @@
     "loading": "PPT önizlemesi başlatılıyor...",
     "installing": "Önizleme bileşeni yükleniyor...",
     "startFailed": "PPT önizlemesi başlatılamadı",
-    "installHint": "OfficeCLI'yi resmi iOfficeAI/OfficeCli releases sayfasından yükleyin"
+    "installHint": "OfficeCLI'yi resmi iOfficeAI/OfficeCLI releases sayfasından yükleyin"
   }
 }

@@ -1,14 +1,11 @@
 {
-  "agentFallbackNotice": "{{original}} 不可用，已自动切换到 {{fallback}}。",
-  "noAgentAvailable": "没有可用的 Main Agent。请登录 Google 或安装 Claude/Codex CLI。是否前往设置？",
-  "noAgentAvailableShort": "没有可用的 Main Agent。点击配置。",
-  "agentTabAutoSwitch": "模型不兼容 Gemini，已自动切换到 {{fallback}}",
-  "autoSwitchToAgent": "Gemini 未配置，正在自动切换到 {{agent}}",
-  "autoSwitchedAgent": "{{from}} 不可用，已自动切换到 {{to}}",
-  "promptExamplesHint": "试试这些可点击的案例提示词：",
+  "promptExamplesHint": "试试这些指令",
+  "defaultPrompts": {
+    "capabilities": "你能为我做哪些事情？",
+    "skills": "你有哪些技能？",
+    "tools": "你有哪些工具？"
+  },
   "selectAssistantHint": "选择一位助手开始任务",
-  "agentSwitcherLabel": "Agent",
-  "switchedToAgent": "已切换到 {{agent}}",
   "workspace": {
     "workInProject": "在项目中工作",
     "optional": "可选",

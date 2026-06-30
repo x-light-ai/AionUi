@@ -7,15 +7,18 @@ import { TEAM_MODE_ENABLED } from '@/common/config/constants';
 const Conversation = React.lazy(() => import('@renderer/pages/conversation'));
 const Guid = React.lazy(() => import('@renderer/pages/guid'));
 const AgentSettings = React.lazy(() => import('@renderer/pages/settings/AgentSettings'));
+const AgentRepairPage = React.lazy(() => import('@renderer/pages/settings/AgentSettings/AgentRepairPage'));
 const AssistantSettings = React.lazy(() => import('@renderer/pages/settings/AssistantSettings'));
-const CapabilitiesSettings = React.lazy(() => import('@renderer/pages/settings/CapabilitiesSettings'));
+// FORK-CUSTOM: 指向 fork 版 Capabilities 容器（新增 Skill Market tab + fork 版 Skills 页），上游 CapabilitiesSettings 保持原样
+const CapabilitiesSettings = React.lazy(() => import('@renderer/pages/settings/XaiworkCapabilitiesSettings'));
 const AppearanceSettings = React.lazy(() => import('@renderer/pages/settings/AppearanceSettings'));
 const ModeSettings = React.lazy(() => import('@renderer/pages/settings/ModeSettings'));
 const SystemSettings = React.lazy(() => import('@renderer/pages/settings/SystemSettings'));
 const WebuiSettings = React.lazy(() => import('@renderer/pages/settings/WebuiSettings'));
 const PetSettings = React.lazy(() => import('@renderer/pages/settings/PetSettings'));
 const ExtensionSettingsPage = React.lazy(() => import('@renderer/pages/settings/ExtensionSettingsPage'));
-const LoginPage = React.lazy(() => import('@renderer/pages/login'));
+// FORK-CUSTOM: 指向 fork 版登录页（微信扫码登录），上游 pages/login/index.tsx 保持原样
+const LoginPage = React.lazy(() => import('@renderer/pages/login/XaiworkLoginPage'));
 const ComponentsShowcase = React.lazy(() => import('@renderer/pages/TestShowcase'));
 const ScheduledTasksPage = React.lazy(() => import('@renderer/pages/cron/ScheduledTasksPage'));
 const TaskDetailPage = React.lazy(() => import('@renderer/pages/cron/ScheduledTasksPage/TaskDetailPage'));
@@ -72,7 +75,12 @@ const PanelRoute: React.FC<{ layout: React.ReactElement }> = ({ layout }) => {
           <Route path='/settings/model' element={withRouteFallback(ModeSettings)} />
           <Route path='/settings/assistants' element={withRouteFallback(AssistantSettings)} />
           <Route path='/settings/agent' element={withRouteFallback(AgentSettings)} />
+          <Route path='/settings/agent/:id/repair' element={withRouteFallback(AgentRepairPage)} />
           <Route path='/settings/capabilities' element={withRouteFallback(CapabilitiesSettings)} />
+          <Route
+            path='/settings/capabilities/skills/import-history'
+            element={withRouteFallback(CapabilitiesSettings)}
+          />
           {/* Legacy routes — redirect to the merged /settings/capabilities page */}
           <Route path='/settings/skills-hub' element={<Navigate to='/settings/capabilities?tab=skills' replace />} />
           <Route path='/settings/tools' element={<Navigate to='/settings/capabilities?tab=tools' replace />} />

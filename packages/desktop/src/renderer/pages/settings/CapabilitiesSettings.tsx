@@ -16,61 +16,55 @@
  */
 
 import { Tabs } from '@arco-design/web-react';
-import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import SkillsHubSettings from './SkillsHubSettings';
-import SkillMarketSettings from './SkillMarketSettings';
 import ToolsModalContent from '@/renderer/components/settings/SettingsModal/contents/ToolsModalContent';
 import SettingsPageWrapper from './components/SettingsPageWrapper';
 
-type CapabilitiesTab = 'skills' | 'market' | 'tools';
+type CapabilitiesTab = 'skills' | 'tools';
 
-const isCapabilitiesTab = (value: string | null): value is CapabilitiesTab =>
-  value === 'skills' || value === 'market' || value === 'tools';
+const isCapabilitiesTab = (value: string | null): value is CapabilitiesTab => value === 'skills' || value === 'tools';
 
 const CapabilitiesSettings: React.FC = () => {
   const { t } = useTranslation();
-  const [searchParams] = useSearchParams();
-  // Initialize from URL synchronously to avoid a flash of the default tab.
-  const [activeTab, setActiveTab] = useState<CapabilitiesTab>(() => {
-    const tabParam = searchParams.get('tab');
-    return isCapabilitiesTab(tabParam) ? tabParam : 'skills';
-  });
-
-  // Re-sync if the URL changes externally (e.g. browser back/forward).
-  useEffect(() => {
-    const tabParam = searchParams.get('tab');
-    if (isCapabilitiesTab(tabParam) && tabParam !== activeTab) {
-      setActiveTab(tabParam);
-    }
-  }, [searchParams, activeTab]);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const activeTab: CapabilitiesTab =
+    location.pathname.startsWith('/settings/capabilities/skills/') || !isCapabilitiesTab(tabParam)
+      ? 'skills'
+      : tabParam;
 
   const handleTabChange = (key: string) => {
-    if (isCapabilitiesTab(key)) {
-      setActiveTab(key);
-      // FORK-CUSTOM: Avoid React Router navigation on every tab click; router-level
-      // refresh causes visible layout jitter in this settings page.
-      const next = new URLSearchParams(searchParams);
-      next.set('tab', key);
-      window.history.replaceState(null, '', `${window.location.pathname}?${next.toString()}`);
+    if (!isCapabilitiesTab(key) || key === activeTab) {
+      return;
     }
+
+    if (location.pathname !== '/settings/capabilities') {
+      void navigate(`/settings/capabilities?tab=${key}`, { replace: true });
+      return;
+    }
+
+    // Preserve any other query params the embedded content may rely on.
+    const next = new URLSearchParams(searchParams);
+    next.set('tab', key);
+    setSearchParams(next, { replace: true });
   };
 
   return (
-    <SettingsPageWrapper contentClassName='max-w-1200px' className='[scrollbar-gutter:stable]'>
+    <SettingsPageWrapper contentClassName='max-w-1200px'>
       <Tabs
         activeTab={activeTab}
         onChange={handleTabChange}
         type='line'
-        animation={false}
-        className='settings-capabilities-tabs flex flex-col flex-1 min-h-0 [&>.arco-tabs-content]:pt-0'
+        animation={{ tabPane: false, inkBar: true }}
+        className='flex flex-col flex-1 min-h-0 [&>.arco-tabs-content]:pt-0'
       >
         <Tabs.TabPane key='skills' title={t('settings.capabilitiesTab.skills', { defaultValue: 'Skills' })}>
           <SkillsHubSettings withWrapper={false} />
-        </Tabs.TabPane>
-        <Tabs.TabPane key='market' title={t('settings.capabilitiesTab.market', { defaultValue: 'Skill Market' })}>
-          <SkillMarketSettings />
         </Tabs.TabPane>
         <Tabs.TabPane key='tools' title={t('settings.capabilitiesTab.tools', { defaultValue: 'Tools' })}>
           <ToolsModalContent />

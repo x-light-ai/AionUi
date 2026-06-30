@@ -53,6 +53,10 @@
   "closeAll": "すべて閉じる",
   "readOnlyLabel": "閲覧専用",
   "pathLabel": "パス",
+  "missingFile": {
+    "title": "ファイルが見つかりません",
+    "openInNewTab": "新しいタブで開いてみる"
+  },
   "noTabs": "タブはありません",
   "openInPanelTooltip": "プレビューパネルで表示",
   "mermaidTitle": "Mermaid 図",
@@ -73,6 +77,10 @@
       "portTimeout": "プレビューサービスは起動しましたが、時間内に準備完了になりませんでした。再試行してください。",
       "startFailed": "Office プレビューサービスの起動に失敗しました。",
       "outsideSandbox": "このファイルは現在のプロジェクトサンドボックスの外にあります。"
+    },
+    "serverInstall": {
+      "hint": "AionUi はサーバー上で動作しています。プレビューコンポーネントはそのサーバーにインストールする必要があります。サーバーで次のコマンドを実行してから再試行してください：",
+      "icuNote": "それでも起動しない場合は、サーバーに ICU ライブラリをインストールしてください（Debian/Ubuntu：apt-get install -y libicu-dev）。"
     }
   },
   "word": {
@@ -130,6 +138,6 @@
     "loading": "PPTプレビューを起動中...",
     "installing": "プレビューコンポーネントをインストール中...",
     "startFailed": "PPTプレビューの起動に失敗しました",
-    "installHint": "公式 iOfficeAI/OfficeCli releases ページから OfficeCLI をインストールしてください"
+    "installHint": "公式 iOfficeAI/OfficeCLI releases ページから OfficeCLI をインストールしてください"
   }
 }

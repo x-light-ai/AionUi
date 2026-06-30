@@ -30,15 +30,14 @@ const ConversationSkillSelector: React.FC<ConversationSkillSelectorProps> = ({ o
   const [skills, setSkills] = useState<SkillItem[]>([]);
 
   useEffect(() => {
-    Promise.all([ipcBridge.fs.listBuiltinAutoSkills.invoke(), ipcBridge.fs.listAvailableSkills.invoke()])
-      .then(([autoSkills, availableSkills]) => {
-        const autoNames = new Set(autoSkills.map((s) => s.name));
-        const merged: SkillItem[] = [
-          ...autoSkills.map((s) => ({ name: s.name, description: s.description, isAuto: true })),
-          ...availableSkills
-            .filter((s) => !autoNames.has(s.name))
-            .map((s) => ({ name: s.name, description: s.description, isAuto: false })),
-        ];
+    ipcBridge.fs.listAvailableSkills
+      .invoke()
+      .then((availableSkills) => {
+        const merged: SkillItem[] = availableSkills.map((s) => ({
+          name: s.name,
+          description: s.description,
+          isAuto: s.is_auto_inject === true,
+        }));
         setSkills(merged);
       })
       .catch(() => setSkills([]));

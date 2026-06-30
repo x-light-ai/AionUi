@@ -1,8 +1,8 @@
 import { Message } from '@arco-design/web-react';
 import coworkSvg from '@/renderer/assets/icons/cowork.svg';
-import { useDetectedAgents, useAssistantEditor, useAssistantList } from '@/renderer/hooks/assistant';
+import { useAssistantEditor, useAssistantList } from '@/renderer/hooks/assistant';
 import SettingsPageWrapper from '../components/SettingsPageWrapper';
-import { resolveAvatarImageSrc } from './assistantUtils';
+import { resolveAvatarImageSrc, buildAssistantEditorBackends } from './assistantUtils';
 import AssistantEditorPage from './AssistantEditorPage';
 import AssistantListPanel from './AssistantListPanel';
 import DeleteAssistantModal from './DeleteAssistantModal';
@@ -50,13 +50,6 @@ const AssistantSettings: React.FC = () => {
   const handleHighlightConsumed = useCallback(() => {
     setSearchParams({}, { replace: true });
   }, [setSearchParams]);
-  const avatarImageMap: Record<string, string> = useMemo(
-    () => ({
-      'cowork.svg': coworkSvg,
-      '\u{1F6E0}\u{FE0F}': coworkSvg,
-    }),
-    []
-  );
 
   // Compose hooks
   const {
@@ -74,7 +67,7 @@ const AssistantSettings: React.FC = () => {
       assistants
         .filter((assistant) => assistant.source === 'builtin' && assistant.avatar?.startsWith('/api/assistants/'))
         .map((assistant) => {
-          const src = resolveAvatarImageSrc(assistant.avatar, avatarImageMap);
+          const src = resolveAvatarImageSrc(assistant.avatar);
           if (!src) {
             return null;
           }
@@ -86,17 +79,15 @@ const AssistantSettings: React.FC = () => {
           };
         })
         .filter((option): option is NonNullable<typeof option> => option !== null),
-    [assistants, avatarImageMap, localeKey]
+    [assistants, localeKey]
   );
-
-  const { availableBackends, refreshAgentDetection } = useDetectedAgents();
+  const availableBackends = useMemo(() => buildAssistantEditorBackends(assistants, localeKey), [assistants, localeKey]);
 
   const editor = useAssistantEditor({
     localeKey,
     activeAssistant,
     setActiveAssistantId,
     loadAssistants,
-    refreshAgentDetection,
     message,
   });
 
@@ -108,7 +99,7 @@ const AssistantSettings: React.FC = () => {
     editor.setEditAgent(availableBackends[0].id);
   }, [availableBackends, editor.editAgent, editor.setEditAgent]);
 
-  const editAvatarImage = editor.editAvatarPreview || resolveAvatarImageSrc(editor.editAvatar, avatarImageMap);
+  const editAvatarImage = editor.editAvatarPreview || resolveAvatarImageSrc(editor.editAvatar);
   const hasConsumedNavigationIntentRef = useRef(false);
   const showEditor = editor.editVisible && (editor.isCreating || activeAssistantId !== null);
   const editorViewModel: AssistantEditorViewModel = {
@@ -266,7 +257,6 @@ const AssistantSettings: React.FC = () => {
             <AssistantListPanel
               assistants={assistants}
               localeKey={localeKey}
-              avatarImageMap={avatarImageMap}
               onEdit={(assistant) => void editor.handleEdit(assistant)}
               onDuplicate={(assistant) => void editor.handleDuplicate(assistant)}
               onDelete={(assistant) => editor.handleDeleteRequest(assistant)}
@@ -284,7 +274,6 @@ const AssistantSettings: React.FC = () => {
             onCancel={() => editor.setDeleteConfirmVisible(false)}
             onConfirm={editor.handleDeleteConfirm}
             activeAssistant={activeAssistant}
-            avatarImageMap={avatarImageMap}
           />
 
           <SkillConfirmModals

@@ -1,14 +1,11 @@
 {
-  "agentFallbackNotice": "{{original}} недоступен, используется {{fallback}}.",
-  "noAgentAvailable": "Нет доступного основного агента. Войдите в Google или установите Claude/Codex CLI. Перейти к настройкам?",
-  "noAgentAvailableShort": "Основной агент недоступен. Нажмите для настройки.",
-  "agentTabAutoSwitch": "Модель несовместима с Gemini, автоматическое переключение на {{fallback}}",
-  "autoSwitchToAgent": "Gemini не настроен, автоматическое переключение на {{agent}}",
-  "autoSwitchedAgent": "{{from}} недоступен, переключено на {{to}}",
-  "promptExamplesHint": "Попробуйте примеры промптов:",
+  "promptExamplesHint": "Попробуйте эти инструкции",
+  "defaultPrompts": {
+    "capabilities": "Что ты можешь сделать для меня?",
+    "skills": "Какие у тебя есть навыки?",
+    "tools": "Какие у тебя есть инструменты?"
+  },
   "selectAssistantHint": "Выберите ассистента, чтобы начать задачу",
-  "agentSwitcherLabel": "Агент",
-  "switchedToAgent": "Переключено на {{agent}}",
   "workspace": {
     "workInProject": "Работать в проекте",
     "optional": "Необязательно",

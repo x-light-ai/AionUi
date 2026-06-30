@@ -14,7 +14,6 @@
 // empty list), this transparently falls back to the upstream useAcpModelInfo
 // behaviour.
 import type { AcpModelInfo } from '@/common/types/platform/acpTypes';
-import { savePreferredModelId } from '@/renderer/pages/guid/hooks/agentSelectionUtils';
 import { useCallback, useMemo, useState } from 'react';
 import { applyXaiworkModelConfig } from '../market/applyXaiworkModelConfig';
 import { useAcpModelInfo, type UseAcpModelInfoResult } from './useAcpModelInfo';
@@ -69,9 +68,6 @@ export const useAcpModelInfoXaiwork = (params: UseAcpModelInfoParams): UseAcpMod
       void (async () => {
         try {
           await applyXaiworkModelConfig(backend, model);
-          if (persistGlobalPreference) {
-            void savePreferredModelId(backend, model_id);
-          }
           setSelectedModelId(model_id);
           onSelectModelSuccess?.(model_id);
         } catch (error) {
@@ -87,6 +83,7 @@ export const useAcpModelInfoXaiwork = (params: UseAcpModelInfoParams): UseAcpMod
   }
 
   return {
+    ...base,
     model_info: xaiworkModelInfo,
     canSwitch: true,
     selectModel: selectModelXaiwork,
