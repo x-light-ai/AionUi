@@ -44,7 +44,6 @@ const GuidPage: React.FC = () => {
 
   const localeKey = resolveLocaleKey(i18n.language);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-  const [agentSelectorEnabled] = useConfig('ui.agentSelectorEnabled');
 
   // Open external link
   const openLink = useCallback(async (url: string) => {

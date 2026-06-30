@@ -9,7 +9,6 @@ import { parseError } from '@/common/utils';
 import { formatManagedAgentDiagnosticMessage, type ManagedAgent } from '@/renderer/utils/model/agentTypes';
 import AionModal from '@/renderer/components/base/AionModal';
 import { useManagedAgents } from '@/renderer/hooks/agent/useManagedAgents';
-import { useForkConfig } from '@/renderer/hooks/useForkConfig';
 import { openExternalUrl } from '@/renderer/utils/platform';
 import { Button, Message, Radio, Typography } from '@arco-design/web-react';
 import TalkToButlerButton from '@/renderer/components/base/TalkToButlerButton';
@@ -28,17 +27,12 @@ import {
 
 const LOCAL_AGENT_SETUP_GUIDE_URL = 'https://github.com/iOfficeAI/AionUi/wiki/ACP-Setup';
 
-type LocalAgentsProps = {
-  agentSelectorEnabled: boolean;
-};
-
-const LocalAgents: React.FC<LocalAgentsProps> = ({ agentSelectorEnabled: _agentSelectorEnabled }) => {
+const LocalAgents: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [testingAgentId, setTestingAgentId] = useState<string | null>(null);
   const [agentFilter, setAgentFilter] = useState<AgentAvailabilityFilter>('all');
   const { assistants } = useAssistantsForAgents();
-  const { showAionCliInUi } = useForkConfig();
 
   // Management view: includes user-disabled custom agents so they stay
   // listed (greyed) with a working re-enable toggle. `refreshCatalog`
@@ -49,11 +43,7 @@ const LocalAgents: React.FC<LocalAgentsProps> = ({ agentSelectorEnabled: _agentS
   // Hide deprecated runtime backends (nanobot / openclaw-gateway / remote / gemini)
   // — they are no longer offered as agents and shouldn't appear on the detection page.
   const officialAgents = allAgents.filter(
-    (a) =>
-      a.agent_source !== 'custom' &&
-      !isDeprecatedRuntimeAgentType(a.agent_type) &&
-      // FORK-CUSTOM: allow hiding Aion CLI from the agents management page.
-      (showAionCliInUi || (a.agent_type !== 'aionrs' && a.backend !== 'aionrs'))
+    (a) => a.agent_source !== 'custom' && !isDeprecatedRuntimeAgentType(a.agent_type)
   );
 
   const customAgents: ManagedAgent[] = allAgents.filter((a) => a.agent_source === 'custom');
