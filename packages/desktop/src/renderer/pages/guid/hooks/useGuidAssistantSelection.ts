@@ -5,6 +5,8 @@
  */
 
 import { assistantRuntimeKey, isAionrsAssistant, type Assistant } from '@/common/types/agent/assistantTypes';
+// FORK-CUSTOM: fork 默认值配置
+import { FORK_DEFAULTS } from '@/common/config/forkDefaults';
 import type { AcpModelInfo } from '../types';
 import type { AgentModeOption } from '@/renderer/utils/model/agentTypes';
 import {
@@ -73,12 +75,43 @@ export function resolveAssistantSelectionKey(
   return undefined;
 }
 
-export function pickDefaultAssistantSelectionKey(assistants: Assistant[]): string | null {
+// FORK-CUSTOM: enhanced to support generated-only fallback and configurable default
+export function pickDefaultAssistantSelectionKey(assistants: Assistant[], allAssistants?: Assistant[]): string | null {
   const enabledAssistants = assistants.filter((assistant) => assistant.enabled !== false);
-  const preferred =
-    enabledAssistants.find((assistant) => assistant.source === 'generated' && isAionrsAssistant(assistant)) ??
-    enabledAssistants.find((assistant) => isAionrsAssistant(assistant)) ??
-    enabledAssistants[0];
+  const enabledAll = (allAssistants ?? assistants).filter((assistant) => assistant.enabled !== false);
+
+  // FORK-CUSTOM: prefer by configured agent backend (stable across installs)
+  const configuredBackend = FORK_DEFAULTS.defaultAssistantBackend;
+  if (configuredBackend) {
+    const matchesBackend = (assistant: Assistant): boolean => assistantRuntimeKey(assistant) === configuredBackend;
+    const matched = enabledAssistants.find(matchesBackend) ?? enabledAll.find(matchesBackend);
+    if (matched) {
+      return matched.id;
+    }
+  }
+
+  // FORK-CUSTOM: fallback to explicit assistant id (machine-specific, e.g. bare:<hash>)
+  const configuredDefaultId = FORK_DEFAULTS.defaultAssistantId;
+  if (configuredDefaultId) {
+    const matched =
+      enabledAssistants.find((assistant) => assistant.id === configuredDefaultId) ??
+      enabledAll.find((assistant) => assistant.id === configuredDefaultId);
+    if (matched) {
+      return matched.id;
+    }
+  }
+
+  // FORK-CUSTOM: prefer builtin/user assistants first (generated filtered out by caller)
+  const preferred = enabledAssistants.find((assistant) => isAionrsAssistant(assistant)) ?? enabledAssistants[0];
+
+  // FORK-CUSTOM: fallback to generated assistants when no visible assistants available
+  if (!preferred && allAssistants) {
+    const enabledGenerated = allAssistants.filter(
+      (assistant) => assistant.enabled !== false && assistant.source === 'generated'
+    );
+    return enabledGenerated.find((assistant) => isAionrsAssistant(assistant))?.id ?? enabledGenerated[0]?.id ?? null;
+  }
+
   return preferred?.id ?? null;
 }
 
@@ -96,7 +129,8 @@ export const useGuidAssistantSelection = ({
   const [selectedAssistantIdState, _setSelectedAssistantId] = useState<string | null>(null);
   const [selectedMode, _setSelectedMode] = useState<string>('default');
   const [selectedAcpModel, _setSelectedAcpModel] = useState<string | null>(null);
-  const { assistants } = useCustomAgentsLoader();
+  // FORK-CUSTOM: get both filtered and all assistants for fallback
+  const { assistants, allAssistants } = useCustomAgentsLoader();
   const managedAgentRuntimeCatalog = useManagedAgentRuntimeCatalog();
 
   const setSelectedMode = useCallback(
@@ -135,11 +169,15 @@ export const useGuidAssistantSelection = ({
   }
 
   useLayoutEffect(() => {
-    if (assistants.length === 0) return;
+    // FORK-CUSTOM: use allAssistants for length check to avoid empty state when only generated available
+    if (allAssistants.length === 0) return;
     if (resetHandledRef.current) return;
 
     if (preselectAssistantId) {
-      const resolvedPreselect = resolveAssistantSelectionKey(preselectAssistantId, assistants);
+      // FORK-CUSTOM: try both filtered and all assistants for preselect resolution
+      const resolvedPreselect =
+        resolveAssistantSelectionKey(preselectAssistantId, assistants) ??
+        resolveAssistantSelectionKey(preselectAssistantId, allAssistants);
       if (resolvedPreselect) {
         resetHandledRef.current = true;
         _setSelectedAssistantId(resolvedPreselect);
@@ -149,30 +187,38 @@ export const useGuidAssistantSelection = ({
 
     if (resetAssistant) {
       resetHandledRef.current = true;
-      const fallbackId = pickDefaultAssistantSelectionKey(assistants);
+      // FORK-CUSTOM: pass allAssistants for generated fallback
+      const fallbackId = pickDefaultAssistantSelectionKey(assistants, allAssistants);
       _setSelectedAssistantId(fallbackId);
     }
-  }, [assistants, preselectAssistantId, resetAssistant]);
+  }, [assistants, allAssistants, preselectAssistantId, resetAssistant]);
 
   useEffect(() => {
-    if (assistants.length === 0) return;
+    // FORK-CUSTOM: use allAssistants for length check
+    if (allAssistants.length === 0) return;
     if (resetAssistant) return;
     if (preselectAssistantId && resolveAssistantSelectionKey(preselectAssistantId, assistants)) return;
-    if (!selectedAssistantIdState || !assistants.some((assistant) => assistant.id === selectedAssistantIdState)) {
-      _setSelectedAssistantId(pickDefaultAssistantSelectionKey(assistants));
+    // FORK-CUSTOM: check against allAssistants to allow selected generated assistant
+    if (!selectedAssistantIdState || !allAssistants.some((assistant) => assistant.id === selectedAssistantIdState)) {
+      _setSelectedAssistantId(pickDefaultAssistantSelectionKey(assistants, allAssistants));
     }
-  }, [assistants, preselectAssistantId, resetAssistant, selectedAssistantIdState]);
+  }, [assistants, allAssistants, preselectAssistantId, resetAssistant, selectedAssistantIdState]);
 
+  // FORK-CUSTOM: search in allAssistants to allow selected generated assistant to work
   const selectedAssistant = useMemo(
     () =>
-      selectedAssistantIdState ? assistants.find((assistant) => assistant.id === selectedAssistantIdState) : undefined,
-    [assistants, selectedAssistantIdState]
+      selectedAssistantIdState
+        ? allAssistants.find((assistant) => assistant.id === selectedAssistantIdState)
+        : undefined,
+    [allAssistants, selectedAssistantIdState]
   );
   const selectedAssistantId = selectedAssistant?.id ?? null;
   const selectedAssistantBackend = assistantRuntimeKey(selectedAssistant);
   const selectedAssistantModels = selectedAssistant?.models ?? [];
   // FORK-CUSTOM: distributed models for the active backend
-  const { models: xaiworkModels, hasModels: xaiworkHasModels } = useXaiworkAgentModels(selectedAssistantBackend || undefined);
+  const { models: xaiworkModels, hasModels: xaiworkHasModels } = useXaiworkAgentModels(
+    selectedAssistantBackend || undefined
+  );
   const selectedManagedAgentRuntimeCatalog = useMemo(
     () =>
       selectedAssistant?.agent_id
@@ -213,7 +259,13 @@ export const useGuidAssistantSelection = ({
     }
 
     _setSelectedAcpModel(resolveInitialAssistantModel([]));
-  }, [selectedAssistantModels, selectedAgentRuntimeModelInfo, xaiworkHasModels, xaiworkModels, selectedAssistantBackend]);
+  }, [
+    selectedAssistantModels,
+    selectedAgentRuntimeModelInfo,
+    xaiworkHasModels,
+    xaiworkModels,
+    selectedAssistantBackend,
+  ]);
 
   useEffect(() => {
     const fallbackMode =
@@ -229,7 +281,11 @@ export const useGuidAssistantSelection = ({
     return buildAssistantModelInfo(selectedAssistantModels);
   }, [selectedAssistantModels, selectedAgentRuntimeModelInfo]);
 
-  const defaultAssistantId = useMemo(() => pickDefaultAssistantSelectionKey(assistants), [assistants]);
+  // FORK-CUSTOM: pass allAssistants for generated fallback
+  const defaultAssistantId = useMemo(
+    () => pickDefaultAssistantSelectionKey(assistants, allAssistants),
+    [assistants, allAssistants]
+  );
 
   return {
     selectedAssistantId,

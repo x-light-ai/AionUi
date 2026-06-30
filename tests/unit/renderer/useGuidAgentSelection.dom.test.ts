@@ -21,7 +21,9 @@ let mockManagedAgents: ManagedAgent[] = [];
 
 vi.mock('@/renderer/pages/guid/hooks/useCustomAgentsLoader', () => ({
   useCustomAgentsLoader: () => ({
-    assistants: mockAssistants,
+    // FORK-CUSTOM: filter generated assistants for UI display, expose all for fallback
+    assistants: mockAssistants.filter((a) => a.source !== 'generated'),
+    allAssistants: mockAssistants,
   }),
 }));
 
@@ -85,6 +87,8 @@ describe('useGuidAssistantSelection', () => {
     vi.doMock('@/renderer/pages/guid/hooks/useCustomAgentsLoader', () => ({
       useCustomAgentsLoader: () => ({
         assistants: [],
+        // FORK-CUSTOM: allAssistants required for fallback logic
+        allAssistants: [],
       }),
     }));
 
