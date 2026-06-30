@@ -46,7 +46,7 @@ import { mergeFileSelectionItems } from '@/renderer/utils/file/fileSelection';
 import { buildDisplayMessage, collectSelectedFiles } from '@/renderer/utils/file/messageFiles';
 import type { AgentModeOption } from '@/renderer/utils/model/agentTypes';
 import { Message, Tag } from '@arco-design/web-react';
-import { Brain, Shield } from '@icon-park/react';
+import { Brain, MagicHat, Shield } from '@icon-park/react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 // FORK-CUSTOM: bottom-toolbar skill selector mirrored from the new-conversation page.
@@ -129,6 +129,7 @@ const AionrsSendBox: React.FC<{
   const layout = useLayoutContext();
   const isMobile = Boolean(layout?.isMobile);
   const conversationContext = useConversationContextSafe();
+  const loadedSkills = conversationContext?.loadedSkills ?? [];
   const loadedMcpStatuses =
     conversationContext?.loadedMcpStatuses ??
     (conversationContext?.loadedMcpServers ?? []).map<IConversationMcpStatus>((name) => ({
@@ -403,8 +404,6 @@ const AionrsSendBox: React.FC<{
     [setContent, contentRef]
   );
 
-  // Mode switching for the mobile action sheet — mirrors AgentModeSelector's
-  // setMode call so the bottom-sheet path stays in lockstep with the desktop dropdown.
   const handleSheetModeChange = useCallback(
     async (mode: string) => {
       if (!runtimeMode || mode === runtimeMode.currentValue) return;
@@ -523,6 +522,27 @@ const AionrsSendBox: React.FC<{
       });
     }
 
+    if (loadedSkills.length > 0) {
+      const skillOptions: MobileActionSheetOption[] = loadedSkills.map((name) => ({
+        key: name,
+        label: `/${name}`,
+      }));
+      entries.push({
+        key: 'skills',
+        icon: <MagicHat theme='outline' size='16' />,
+        label: t('common.skills', { defaultValue: 'Skills' }),
+        variant: 'muted',
+        submenu: {
+          title: t('common.skills', { defaultValue: 'Skills' }),
+          selectable: false,
+          options: skillOptions,
+          onSelect: (name) => {
+            setContent(`/${name} `);
+          },
+        },
+      });
+    }
+
     if (loadedMcpStatuses.length > 0) {
       const mcpOptions: MobileActionSheetOption[] = loadedMcpStatuses.map((item) => ({
         key: item.id,
@@ -557,6 +577,7 @@ const AionrsSendBox: React.FC<{
     handleSheetModelSelect,
     isMobile,
     loadedMcpStatuses,
+    loadedSkills,
     modelSelection,
     runtimeConfig,
     runtimeMode,

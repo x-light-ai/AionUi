@@ -42,7 +42,7 @@ import { emitter, useAddEventListener } from '@/renderer/utils/emitter';
 import { mergeFileSelectionItems } from '@/renderer/utils/file/fileSelection';
 import { buildDisplayMessage } from '@/renderer/utils/file/messageFiles';
 import { Message, Tag } from '@arco-design/web-react';
-import { Brain, Shield } from '@icon-park/react';
+import { Brain, MagicHat, Shield } from '@icon-park/react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 // FORK-CUSTOM: bottom-toolbar skill selector mirrored from the new-conversation page.
@@ -132,6 +132,7 @@ const AcpSendBox: React.FC<{
   const layout = useLayoutContext();
   const isMobile = Boolean(layout?.isMobile);
   const conversationContext = useConversationContextSafe();
+  const loadedSkills = conversationContext?.loadedSkills ?? [];
   const loadedMcpStatuses =
     conversationContext?.loadedMcpStatuses ??
     (conversationContext?.loadedMcpServers ?? []).map<IConversationMcpStatus>((name) => ({
@@ -550,6 +551,27 @@ Please check your local CLI tool authentication status`,
       });
     });
 
+    if (loadedSkills.length > 0) {
+      const skillOptions: MobileActionSheetOption[] = loadedSkills.map((name) => ({
+        key: name,
+        label: `/${name}`,
+      }));
+      entries.push({
+        key: 'skills',
+        icon: <MagicHat theme='outline' size='16' />,
+        label: t('common.skills', { defaultValue: 'Skills' }),
+        variant: 'muted',
+        submenu: {
+          title: t('common.skills', { defaultValue: 'Skills' }),
+          selectable: false,
+          options: skillOptions,
+          onSelect: (name) => {
+            setContent(`/${name} `);
+          },
+        },
+      });
+    }
+
     if (loadedMcpStatuses.length > 0) {
       const mcpOptions: MobileActionSheetOption[] = loadedMcpStatuses.map((item) => ({
         key: item.id,
@@ -584,10 +606,12 @@ Please check your local CLI tool authentication status`,
     handleThoughtLevelSetOption,
     isMobile,
     loadedMcpStatuses,
+    loadedSkills,
     model_info,
     runtimeMode,
     runtimeThoughtLevel,
     selectModel,
+    setContent,
     t,
   ]);
 
