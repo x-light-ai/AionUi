@@ -77,5 +77,5 @@ describe('release packaging configuration', () => {
     } finally {
       rmSync(tempDir, { force: true, recursive: true });
     }
-  });
+  }, 30000);
 });

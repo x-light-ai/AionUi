@@ -10,7 +10,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import LocalAgents from '@/renderer/pages/settings/AgentSettings/LocalAgents';
 
-const useAgentsMock = vi.fn();
+const useManagedAgentsMock = vi.fn();
 const useForkConfigMock = vi.fn();
 
 vi.mock('react-i18next', () => ({
@@ -19,8 +19,8 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 
-vi.mock('@/renderer/hooks/agent/useAgents', () => ({
-  useAgents: () => useAgentsMock(),
+vi.mock('@/renderer/hooks/agent/useManagedAgents', () => ({
+  useManagedAgents: () => useManagedAgentsMock(),
 }));
 
 vi.mock('@/renderer/hooks/useForkConfig', () => ({
@@ -55,12 +55,13 @@ const renderWithRouter = (ui: React.ReactElement) => render(<MemoryRouter>{ui}</
 describe('LocalAgents', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useAgentsMock.mockReturnValue({
+    useManagedAgentsMock.mockReturnValue({
       agents: [
-        { id: 'aionrs-1', name: 'Aion CLI', agent_type: 'aionrs', backend: 'aionrs', agent_source: 'builtin' },
-        { id: 'claude-1', name: 'Claude Code', agent_type: 'acp', backend: 'claude', agent_source: 'builtin' },
+        { id: 'aionrs-1', name: 'Aion CLI', agent_type: 'aionrs', backend: 'aionrs', agent_source: 'builtin', status: 'online' },
+        { id: 'claude-1', name: 'Claude Code', agent_type: 'acp', backend: 'claude', agent_source: 'builtin', status: 'online' },
       ],
-      revalidate: vi.fn(),
+      isRefreshing: false,
+      refreshCatalog: vi.fn(),
     });
   });
 

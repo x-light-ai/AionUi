@@ -29,6 +29,7 @@ vi.mock('@/renderer/utils/emitter', () => ({
 }));
 
 vi.mock('swr', () => ({
+  default: () => ({ data: undefined }),
   mutate: (...args: unknown[]) => swrMutateMock(...args),
 }));
 

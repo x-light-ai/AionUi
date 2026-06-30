@@ -61,6 +61,10 @@ vi.mock('@renderer/hooks/agent/useManagedAgents', () => ({
   useManagedAgents: () => useManagedAgents(),
 }));
 
+vi.mock('@/renderer/hooks/useForkConfig', () => ({
+  useForkConfig: () => ({ hideTeamSection: true, hideModelSettingsMenu: true, showAionCliInUi: true }),
+}));
+
 // Bridge is only touched by user-action handlers, not on render — stub the
 // shape the handlers reference so the import resolves.
 vi.mock('@/common', () => ({
