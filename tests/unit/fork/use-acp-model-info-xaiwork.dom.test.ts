@@ -1,4 +1,5 @@
 /**
+ * FORK-CUSTOM: tests for the XAIWork ACP model-info override hook.
  * @vitest-environment jsdom
  *
  * useAcpModelInfoXaiwork wraps the upstream ACP model info: it surfaces only

@@ -1,4 +1,5 @@
 /**
+ * FORK-CUSTOM: tests for the XAIWork agent models SWR hook.
  * @vitest-environment jsdom
  *
  * useXaiworkAgentModels gates the model fetch on backend + host + token being

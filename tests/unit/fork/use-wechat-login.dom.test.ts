@@ -1,4 +1,5 @@
 /**
+ * FORK-CUSTOM: tests for the XAIWork WeChat QR login hook.
  * @vitest-environment jsdom
  *
  * useWechatLogin drives the XAIWork QR login: it fetches a ticket/qrcode with

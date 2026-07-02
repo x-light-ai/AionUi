@@ -1,4 +1,5 @@
 /**
+ * FORK-CUSTOM: shape guards for fork-only config constants (forkBrand, forkDefaults).
  * @vitest-environment node
  *
  * Shape guards for fork-only config constants. These files are new fork files

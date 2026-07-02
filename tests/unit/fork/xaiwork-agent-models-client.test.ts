@@ -1,4 +1,5 @@
 /**
+ * FORK-CUSTOM: tests for the XAIWork agent model IPC clients (credential-safe distribution).
  * @vitest-environment node
  */
 

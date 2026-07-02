@@ -1,4 +1,5 @@
 /**
+ * FORK-CUSTOM: tests for the XAIWork remote market client (endpoints + XHub unwrap).
  * @vitest-environment node
  *
  * createMarketClient builds XAIWork market endpoint calls on top of the shared
