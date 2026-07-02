@@ -51,6 +51,9 @@ export interface Assistant {
   team_selectable: boolean;
   team_block_reason?: string;
   deletable: boolean;
+  // FORK-CUSTOM: optional version tag for user-source assistants (market imports).
+  // Not present on the upstream AssistantResponse; stays undefined until the backend exposes it.
+  version?: string;
 }
 
 export interface AssistantProfile {

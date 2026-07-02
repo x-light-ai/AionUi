@@ -79,20 +79,12 @@ describe('LocalAgents', () => {
     });
   });
 
-  it('hides Aion CLI in agents page when showAionCliInUi is false', () => {
-    useForkConfigMock.mockReturnValue({ hideTeamSection: true, showAionCliInUi: false });
+  it('renders official agents (Aion CLI is no longer gated behind a fork switch)', () => {
+    useForkConfigMock.mockReturnValue({ hideTeamSection: true });
 
-    renderWithRouter(<LocalAgents agentSelectorEnabled />);
+    renderWithRouter(<LocalAgents />);
 
-    expect(screen.queryByText('Aion CLI')).not.toBeInTheDocument();
-    expect(screen.getByText('Claude Code')).toBeInTheDocument();
-  });
-
-  it('shows Aion CLI in agents page when showAionCliInUi is true', () => {
-    useForkConfigMock.mockReturnValue({ hideTeamSection: true, showAionCliInUi: true });
-
-    renderWithRouter(<LocalAgents agentSelectorEnabled />);
-
+    // showAionCliInUi gate was removed in 07e300cae; both official agents now always render.
     expect(screen.getByText('Aion CLI')).toBeInTheDocument();
     expect(screen.getByText('Claude Code')).toBeInTheDocument();
   });
