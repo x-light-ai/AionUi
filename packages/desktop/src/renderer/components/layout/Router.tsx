@@ -8,7 +8,8 @@ const Conversation = React.lazy(() => import('@renderer/pages/conversation'));
 const Guid = React.lazy(() => import('@renderer/pages/guid'));
 const AgentSettings = React.lazy(() => import('@renderer/pages/settings/AgentSettings'));
 const AgentRepairPage = React.lazy(() => import('@renderer/pages/settings/AgentSettings/AgentRepairPage'));
-const AssistantSettings = React.lazy(() => import('@renderer/pages/settings/AssistantSettings'));
+// FORK-CUSTOM: 指向 fork 版助手容器（新增"我的助手"/"助手市场"两个 tab，我的助手过滤掉 generated），上游 AssistantSettings 保持原样
+const AssistantSettings = React.lazy(() => import('@renderer/pages/settings/XaiworkAssistantSettings'));
 // FORK-CUSTOM: 指向 fork 版 Capabilities 容器（新增 Skill Market tab + fork 版 Skills 页），上游 CapabilitiesSettings 保持原样
 const CapabilitiesSettings = React.lazy(() => import('@renderer/pages/settings/XaiworkCapabilitiesSettings'));
 const AppearanceSettings = React.lazy(() => import('@renderer/pages/settings/AppearanceSettings'));

@@ -129,11 +129,11 @@ const XaiworkSkillsSettings: React.FC<XaiworkSkillsSettingsProps> = ({ withWrapp
   const handleDelete = async (skillName: string) => {
     try {
       await ipcBridge.fs.deleteSkill.invoke({ skill_name: skillName });
-      Message.success(t('settings.skillsHub.deleteSuccess', { defaultValue: 'Skill deleted' }));
+      Message.success(t('fork.skillsHub.uninstallSuccess', { defaultValue: 'Skill uninstalled' }));
       void fetchData();
     } catch (error) {
       console.error('Failed to delete skill:', error);
-      Message.error(t('settings.skillsHub.deleteError', { defaultValue: 'Error deleting skill' }));
+      Message.error(t('fork.skillsHub.uninstallError', { defaultValue: 'Error uninstalling skill' }));
     }
   };
 
@@ -153,13 +153,13 @@ const XaiworkSkillsSettings: React.FC<XaiworkSkillsSettingsProps> = ({ withWrapp
 
   const confirmDelete = (skillName: string) => {
     Modal.confirm({
-      title: t('settings.skillsHub.deleteConfirmTitle', { defaultValue: 'Delete Skill' }),
-      content: t('settings.skillsHub.deleteConfirmContent', {
+      title: t('fork.skillsHub.uninstallConfirmTitle', { defaultValue: 'Uninstall Skill' }),
+      content: t('fork.skillsHub.uninstallConfirmContent', {
         name: skillName,
-        defaultValue: `Are you sure you want to delete "${skillName}"?`,
+        defaultValue: `Are you sure you want to uninstall "${skillName}"?`,
       }),
       okButtonProps: { status: 'danger' },
-      okText: t('common.delete', { defaultValue: 'Delete' }),
+      okText: t('fork.skillsHub.uninstallOkText', { defaultValue: 'Uninstall' }),
       onOk: () => void handleDelete(skillName),
       wrapClassName: 'modal-delete-skill',
     });
@@ -254,7 +254,7 @@ const XaiworkSkillsSettings: React.FC<XaiworkSkillsSettingsProps> = ({ withWrapp
                     tags={skill.tags}
                     highlighted={highlightedSkill === skill.name}
                     onDelete={() => confirmDelete(skill.name)}
-                    deleteTitle={t('common.delete', { defaultValue: 'Delete' })}
+                    deleteTitle={t('fork.skillsHub.uninstallTooltip', { defaultValue: 'Uninstall' })}
                     deleteTestId={`btn-delete-${normalizeTestId(skill.name)}`}
                   />
                 );

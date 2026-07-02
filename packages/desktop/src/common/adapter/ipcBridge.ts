@@ -883,15 +883,30 @@ export const acpConversation = {
     (p) => `/api/agents/${p.id}/enabled`,
     (p) => ({ enabled: p.enabled })
   ),
-  // FORK-CUSTOM: unified model config application for builtin agents (claude / codex).
-  // Supplements config_json.env with base_url/api_key/model_id, writes agent env,
-  // and merges the full config_json into local CLI settings in one operation.
-  setBuiltinAgentConfig: httpPost<
-    void,
-    { backend: string; baseUrl: string; apiKey: string; modelId: string; configJson: string }
+  // FORK-CUSTOM: XAIWork config broker (server-to-server). AionCore fetches
+  // full model configs (including api_key / config_json) from XAIWork OpenApi
+  // so the renderer only ever sees `{modelId, name}`. `xaiworkHost` and
+  // `xaiworkAuthToken` are forwarded per-request; AionCore does not persist
+  // them. Wire field name is `xaiwork_auth_token` so the upstream httpBridge
+  // sensitive-key regex (`auth[_-]?token`) redacts it in dev-mode logs.
+  listXaiworkModels: httpPost<
+    Array<{ modelId: string; name: string }>,
+    { backend: string; xaiworkHost: string; xaiworkAuthToken: string }
   >(
-    (p) => `/api/agents/builtin/${p.backend}/config`,
-    (p) => ({ base_url: p.baseUrl, api_key: p.apiKey, model_id: p.modelId, config_json: p.configJson })
+    '/api/agents/xaiwork/models',
+    (p) => ({ backend: p.backend, xaiwork_host: p.xaiworkHost, xaiwork_auth_token: p.xaiworkAuthToken })
+  ),
+  applyXaiworkModel: httpPost<
+    void,
+    { backend: string; modelId: string; xaiworkHost: string; xaiworkAuthToken: string }
+  >(
+    '/api/agents/xaiwork/apply',
+    (p) => ({
+      backend: p.backend,
+      model_id: p.modelId,
+      xaiwork_host: p.xaiworkHost,
+      xaiwork_auth_token: p.xaiworkAuthToken,
+    })
   ),
   checkManagedAgentHealthById: httpPost<import('@/renderer/utils/model/agentTypes').ManagedAgent, { id: string }>(
     (p) => `/api/agents/${p.id}/health-check`,

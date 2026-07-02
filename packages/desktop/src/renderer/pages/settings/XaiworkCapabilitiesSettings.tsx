@@ -17,7 +17,7 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import XaiworkSkillsSettings from './XaiworkSkillsSettings';
-import SkillMarketSettings from './SkillMarketSettings';
+import XaiworkSkillMarketSettings from './XaiworkSkillMarketSettings';
 import ToolsModalContent from '@/renderer/components/settings/SettingsModal/contents/ToolsModalContent';
 import SettingsPageWrapper from './components/SettingsPageWrapper';
 import styles from './XaiworkCapabilitiesSettings.module.css';
@@ -71,7 +71,7 @@ const XaiworkCapabilitiesSettings: React.FC = () => {
           <XaiworkSkillsSettings withWrapper={false} />
         </Tabs.TabPane>
         <Tabs.TabPane key='market' title={t('settings.capabilitiesTab.market', { defaultValue: 'Skill Market' })}>
-          <SkillMarketSettings />
+          <XaiworkSkillMarketSettings />
         </Tabs.TabPane>
         <Tabs.TabPane key='tools' title={t('settings.capabilitiesTab.tools', { defaultValue: 'Tools' })}>
           <ToolsModalContent />
