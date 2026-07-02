@@ -1,33 +1,22 @@
-/**
- * AssistantSettings — Settings page for managing assistants.
- *
- * Editing permissions by assistant type:
- *
- * | Field          | Builtin | Custom |
- * |----------------|---------|--------|
- * | Save button    |  yes    |  yes   |
- * | Name           |  no     |  yes   |
- * | Description    |  no     |  yes   |
- * | Avatar         |  no     |  yes   |
- * | Main Agent     |  yes    |  yes   |
- * | Prompt editing |  no     |  yes   |
- * | Delete         |  no     |  yes   |
- *
- * Builtin assistants only allow Main Agent plus default model / permission
- * overrides. The full-page editor still renders builtin skills and prompts as
- * read-only so users can inspect what's bundled.
- */
+// FORK-CUSTOM: XAIWork 定制版"我的助手"页面（替代上游 AssistantSettings 的内容部分）。
+// 上游 AssistantSettings/index.tsx 保持原样不动，本文件承载所有 fork 改动，避免 rebase 冲突。
+// 与上游差异：1) 列表过滤掉 source==='generated'（AionCore CLI 自动生成的助手不展示）；
+// 2) 支持 withWrapper prop，由 fork 容器 XaiworkAssistantSettings 的 tab 内嵌（不重复包 SettingsPageWrapper）。
 import { Message } from '@arco-design/web-react';
+import { Refresh } from '@icon-park/react';
 import { useAssistantEditor, useAssistantList } from '@/renderer/hooks/assistant';
-import SettingsPageWrapper from '../components/SettingsPageWrapper';
-import { buildAssistantEditorBackends, resolveAvatarImageSrc } from './assistantUtils';
-import AssistantEditorPage from './AssistantEditorPage';
-import AssistantListPanel from './AssistantListPanel';
-import DeleteAssistantModal from './DeleteAssistantModal';
-import SkillConfirmModals from './SkillConfirmModals';
-import type { AssistantEditorViewModel } from './types';
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import TalkToButlerButton from '@/renderer/components/base/TalkToButlerButton';
+import SettingsPageWrapper from './components/SettingsPageWrapper';
+import { buildAssistantEditorBackends, resolveAvatarImageSrc } from './AssistantSettings/assistantUtils';
+import AssistantEditorPage from './AssistantSettings/AssistantEditorPage';
+import XaiworkAssistantListPanel from './XaiworkAssistantListPanel';
+import XaiworkDeleteAssistantModal from './XaiworkDeleteAssistantModal';
+import SkillConfirmModals from './AssistantSettings/SkillConfirmModals';
+import type { AssistantEditorViewModel } from './AssistantSettings/types';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLocation, useSearchParams } from 'react-router-dom';
+import styles from './XaiworkMyAssistants.module.css';
 
 type AssistantNavigationState = {
   openAssistantId?: string;
@@ -35,8 +24,15 @@ type AssistantNavigationState = {
 };
 const OPEN_ASSISTANT_EDITOR_INTENT_KEY = 'guid.openAssistantEditorIntent';
 
-const AssistantSettings: React.FC = () => {
+interface XaiworkMyAssistantsProps {
+  /** When false, renders without SettingsPageWrapper — useful for embedding in a tab */
+  withWrapper?: boolean;
+}
+
+const XaiworkMyAssistants: React.FC<XaiworkMyAssistantsProps> = ({ withWrapper = true }) => {
   const [message, messageContext] = Message.useMessage({ maxCount: 10 });
+  const [loading, setLoading] = useState(false);
+  const { t } = useTranslation();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigationState = (location.state as AssistantNavigationState | null) ?? null;
@@ -55,6 +51,12 @@ const AssistantSettings: React.FC = () => {
     reorderAssistants,
     localeKey,
   } = useAssistantList();
+
+  // FORK-CUSTOM: hide AionCore CLI auto-generated assistants from the list.
+  // The full `assistants` array is still used for editor backends / avatar
+  // options / navigation intent, since generated assistants back the CLI agents.
+  const visibleAssistants = useMemo(() => assistants.filter((a) => a.source !== 'generated'), [assistants]);
+
   const builtinAvatarOptions = useMemo(
     () =>
       assistants
@@ -157,7 +159,6 @@ const AssistantSettings: React.FC = () => {
       duplicate: (assistant) => void editor.handleDuplicate(assistant),
     },
   };
-
   useEffect(() => {
     if (hasConsumedNavigationIntentRef.current) return;
     const openAssistantFromRoute =
@@ -192,20 +193,63 @@ const AssistantSettings: React.FC = () => {
     void editor.handleEdit(targetAssistant);
   }, [assistants, editor, navigationState]);
 
-  return (
-    <SettingsPageWrapper className='!h-full !overflow-hidden' contentClassName='!h-full'>
-      <div className='flex flex-col h-full w-full'>
-        {messageContext}
-        <div className='flex-1 min-h-0'>
-          {showEditor ? (
-            <AssistantEditorPage
-              editor={editorViewModel}
-              activeAssistant={activeAssistant}
-              onBack={() => editor.setEditVisible(false)}
-            />
-          ) : (
-            <AssistantListPanel
-              assistants={assistants}
+  const mainContent = (
+    <div className='flex flex-col h-full w-full'>
+      {messageContext}
+      <div className='flex-1 min-h-0'>
+        {showEditor ? (
+          <AssistantEditorPage
+            editor={editorViewModel}
+            activeAssistant={activeAssistant}
+            onBack={() => editor.setEditVisible(false)}
+          />
+        ) : (
+          <div
+            className={`${styles.card} bg-base rd-16px md:rd-24px shadow-sm border border-b-base px-[16px] md:px-[32px] py-32px`}
+          >
+            {/* FORK-CUSTOM: 自渲染 toolbar（标题「我的助手」+ 计数 + 创建按钮），与「我的技能」一致；
+                上游 AssistantListPanel 自带的 header 由 CSS 隐藏，避免重复标题。 */}
+            <div className='flex items-center justify-between gap-16px mb-16px shrink-0'>
+              <div className='flex items-center gap-10px shrink-0'>
+                <span className='text-16px md:text-18px text-t-primary font-bold tracking-tight'>
+                  {t('settings.assistantTab.mine', { defaultValue: '我的助手' })}
+                </span>
+                <span className='bg-[rgba(var(--primary-6),0.08)] text-primary-6 text-12px px-10px py-2px rd-[100px] font-medium ml-4px'>
+                  {visibleAssistants.length}
+                </span>
+              </div>
+              <div className='flex items-center gap-12px shrink-0'>
+                <button
+                  data-testid='btn-refresh-my-assistants'
+                  className='outline-none border-none bg-transparent cursor-pointer p-6px text-t-tertiary hover:text-primary-6 transition-colors rd-full hover:bg-fill-2'
+                  onClick={async () => {
+                    setLoading(true);
+                    try {
+                      await loadAssistants();
+                      message.success(t('common.refreshSuccess', { defaultValue: 'Refreshed' }));
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                  title={t('common.refresh', { defaultValue: 'Refresh' })}
+                >
+                  <Refresh theme='outline' size={16} className={loading ? 'animate-spin' : ''} />
+                </button>
+                <TalkToButlerButton
+                  className='shrink-0'
+                  label={t('settings.createAssistant', { defaultValue: 'Create Assistant' })}
+                  chatLabel={t('settings.talkToButler.createViaChat', { defaultValue: 'Create via chat' })}
+                  onManual={() => void editor.handleCreate()}
+                  manualLabel={t('settings.talkToButler.createManually', { defaultValue: 'Create manually' })}
+                  prompt={t('settings.talkToButler.prompt.createAssistant', {
+                    defaultValue: 'Help me create a new assistant and walk me through setting it up.',
+                  })}
+                  data-testid='btn-create-assistant-xaiwork'
+                />
+              </div>
+            </div>
+            <XaiworkAssistantListPanel
+              assistants={visibleAssistants}
               localeKey={localeKey}
               onEdit={(assistant) => void editor.handleEdit(assistant)}
               onDuplicate={(assistant) => void editor.handleDuplicate(assistant)}
@@ -217,32 +261,40 @@ const AssistantSettings: React.FC = () => {
               highlightId={highlightId}
               onHighlightConsumed={handleHighlightConsumed}
             />
-          )}
+          </div>
+        )}
 
-          <DeleteAssistantModal
-            visible={editor.deleteConfirmVisible}
-            onCancel={() => editor.setDeleteConfirmVisible(false)}
-            onConfirm={editor.handleDeleteConfirm}
-            activeAssistant={activeAssistant}
-          />
+        <XaiworkDeleteAssistantModal
+          visible={editor.deleteConfirmVisible}
+          onCancel={() => editor.setDeleteConfirmVisible(false)}
+          onConfirm={editor.handleDeleteConfirm}
+          activeAssistant={activeAssistant}
+        />
 
-          <SkillConfirmModals
-            deletePendingSkillName={editor.deletePendingSkillName}
-            setDeletePendingSkillName={editor.setDeletePendingSkillName}
-            pendingSkills={editor.pendingSkills}
-            setPendingSkills={editor.setPendingSkills}
-            deleteCustomSkillName={editor.deleteCustomSkillName}
-            setDeleteCustomSkillName={editor.setDeleteCustomSkillName}
-            customSkills={editor.customSkills}
-            setCustomSkills={editor.setCustomSkills}
-            selectedSkills={editor.selectedSkills}
-            setSelectedSkills={editor.setSelectedSkills}
-            message={message}
-          />
-        </div>
+        <SkillConfirmModals
+          deletePendingSkillName={editor.deletePendingSkillName}
+          setDeletePendingSkillName={editor.setDeletePendingSkillName}
+          pendingSkills={editor.pendingSkills}
+          setPendingSkills={editor.setPendingSkills}
+          deleteCustomSkillName={editor.deleteCustomSkillName}
+          setDeleteCustomSkillName={editor.setDeleteCustomSkillName}
+          customSkills={editor.customSkills}
+          setCustomSkills={editor.setCustomSkills}
+          selectedSkills={editor.selectedSkills}
+          setSelectedSkills={editor.setSelectedSkills}
+          message={message}
+        />
       </div>
+    </div>
+  );
+
+  return withWrapper ? (
+    <SettingsPageWrapper className='!h-full !overflow-hidden' contentClassName='!h-full'>
+      {mainContent}
     </SettingsPageWrapper>
+  ) : (
+    mainContent
   );
 };
 
-export default AssistantSettings;
+export default XaiworkMyAssistants;

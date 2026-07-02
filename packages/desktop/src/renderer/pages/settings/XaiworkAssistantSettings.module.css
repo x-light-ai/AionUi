@@ -1,0 +1,6 @@
+/* FORK-CUSTOM: XAIWork 定制助手容器页样式。
+ * 去掉 type='line' tabs 头部的通栏分隔线（它是直线，会盖过下方内容卡片的圆角），
+ * 保留选中项下方的 inkBar 短下划线。样式与组件同目录，避免被上游改动或重构丢失。 */
+.tabs :global(.arco-tabs-header-nav)::before {
+  display: none;
+}

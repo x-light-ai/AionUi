@@ -1,0 +1,29 @@
+/* FORK-CUSTOM: XAIWork 定制「我的助手」页样式。
+ * 把上游 AssistantListPanel 装进一个卡片块里（圆角/阴影/边框/白底），外观与「我的技能」一致。
+ * fork 在卡片内自渲染了 toolbar（标题「我的助手」+ 计数 + 创建按钮），故把上游自带的 header
+ * 整个隐藏（避免重复标题），并去掉 body 自带的 padding 与 max-w-760px 居中，让列表贴卡片内边距。
+ * 不改动上游 AssistantListPanel.tsx，仅在 fork 容器侧作用域覆盖，避免 rebase 冲突。 */
+
+/* 卡片填满 tab 内容区高度，内部由 AssistantListPanel 自身滚动 */
+.card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* 上游 header 已被 fork toolbar 取代，隐藏避免重复 */
+.card :global([data-testid='assistant-list-header']) {
+  display: none;
+}
+
+/* 列表体去掉自带内边距，padding 交给卡片统一控制 */
+.card :global([data-testid='assistant-list-body']) {
+  padding: 0;
+}
+
+/* 去掉 body 内层 max-w-760px 居中，使列表贴卡片内边距（与技能页一致） */
+.card :global([data-testid='assistant-list-body']) > div {
+  max-width: none;
+}
