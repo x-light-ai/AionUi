@@ -14,8 +14,10 @@
 // empty list), this transparently falls back to the upstream useAcpModelInfo
 // behaviour.
 import type { AcpModelInfo } from '@/common/types/platform/acpTypes';
+import { useConfig } from '@/renderer/hooks/config/useConfig';
 import { useCallback, useMemo, useState } from 'react';
 import { applyXaiworkModelConfig } from '../market/applyXaiworkModelConfig';
+import { readXaiworkRemoteAuth } from '../xaiworkRemoteAuth';
 import { useAcpModelInfo, type UseAcpModelInfoResult } from './useAcpModelInfo';
 import { useXaiworkAgentModels } from './useXaiworkAgentModels';
 
@@ -43,6 +45,7 @@ export const useAcpModelInfoXaiwork = (params: UseAcpModelInfoParams): UseAcpMod
   const base = useAcpModelInfo(params);
   const { byModelId, hasModels } = useXaiworkAgentModels(enabled ? backend : undefined);
   const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
+  const [host] = useConfig('xaiwork.adminApiHost');
 
   // Build the overridden model_info from the XAIWork distribution.
   const xaiworkModelInfo = useMemo<AcpModelInfo | null>(() => {
@@ -72,9 +75,15 @@ export const useAcpModelInfoXaiwork = (params: UseAcpModelInfoParams): UseAcpMod
         onSelectModelFailed?.(model_id, new Error('model not found in XAIWork distribution'));
         return;
       }
+      const effectiveHost = host?.trim() || '';
+      const authToken = readXaiworkRemoteAuth()?.accessToken ?? '';
+      if (!effectiveHost || !authToken) {
+        onSelectModelFailed?.(model_id, new Error('XAIWork host/token not configured'));
+        return;
+      }
       void (async () => {
         try {
-          await applyXaiworkModelConfig(backend, model);
+          await applyXaiworkModelConfig(backend, model_id, effectiveHost, authToken);
           setSelectedModelId(model_id);
           onSelectModelSuccess?.(model_id);
         } catch (error) {
@@ -86,6 +95,7 @@ export const useAcpModelInfoXaiwork = (params: UseAcpModelInfoParams): UseAcpMod
       enabled,
       backend,
       byModelId,
+      host,
       persistGlobalPreference,
       setSelectedModelId,
       onSelectModelSuccess,

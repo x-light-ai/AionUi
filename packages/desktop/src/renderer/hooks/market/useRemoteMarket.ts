@@ -69,8 +69,9 @@ export function useRemoteMarket(type: MarketItemType) {
       return items.map((item) => ({ ...item, installed: installedSet.has(item.name) }));
     }
 
-    const assistantIds = new Set(installedAssistants.map((assistant) => assistant.id));
-    return items.map((item) => ({ ...item, installed: assistantIds.has(item.itemKey) }));
+    // FORK-CUSTOM: match by name (itemKey is the market's business key, not the local assistant UUID)
+    const assistantNames = new Set(installedAssistants.map((assistant) => assistant.name));
+    return items.map((item) => ({ ...item, installed: assistantNames.has(item.name) }));
   }, [installedAssistants, installedSkills, items, type]);
 
   const install = useCallback(
@@ -100,11 +101,15 @@ export function useRemoteMarket(type: MarketItemType) {
       if (type === 'skill') {
         await ipcBridge.fs.deleteSkill.invoke({ skill_name: item.name });
       } else {
-        await ipcBridge.assistants.delete.invoke({ id: item.itemKey });
+        // FORK-CUSTOM: resolve real assistant.id by name before deleting (itemKey ≠ local UUID)
+        const target = installedAssistants.find((a) => a.name === item.name);
+        if (target) {
+          await ipcBridge.assistants.delete.invoke({ id: target.id });
+        }
       }
       await load();
     },
-    [load, type]
+    [installedAssistants, load, type]
   );
 
   return {

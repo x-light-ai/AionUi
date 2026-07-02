@@ -1,10 +1,11 @@
-import React from 'react';
+// FORK-CUSTOM: 技能/助手市场卡片网格，含安装/卸载按钮防抖（per-item loading 状态）
+import React, { useCallback, useState } from 'react';
 import { Button, Typography } from '@arco-design/web-react';
 import { IconDelete, IconDownload } from '@arco-design/web-react/icon';
 import type { RemoteMarketCard } from '@/renderer/hooks/market/useRemoteMarket';
 import { getAvatarColorClass } from '@/renderer/pages/settings/components/SkillCard';
 
-interface MarketCardGridProps {
+interface XaiworkMarketCardGridProps {
   emptyText: string;
   installText: string;
   installedText: string;
@@ -19,7 +20,7 @@ interface MarketCardGridProps {
 
 const actionButtonClassName = '!min-w-80px !rounded-9px !px-10px';
 
-const MarketCardGrid: React.FC<MarketCardGridProps> = ({
+const XaiworkMarketCardGrid: React.FC<XaiworkMarketCardGridProps> = ({
   emptyText,
   installText,
   installedText,
@@ -31,6 +32,46 @@ const MarketCardGrid: React.FC<MarketCardGridProps> = ({
   onInstall,
   onRemove,
 }) => {
+  // FORK-CUSTOM: per-item processing state for debounce
+  const [processingIds, setProcessingIds] = useState<Set<string>>(() => new Set());
+
+  const addProcessing = (key: string) =>
+    setProcessingIds((prev) => new Set(prev).add(key));
+  const removeProcessing = (key: string) =>
+    setProcessingIds((prev) => {
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+
+  const handleInstallClick = useCallback(
+    async (item: RemoteMarketCard) => {
+      const key = `install-${item.id}`;
+      if (processingIds.has(key)) return;
+      addProcessing(key);
+      try {
+        await onInstall(item);
+      } finally {
+        removeProcessing(key);
+      }
+    },
+    [onInstall, processingIds],
+  );
+
+  const handleRemoveClick = useCallback(
+    async (item: RemoteMarketCard) => {
+      const key = `remove-${item.id}`;
+      if (processingIds.has(key)) return;
+      addProcessing(key);
+      try {
+        await onRemove(item);
+      } finally {
+        removeProcessing(key);
+      }
+    },
+    [onRemove, processingIds],
+  );
+
   if (loading) {
     return (
       <div className='flex items-center justify-center py-48px'>
@@ -113,7 +154,9 @@ const MarketCardGrid: React.FC<MarketCardGridProps> = ({
                   status='danger'
                   icon={<IconDelete />}
                   className={actionButtonClassName}
-                  onClick={() => onRemove(item)}
+                  loading={processingIds.has(`remove-${item.id}`)}
+                  disabled={processingIds.has(`remove-${item.id}`)}
+                  onClick={() => void handleRemoveClick(item)}
                 >
                   {removeText}
                 </Button>
@@ -124,7 +167,9 @@ const MarketCardGrid: React.FC<MarketCardGridProps> = ({
                 size='small'
                 icon={<IconDownload />}
                 className={actionButtonClassName}
-                onClick={() => onInstall(item)}
+                loading={processingIds.has(`install-${item.id}`)}
+                disabled={processingIds.has(`install-${item.id}`)}
+                onClick={() => void handleInstallClick(item)}
               >
                 {installText}
               </Button>
@@ -136,4 +181,4 @@ const MarketCardGrid: React.FC<MarketCardGridProps> = ({
   );
 };
 
-export default MarketCardGrid;
+export default XaiworkMarketCardGrid;

@@ -1,18 +1,15 @@
-/**
- * @license
- * Copyright 2025 AionUi (aionui.com)
- * SPDX-License-Identifier: Apache-2.0
- */
-
-import { Message } from '@arco-design/web-react';
+// FORK-CUSTOM: XAIWork 远端"技能市场"页面，由 XaiworkCapabilitiesSettings 的 Market tab 内嵌。
+// 数据来自 OpenApi /openapi/market/skill，经 useRemoteMarket('skill') 拉取 + 安装/卸载。
+import { Message, Modal } from '@arco-design/web-react';
 import { Refresh, Search } from '@icon-park/react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import MarketCardGrid from '@/renderer/components/market/MarketCardGrid';
+import XaiworkMarketCardGrid from '@/renderer/components/market/XaiworkMarketCardGrid';
 import { useRemoteMarket, type RemoteMarketCard } from '@/renderer/hooks/market/useRemoteMarket';
 
-const SkillMarketSettings: React.FC = () => {
+const XaiworkSkillMarketSettings: React.FC = () => {
   const { t } = useTranslation();
+  
   const remoteMarket = useRemoteMarket('skill');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTagId, setActiveTagId] = useState<number | null>(null);
@@ -43,21 +40,31 @@ const SkillMarketSettings: React.FC = () => {
     }
   };
 
-  const handleRemove = async (item: RemoteMarketCard) => {
-    try {
-      await remoteMarket.remove(item);
-      Message.success(t('settings.skillsHub.deleteSuccess', { defaultValue: 'Skill deleted' }));
-    } catch (error) {
-      console.error('Failed to remove remote market skill:', error);
-      Message.error(t('settings.skillsHub.deleteError', { defaultValue: 'Error deleting skill' }));
-    }
+  const handleRemove = (item: RemoteMarketCard) => {
+    Modal.confirm({
+      title: t('fork.skillMarket.uninstallConfirmTitle', { defaultValue: 'Uninstall Skill' }),
+      content: t('fork.skillMarket.uninstallConfirmContent', {
+        name: item.name,
+        defaultValue: `Are you sure you want to uninstall "${item.name}"?`,
+      }),
+      okButtonProps: { status: 'danger' },
+      okText: t('fork.skillMarket.uninstallOkText', { defaultValue: 'Uninstall' }),
+      onOk: async () => {
+        try {
+          await remoteMarket.remove(item);
+          Message.success(t('fork.skillMarket.uninstallSuccess', { defaultValue: 'Skill uninstalled' }));
+        } catch (error) {
+          console.error('Failed to remove remote market skill:', error);
+          Message.error(t('fork.skillMarket.uninstallError', { defaultValue: 'Error uninstalling skill' }));
+        }
+      },
+    });
   };
 
   return (
     <div className='flex flex-col h-full w-full'>
       <div className='space-y-16px pb-24px'>
         <div className='px-[16px] md:px-[32px] py-32px bg-base rd-16px md:rd-24px shadow-sm border border-b-base relative overflow-hidden transition-all'>
-          {/* Header */}
           <div className='flex items-center justify-between gap-16px mb-24px'>
             <div className='flex items-center gap-10px shrink-0'>
               <span className='text-16px md:text-18px text-t-primary font-bold tracking-tight'>
@@ -70,16 +77,13 @@ const SkillMarketSettings: React.FC = () => {
             <button
               data-testid='btn-refresh-market'
               className='outline-none border-none bg-transparent cursor-pointer p-6px text-t-tertiary hover:text-primary-6 transition-colors rd-full hover:bg-fill-2'
-              onClick={() => {
-                void remoteMarket.reload();
-              }}
+              onClick={() => { void remoteMarket.reload(); }}
               title={t('common.refresh', { defaultValue: 'Refresh' })}
             >
               <Refresh theme='outline' size={16} className={remoteMarket.loading ? 'animate-spin' : ''} />
             </button>
           </div>
 
-          {/* Search */}
           <div className='relative group w-full mb-16px'>
             <div className='absolute left-12px top-1/2 -translate-y-1/2 text-t-tertiary group-focus-within:text-primary-6 flex pointer-events-none transition-colors'>
               <Search size={15} />
@@ -94,7 +98,6 @@ const SkillMarketSettings: React.FC = () => {
             />
           </div>
 
-          {/* Tag filter */}
           {remoteMarket.tags.length > 0 && (
             <div className='flex flex-wrap gap-8px mb-24px'>
               <button
@@ -115,7 +118,7 @@ const SkillMarketSettings: React.FC = () => {
             </div>
           )}
 
-          <MarketCardGrid
+          <XaiworkMarketCardGrid
             emptyText={t('settings.skillMarket.empty', { defaultValue: 'No skills available in the market.' })}
             installText={t('settings.agentManagement.marketInstall', { defaultValue: 'Install' })}
             installedText={t('settings.installed', { defaultValue: 'Installed' })}
@@ -133,4 +136,4 @@ const SkillMarketSettings: React.FC = () => {
   );
 };
 
-export default SkillMarketSettings;
+export default XaiworkSkillMarketSettings;

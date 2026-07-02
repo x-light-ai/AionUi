@@ -16,8 +16,10 @@ import type { NavigateFunction } from 'react-router-dom';
 import { mutate as swrMutate } from 'swr';
 import { getConversationCreateErrorMessage } from '@/renderer/pages/conversation/utils/conversationCreateError';
 // FORK-CUSTOM: XAIWork model config application on new-conversation create.
+import { useConfig } from '@/renderer/hooks/config/useConfig';
 import { useXaiworkAgentModels } from '@/renderer/hooks/agent/useXaiworkAgentModels';
 import { applyXaiworkModelConfig } from '@/renderer/hooks/market/applyXaiworkModelConfig';
+import { readXaiworkRemoteAuth } from '@/renderer/hooks/xaiworkRemoteAuth';
 import type { AcpModelInfo } from '../types';
 
 export type GuidSendDeps = {
@@ -102,11 +104,13 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
   } = deps;
   const sendingRef = useRef(false);
 
-  // FORK-CUSTOM: distributed models + relay credentials for the active backend.
+  // FORK-CUSTOM: distributed models for the active backend. Credentials (baseUrl
+  // / apiKey) never touch the renderer — AionCore fetches them server-side.
   const xaiworkBackend = selectedAssistantBackend;
   const { byModelId: xaiworkByModelId, hasModels: xaiworkHasModels } = useXaiworkAgentModels(
     xaiworkBackend || undefined
   );
+  const [xaiworkHost] = useConfig('xaiwork.adminApiHost');
 
   const handleSend = useCallback(async () => {
     if (!selectedAssistantId) {
@@ -216,9 +220,11 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
       if (xaiworkHasModels) {
         const selectedId = selectedAcpModel || currentAcpCachedModelInfo?.current_model_id || undefined;
         const relayModel = selectedId ? xaiworkByModelId.get(selectedId) : undefined;
-        if (relayModel && xaiworkBackend) {
+        const effectiveHost = xaiworkHost?.trim() || '';
+        const authToken = readXaiworkRemoteAuth()?.accessToken ?? '';
+        if (relayModel && xaiworkBackend && effectiveHost && authToken) {
           try {
-            await applyXaiworkModelConfig(xaiworkBackend, relayModel);
+            await applyXaiworkModelConfig(xaiworkBackend, relayModel.modelId, effectiveHost, authToken);
           } catch (error) {
             console.error('Failed to apply XAIWork model config before conversation create:', error);
           }
