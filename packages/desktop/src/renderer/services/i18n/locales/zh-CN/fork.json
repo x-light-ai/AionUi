@@ -1,0 +1,30 @@
+{
+  "skillMarket": {
+    "uninstallSuccess": "技能已卸载",
+    "uninstallError": "卸载技能出错",
+    "uninstallConfirmTitle": "卸载技能",
+    "uninstallConfirmContent": "确定要卸载 \"{{name}}\" 吗？",
+    "uninstallOkText": "卸载"
+  },
+  "assistantMarket": {
+    "uninstallSuccess": "助手已卸载",
+    "uninstallError": "卸载助手失败",
+    "uninstallConfirmTitle": "卸载助手",
+    "uninstallConfirmContent": "确定要卸载 \"{{name}}\" 吗？",
+    "uninstallOkText": "卸载"
+  },
+  "skillsHub": {
+    "uninstallTooltip": "卸载",
+    "uninstallConfirmTitle": "卸载技能",
+    "uninstallConfirmContent": "确定要卸载 \"{{name}}\" 吗？",
+    "uninstallOkText": "卸载",
+    "uninstallSuccess": "技能已卸载",
+    "uninstallError": "卸载技能出错"
+  },
+  "myAssistant": {
+    "uninstallMenuItem": "卸载",
+    "uninstallTitle": "卸载助手",
+    "uninstallOkText": "卸载",
+    "uninstallConfirm": "确定要卸载此助手吗？此操作无法撤销。"
+  }
+}

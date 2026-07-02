@@ -22,6 +22,8 @@ import guid from './guid.json';
 import agent from './agent.json';
 import team from './team.json';
 import pet from './pet.json';
+// FORK-CUSTOM: fork-only translations
+import fork from './fork.json';
 
 export default {
   common,
@@ -43,4 +45,6 @@ export default {
   agent,
   team,
   pet,
+  // FORK-CUSTOM: fork-only translations
+  fork,
 };

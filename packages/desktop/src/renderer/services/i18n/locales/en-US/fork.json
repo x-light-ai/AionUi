@@ -1,0 +1,30 @@
+{
+  "skillMarket": {
+    "uninstallSuccess": "Skill uninstalled",
+    "uninstallError": "Error uninstalling skill",
+    "uninstallConfirmTitle": "Uninstall Skill",
+    "uninstallConfirmContent": "Are you sure you want to uninstall \"{{name}}\"?",
+    "uninstallOkText": "Uninstall"
+  },
+  "assistantMarket": {
+    "uninstallSuccess": "Assistant uninstalled",
+    "uninstallError": "Error uninstalling assistant",
+    "uninstallConfirmTitle": "Uninstall Assistant",
+    "uninstallConfirmContent": "Are you sure you want to uninstall \"{{name}}\"?",
+    "uninstallOkText": "Uninstall"
+  },
+  "skillsHub": {
+    "uninstallTooltip": "Uninstall",
+    "uninstallConfirmTitle": "Uninstall Skill",
+    "uninstallConfirmContent": "Are you sure you want to uninstall \"{{name}}\"?",
+    "uninstallOkText": "Uninstall",
+    "uninstallSuccess": "Skill uninstalled",
+    "uninstallError": "Error uninstalling skill"
+  },
+  "myAssistant": {
+    "uninstallMenuItem": "Uninstall",
+    "uninstallTitle": "Uninstall Assistant",
+    "uninstallOkText": "Uninstall",
+    "uninstallConfirm": "Are you sure you want to uninstall this assistant? This action cannot be undone."
+  }
+}
