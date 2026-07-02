@@ -1920,6 +1920,7 @@ export type I18nKey =
   | 'settings.removeCustomSkillTitle'
   | 'settings.removeFromAssistant'
   | 'settings.repair.duplicateKeysError'
+  | 'settings.repair.emptyOverridesError'
   | 'settings.repair.envHelp'
   | 'settings.repair.envLabel'
   | 'settings.repair.envOauthNote'
