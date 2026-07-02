@@ -28,6 +28,8 @@ vi.mock('@/common/config/configService', () => ({
   configService: {
     get: configGetMock,
     set: configSetMock,
+    // FORK-CUSTOM: useGuidAssistantSelection -> useXaiworkAgentModels -> useConfig subscribes via useSyncExternalStore
+    subscribe: () => () => {},
   },
 }));
 
@@ -150,14 +152,15 @@ describe('useGuidAssistantSelection', () => {
     );
 
     await waitFor(() => {
-      expect(result.current.selectedAssistantId).toBe('bare-aionrs');
+      // FORK-CUSTOM: default resolves to the claude backend (FORK_DEFAULTS.defaultAssistantBackend)
+      expect(result.current.selectedAssistantId).toBe('assistant-claude');
     });
 
     act(() => {
-      result.current.setSelectedAssistantId('assistant-claude');
+      result.current.setSelectedAssistantId('bare-aionrs');
     });
 
-    expect(configSetMock).toHaveBeenCalledWith('guid.lastAssistantId', 'assistant-claude');
+    expect(configSetMock).toHaveBeenCalledWith('guid.lastAssistantId', 'bare-aionrs');
   });
 
   it('falls back to the default assistant when the persisted guid assistant no longer exists', async () => {
@@ -176,7 +179,8 @@ describe('useGuidAssistantSelection', () => {
     );
 
     await waitFor(() => {
-      expect(result.current.selectedAssistantId).toBe('bare-aionrs');
+      // FORK-CUSTOM: fallback resolves to the claude backend (FORK_DEFAULTS.defaultAssistantBackend)
+      expect(result.current.selectedAssistantId).toBe('assistant-claude');
     });
   });
 
