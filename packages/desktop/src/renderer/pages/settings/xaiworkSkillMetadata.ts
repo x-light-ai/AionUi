@@ -1,12 +1,6 @@
-export interface XaiworkInstalledSkillMetadata {
-  name: string;
-  description: string | null;
-  version: string | null;
-  tags: string[];
-  source: 'market' | 'assistant-bundle';
-  visibility: 'user' | 'dependency';
-  assistant_ids: string[];
-}
+import type { XaiworkInstalledSkillMetadata } from '@/common/adapter/xaiworkBridge';
+
+export type { XaiworkInstalledSkillMetadata } from '@/common/adapter/xaiworkBridge';
 
 interface SkillMetadataTarget {
   name: string;

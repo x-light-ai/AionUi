@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ipcBridge } from '@/common';
+import { xaiworkBridge } from '@/common/adapter/xaiworkBridge';
 import { useAdminMarketClient } from './useAdminMarketClient';
 import type { Assistant } from '@/common/types/agent/assistantTypes';
 import type { MarketItemType, RemoteMarketItem } from './marketClient';
@@ -82,14 +83,14 @@ export function useRemoteMarket(type: MarketItemType) {
       const download = await client.downloadItem(type, item.id);
       const url = resolveDownloadUrl(host, download.storagePath);
       if (type === 'skill') {
-        await ipcBridge.fs.importRemoteSkill.invoke({
+        await xaiworkBridge.skills.importRemote.invoke({
           url,
           description: item.description,
           version: item.version,
           tags: item.tags,
         });
       } else {
-        await ipcBridge.assistants.importRemote.invoke({ url });
+        await xaiworkBridge.assistants.importRemote.invoke({ url });
       }
       await load();
     },

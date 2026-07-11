@@ -167,7 +167,6 @@ export const assistants = {
     }
   ),
   import: httpPost<ImportAssistantsResult, ImportAssistantsRequest>('/api/assistants/import'),
-  importRemote: httpPost<ImportAssistantsResult, { url: string }>('/api/assistants/import-remote'),
 };
 
 // ---------------------------------------------------------------------------
@@ -584,26 +583,12 @@ export const fs = {
       description: string;
       location: string;
       relative_location?: string;
-      version?: string;
-      tags?: string[];
       is_auto_inject: boolean;
       is_custom: boolean;
       source: 'builtin' | 'custom' | 'cron' | 'extension';
     }>,
     void
   >('/api/skills'),
-  listXaiworkSkillMetadata: httpGet<
-    Array<{
-      name: string;
-      description: string | null;
-      version: string | null;
-      tags: string[];
-      source: 'market' | 'assistant-bundle';
-      visibility: 'user' | 'dependency';
-      assistant_ids: string[];
-    }>,
-    void
-  >('/api/xaiwork/skills/metadata'),
   materializeSkillsForAgent: httpPost<
     { skills: Array<{ name: string; source_path: string }> },
     { conversation_id: string; skills: string[] }
@@ -638,13 +623,6 @@ export const fs = {
     }>,
     void
   >('/api/skills/detect-external'),
-  importSkillWithSymlink: httpPost<{ skill_name: string; skill_names?: string[] }, { skill_path: string }>(
-    '/api/skills/import-symlink'
-  ),
-  importRemoteSkill: httpPost<
-    { skill_name: string; skill_names?: string[] },
-    { url: string; description?: string; version?: string; tags?: string[] }
-  >('/api/skills/import-remote'),
   importSkills: httpPost<
     {
       skill_name: string;
@@ -898,29 +876,6 @@ export const acpConversation = {
     (p) => `/api/agents/${p.id}/enabled`,
     (p) => ({ enabled: p.enabled })
   ),
-  // FORK-CUSTOM: XAIWork config broker (server-to-server). AionCore fetches
-  // full model configs (including api_key / config_json) from XAIWork OpenApi
-  // so the renderer only ever sees `{modelId, name}`. `xaiworkHost` and
-  // `xaiworkAuthToken` are forwarded per-request; AionCore does not persist
-  // them. Wire field name is `xaiwork_auth_token` so the upstream httpBridge
-  // sensitive-key regex (`auth[_-]?token`) redacts it in dev-mode logs.
-  listXaiworkModels: httpPost<
-    Array<{ modelId: string; name: string }>,
-    { backend: string; xaiworkHost: string; xaiworkAuthToken: string }
-  >('/api/agents/xaiwork/models', (p) => ({
-    backend: p.backend,
-    xaiwork_host: p.xaiworkHost,
-    xaiwork_auth_token: p.xaiworkAuthToken,
-  })),
-  applyXaiworkModel: httpPost<
-    void,
-    { backend: string; modelId: string; xaiworkHost: string; xaiworkAuthToken: string }
-  >('/api/agents/xaiwork/apply', (p) => ({
-    backend: p.backend,
-    model_id: p.modelId,
-    xaiwork_host: p.xaiworkHost,
-    xaiwork_auth_token: p.xaiworkAuthToken,
-  })),
   checkManagedAgentHealthById: httpPost<import('@/renderer/utils/model/agentTypes').ManagedAgent, { id: string }>(
     (p) => `/api/agents/${p.id}/health-check`,
     () => undefined

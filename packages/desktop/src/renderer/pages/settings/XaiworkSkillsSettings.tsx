@@ -2,6 +2,7 @@
 // 上游 SkillsHubSettings.tsx 保持原样不动，本文件承载所有 fork 改动，避免 rebase 冲突。
 // 由 fork 容器 XaiworkCapabilitiesSettings 的 Skills tab 嵌入。
 import { ipcBridge } from '@/common';
+import { xaiworkBridge } from '@/common/adapter/xaiworkBridge';
 import { Message, Modal } from '@arco-design/web-react';
 import { FolderOpen, Info, Puzzle, Search, Refresh } from '@icon-park/react';
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
@@ -67,7 +68,7 @@ const XaiworkSkillsSettings: React.FC<XaiworkSkillsSettingsProps> = ({ withWrapp
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const metadataRequest = ipcBridge.fs.listXaiworkSkillMetadata
+      const metadataRequest = xaiworkBridge.skills.listMetadata
         .invoke()
         .catch((error): XaiworkInstalledSkillMetadata[] => {
           console.warn('Failed to fetch XAIWork skill metadata; using the standard skill list:', error);
@@ -112,7 +113,7 @@ const XaiworkSkillsSettings: React.FC<XaiworkSkillsSettingsProps> = ({ withWrapp
 
   const handleImport = async (skillPath: string) => {
     try {
-      const result = await ipcBridge.fs.importSkillWithSymlink.invoke({ skill_path: skillPath });
+      const result = await xaiworkBridge.skills.importWithSymlink.invoke({ skill_path: skillPath });
       const importedNames = result.skill_names?.length
         ? result.skill_names
         : result.skill_name

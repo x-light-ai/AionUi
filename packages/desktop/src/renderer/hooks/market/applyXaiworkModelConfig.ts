@@ -8,7 +8,7 @@
 // AionCore fetches the full config (baseUrl / apiKey / configJson) server-to-
 // server from XAIWork OpenApi and writes agent env + local CLI settings.
 // The renderer only passes non-sensitive identifiers plus its XAIWork JWT.
-import { ipcBridge } from '@/common';
+import { xaiworkBridge } from '@/common/adapter/xaiworkBridge';
 
 /**
  * Apply a model's config to a builtin agent (claude / codex).
@@ -25,7 +25,7 @@ export async function applyXaiworkModelConfig(
   host: string,
   authToken: string
 ): Promise<void> {
-  await ipcBridge.acpConversation.applyXaiworkModel.invoke({
+  await xaiworkBridge.agents.applyModel.invoke({
     backend,
     modelId,
     xaiworkHost: host,

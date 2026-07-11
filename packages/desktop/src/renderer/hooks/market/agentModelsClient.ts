@@ -2,7 +2,7 @@
 // /api/agents/xaiwork/* endpoints — the renderer never talks to XAIWork
 // OpenApi directly, so credentials (api_key / config_json) stay server-side.
 
-import { ipcBridge } from '@/common';
+import { xaiworkBridge } from '@/common/adapter/xaiworkBridge';
 
 /**
  * One distributed model as surfaced to the renderer.
@@ -17,7 +17,7 @@ export function createAgentModelsClient(host: string, authToken: string) {
   return {
     /** Fetch public model info (id + name) for a builtin agent backend. */
     listModels(backend: string): Promise<XaiworkAgentModel[]> {
-      return ipcBridge.acpConversation.listXaiworkModels.invoke({
+      return xaiworkBridge.agents.listModels.invoke({
         backend,
         xaiworkHost: host,
         xaiworkAuthToken: authToken,

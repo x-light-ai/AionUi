@@ -1,5 +1,5 @@
 /**
- * FORK-CUSTOM: tests for the XAIWork agent model IPC clients (credential-safe distribution).
+ * FORK-CUSTOM: tests for the XAIWork agent model bridge clients (credential-safe distribution).
  * @vitest-environment node
  */
 
@@ -10,11 +10,11 @@ const { listXaiworkModelsInvoke, applyXaiworkModelInvoke } = vi.hoisted(() => ({
   applyXaiworkModelInvoke: vi.fn(),
 }));
 
-vi.mock('@/common', () => ({
-  ipcBridge: {
-    acpConversation: {
-      listXaiworkModels: { invoke: listXaiworkModelsInvoke },
-      applyXaiworkModel: { invoke: applyXaiworkModelInvoke },
+vi.mock('@/common/adapter/xaiworkBridge', () => ({
+  xaiworkBridge: {
+    agents: {
+      listModels: { invoke: listXaiworkModelsInvoke },
+      applyModel: { invoke: applyXaiworkModelInvoke },
     },
   },
 }));
@@ -27,7 +27,7 @@ describe('market/agentModelsClient', () => {
     vi.clearAllMocks();
   });
 
-  it('forwards backend + host + token to the listXaiworkModels IPC', async () => {
+  it('forwards backend + host + token to the XAIWork bridge', async () => {
     const models = [{ modelId: 'm1', name: 'Model One' }];
     listXaiworkModelsInvoke.mockResolvedValue(models);
 
@@ -58,7 +58,7 @@ describe('market/applyXaiworkModelConfig', () => {
     vi.clearAllMocks();
   });
 
-  it('forwards backend + modelId + host + token to the applyXaiworkModel IPC', async () => {
+  it('forwards backend + modelId + host + token to the XAIWork bridge', async () => {
     applyXaiworkModelInvoke.mockResolvedValue(undefined);
 
     await applyXaiworkModelConfig('claude', 'model-42', 'https://api.xaiwork.com', 'jwt-token');
