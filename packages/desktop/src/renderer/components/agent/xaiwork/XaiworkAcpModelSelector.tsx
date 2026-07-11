@@ -4,7 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useAcpModelInfo } from '@/renderer/hooks/agent/useAcpModelInfo';
+// FORK-CUSTOM: use the XAIWork override wrapper (same signature/return as
+// useAcpModelInfo) so the dropdown shows XAIWork-distributed models when
+// configured, and falls back to ACP-handshake models otherwise.
+import { useAcpModelInfoXaiwork as useAcpModelInfo } from '@/renderer/hooks/agent/useAcpModelInfoXaiwork';
 import { classifyConfigSetError } from '@/renderer/hooks/agent/useAcpConfigOptions';
 import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
 import { warmupConversation } from '@/renderer/pages/conversation/utils/warmupConversation';
@@ -14,14 +17,14 @@ import { Dropdown, Menu, Message, Tooltip } from '@arco-design/web-react';
 import { Brain, Down } from '@icon-park/react';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import RuntimeSelectorPill from './RuntimeSelectorPill';
+import RuntimeSelectorPill from '../RuntimeSelectorPill';
 import {
   composeRuntimeSelectorLabel,
   isConfigSetting,
   RuntimeSelectorCheckedItem,
   RuntimeSelectorMenuDivider,
   renderThoughtLevelMenuGroup,
-} from './runtimeSelectorOptions';
+} from '../runtimeSelectorOptions';
 
 const configErrorMessageKey = (error: unknown) => {
   const errorKind = classifyConfigSetError(error);
@@ -40,7 +43,7 @@ const configErrorMessageKey = (error: unknown) => {
  * Data fetching/syncing lives in `useAcpModelInfo` so the mobile action
  * sheet can read from the same source.
  */
-const AcpModelSelector: React.FC<{
+const XaiworkAcpModelSelector: React.FC<{
   conversation_id: string;
   /** ACP backend name for loading cached models (e.g., 'claude', 'qwen') */
   backend?: string;
@@ -61,7 +64,6 @@ const AcpModelSelector: React.FC<{
     onSelectModelSuccess: () => Message.success(t('agent.model.switchSuccess')),
     onSelectModelFailed: (_modelId, error) => Message.error(t(configErrorMessageKey(error))),
   });
-
   const defaultModelLabel = t('common.defaultModel');
   const rawDisplayLabel =
     (model_info?.current_model_id &&
@@ -168,4 +170,4 @@ const AcpModelSelector: React.FC<{
   );
 };
 
-export default AcpModelSelector;
+export default XaiworkAcpModelSelector;

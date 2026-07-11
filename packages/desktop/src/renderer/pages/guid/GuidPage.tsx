@@ -12,12 +12,14 @@ import type { AssistantDetail } from '@/common/types/agent/assistantTypes';
 import { useInputFocusRing } from '@/renderer/hooks/chat/useInputFocusRing';
 import { openExternalUrl } from '@/renderer/utils/platform';
 import AssistantSelectionArea from './components/AssistantSelectionArea';
-import GuidActionRow from './components/GuidActionRow';
+// FORK-CUSTOM: use the isolated XAIWork action row without modifying the upstream component.
+import XaiworkGuidActionRow from './xaiwork/XaiworkGuidActionRow';
 import GuidInputCard from './components/GuidInputCard';
 import GuidModelSelector from './components/GuidModelSelector';
 import QuickActionButtons from './components/QuickActionButtons';
 import FeedbackReportModal from '@/renderer/components/settings/SettingsModal/contents/FeedbackReportModal';
-import { useGuidAssistantSelection } from './hooks/useGuidAssistantSelection';
+// FORK-CUSTOM: use the isolated assistant/model selection policy.
+import { useXaiworkGuidAssistantSelection } from './xaiwork/useXaiworkGuidAssistantSelection';
 import { useGuidInput } from './hooks/useGuidInput';
 import { useGuidModelSelection } from './hooks/useGuidModelSelection';
 import { useGuidSend } from './hooks/useGuidSend';
@@ -29,7 +31,6 @@ import { resolveGuidAssistantDefaults } from './utils/assistantDefaults';
 import SpeechInputButton from '@/renderer/components/chat/SpeechInputButton';
 import { appendSpeechTranscript } from '@/renderer/hooks/system/useSpeechInput';
 import { useLiveTranscriptInsertion } from '@/renderer/hooks/system/useLiveTranscriptInsertion';
-import { useConfig } from '@/renderer/hooks/config/useConfig';
 // FORK-CUSTOM: 读取欢迎页快捷按钮可见性开关
 import { useXaiworkConfig } from '@/renderer/hooks/useXaiworkConfig';
 import { Button, ConfigProvider } from '@arco-design/web-react';
@@ -114,7 +115,7 @@ const GuidPage: React.FC = () => {
   } | null;
   const resetAssistantRequested = navState?.resetAssistant === true;
   const preselectAssistantId = navState?.selectedAssistantId;
-  const agentSelection = useGuidAssistantSelection({
+  const agentSelection = useXaiworkGuidAssistantSelection({
     resetAssistant: resetAssistantRequested,
     preselectAssistantId,
     locationKey: location.key,
@@ -479,7 +480,7 @@ const GuidPage: React.FC = () => {
 
   // Build the action row
   const actionRowNode = (
-    <GuidActionRow
+    <XaiworkGuidActionRow
       files={guidInput.files}
       onFilesUploaded={guidInput.handleFilesUploaded}
       modelSelectorNode={modelSelectorNode}

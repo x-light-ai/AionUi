@@ -15,11 +15,8 @@ import { type TFunction } from 'i18next';
 import type { NavigateFunction } from 'react-router-dom';
 import { mutate as swrMutate } from 'swr';
 import { getConversationCreateErrorMessage } from '@/renderer/pages/conversation/utils/conversationCreateError';
-// FORK-CUSTOM: XAIWork model config application on new-conversation create.
-import { XAIWORK_BRAND } from '@/common/config/xaiworkBrand';
-import { useXaiworkAgentModels } from '@/renderer/hooks/agent/useXaiworkAgentModels';
-import { applyXaiworkModelConfig } from '@/renderer/hooks/market/applyXaiworkModelConfig';
-import { readXaiworkRemoteAuth } from '@/renderer/hooks/xaiworkRemoteAuth';
+// FORK-CUSTOM: isolated model guard for new-conversation creation.
+import { useXaiworkCreateGuard } from '../xaiwork/useXaiworkCreateGuard';
 import type { AcpModelInfo } from '../types';
 
 export type GuidSendDeps = {
@@ -104,14 +101,8 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
   } = deps;
   const sendingRef = useRef(false);
 
-  // FORK-CUSTOM: distributed models for the active backend. Credentials (baseUrl
-  // / apiKey) never touch the renderer — AionCore fetches them server-side.
-  const xaiworkBackend = selectedAssistantBackend;
-  const { byModelId: xaiworkByModelId, hasModels: xaiworkHasModels } = useXaiworkAgentModels(
-    xaiworkBackend || undefined
-  );
-  // FORK-CUSTOM: fixed XAIWork host from brand config (see XAIWORK_BRAND.apiHost).
-  const xaiworkHost = XAIWORK_BRAND.apiHost;
+  // FORK-CUSTOM: one lifecycle entry point; credentials stay inside the fork hook.
+  const applyXaiworkCreateGuard = useXaiworkCreateGuard(selectedAssistantBackend);
 
   const handleSend = useCallback(async () => {
     if (!selectedAssistantId) {
@@ -217,20 +208,8 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
     }
 
     try {
-      // FORK-CUSTOM: apply XAIWork distributed model config before session spawns
-      if (xaiworkHasModels) {
-        const selectedId = selectedAcpModel || currentAcpCachedModelInfo?.current_model_id || undefined;
-        const relayModel = selectedId ? xaiworkByModelId.get(selectedId) : undefined;
-        const effectiveHost = xaiworkHost?.trim() || '';
-        const authToken = readXaiworkRemoteAuth()?.accessToken ?? '';
-        if (relayModel && xaiworkBackend && effectiveHost && authToken) {
-          try {
-            await applyXaiworkModelConfig(xaiworkBackend, relayModel.modelId, effectiveHost, authToken);
-          } catch (error) {
-            console.error('Failed to apply XAIWork model config before conversation create:', error);
-          }
-        }
-      }
+      // FORK-CUSTOM: apply XAIWork distributed model config before session spawns.
+      await applyXaiworkCreateGuard(selectedAcpModel, currentAcpCachedModelInfo?.current_model_id);
       const conversation = await ipcBridge.conversation.create.invoke({
         name: input,
         assistant: {
@@ -296,6 +275,7 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
     navigate,
     t,
     localeKey,
+    applyXaiworkCreateGuard,
   ]);
 
   const sendMessageHandler = useCallback(() => {

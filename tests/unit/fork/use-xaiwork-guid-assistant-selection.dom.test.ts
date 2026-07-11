@@ -13,11 +13,12 @@ import {
   buildAgentRuntimeModelInfo,
   buildAssistantModelInfo,
   resolveInitialAssistantModel,
-  useGuidAssistantSelection,
-} from '@/renderer/pages/guid/hooks/useGuidAssistantSelection';
+  useXaiworkGuidAssistantSelection as useGuidAssistantSelection,
+} from '@/renderer/pages/guid/xaiwork/useXaiworkGuidAssistantSelection';
 
 let mockAssistants: Assistant[] = [];
 let mockManagedAgents: ManagedAgent[] = [];
+let mockXaiworkModels: Array<{ modelId: string; name: string }> = [];
 
 const { configGetMock, configSetMock } = vi.hoisted(() => ({
   configGetMock: vi.fn(),
@@ -28,12 +29,16 @@ vi.mock('@/common/config/configService', () => ({
   configService: {
     get: configGetMock,
     set: configSetMock,
+    // FORK-CUSTOM: useGuidAssistantSelection -> useXaiworkAgentModels -> useConfig subscribes via useSyncExternalStore
+    subscribe: () => () => {},
   },
 }));
 
 vi.mock('@/renderer/pages/guid/hooks/useCustomAgentsLoader', () => ({
   useCustomAgentsLoader: () => ({
-    assistants: mockAssistants,
+    // FORK-CUSTOM: filter generated assistants for UI display, expose all for fallback
+    assistants: mockAssistants.filter((a) => a.source !== 'generated'),
+    allAssistants: mockAssistants,
   }),
 }));
 
@@ -41,11 +46,24 @@ vi.mock('@/renderer/hooks/agent/useManagedAgents', () => ({
   useManagedAgentRuntimeCatalog: () => mockManagedAgents,
 }));
 
+vi.mock('@/renderer/hooks/agent/useXaiworkAgentModels', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/renderer/hooks/agent/useXaiworkAgentModels')>();
+  return {
+    ...actual,
+    useXaiworkAgentModels: () => ({
+      models: mockXaiworkModels,
+      byModelId: new Map(mockXaiworkModels.map((model) => [model.modelId, model])),
+      hasModels: mockXaiworkModels.length > 0,
+    }),
+  };
+});
+
 describe('useGuidAssistantSelection', () => {
   beforeEach(() => {
     configGetMock.mockReturnValue(undefined);
     configSetMock.mockResolvedValue(undefined);
     mockManagedAgents = [];
+    mockXaiworkModels = [];
     mockAssistants = [
       {
         id: 'assistant-claude',
@@ -148,14 +166,15 @@ describe('useGuidAssistantSelection', () => {
     );
 
     await waitFor(() => {
-      expect(result.current.selectedAssistantId).toBe('bare-aionrs');
+      // FORK-CUSTOM: default resolves to the claude backend (XAIWORK_DEFAULTS.defaultAssistantBackend)
+      expect(result.current.selectedAssistantId).toBe('assistant-claude');
     });
 
     act(() => {
-      result.current.setSelectedAssistantId('assistant-claude');
+      result.current.setSelectedAssistantId('bare-aionrs');
     });
 
-    expect(configSetMock).toHaveBeenCalledWith('guid.lastAssistantId', 'assistant-claude');
+    expect(configSetMock).toHaveBeenCalledWith('guid.lastAssistantId', 'bare-aionrs');
   });
 
   it('falls back to the default assistant when the persisted guid assistant no longer exists', async () => {
@@ -174,7 +193,8 @@ describe('useGuidAssistantSelection', () => {
     );
 
     await waitFor(() => {
-      expect(result.current.selectedAssistantId).toBe('bare-aionrs');
+      // FORK-CUSTOM: fallback resolves to the claude backend (XAIWORK_DEFAULTS.defaultAssistantBackend)
+      expect(result.current.selectedAssistantId).toBe('assistant-claude');
     });
   });
 
@@ -183,11 +203,13 @@ describe('useGuidAssistantSelection', () => {
     vi.doMock('@/renderer/pages/guid/hooks/useCustomAgentsLoader', () => ({
       useCustomAgentsLoader: () => ({
         assistants: [],
+        // FORK-CUSTOM: allAssistants required for fallback logic
+        allAssistants: [],
       }),
     }));
 
-    const { useGuidAssistantSelection: useSelectionWithoutAssistants } =
-      await import('@/renderer/pages/guid/hooks/useGuidAssistantSelection');
+    const { useXaiworkGuidAssistantSelection: useSelectionWithoutAssistants } =
+      await import('@/renderer/pages/guid/xaiwork/useXaiworkGuidAssistantSelection');
 
     const { result } = renderHook(() =>
       useSelectionWithoutAssistants({
@@ -407,6 +429,49 @@ describe('useGuidAssistantSelection', () => {
     rerender();
 
     expect(result.current.selectedAcpModel).toBe('global.anthropic.claude-opus-4-8');
+  });
+
+  // FORK-CUSTOM: regression for preserving the user's XAIWork model choice on the new-conversation page.
+  it('keeps a guid-page XAIWork model selection across same-assistant model-list refreshes', async () => {
+    mockAssistants = [
+      assistantFixture({ id: 'assistant-claude-xaiwork', runtimeKey: 'claude', source: 'builtin', sortOrder: 1 }),
+    ];
+    mockXaiworkModels = [
+      { modelId: 'xaiwork-1', name: 'XAIWork One' },
+      { modelId: 'xaiwork-2', name: 'XAIWork Two' },
+    ];
+
+    const { result, rerender } = renderHook(() =>
+      useGuidAssistantSelection({
+        resetAssistant: false,
+      })
+    );
+
+    await waitFor(() => {
+      expect(result.current.selectedAcpModel).toBe('xaiwork-1');
+    });
+
+    act(() => {
+      result.current.setSelectedAcpModel('xaiwork-2');
+    });
+
+    expect(result.current.selectedAcpModel).toBe('xaiwork-2');
+
+    mockXaiworkModels = [
+      { modelId: 'xaiwork-1', name: 'XAIWork One' },
+      { modelId: 'xaiwork-2', name: 'XAIWork Two' },
+    ];
+    rerender();
+
+    expect(result.current.selectedAcpModel).toBe('xaiwork-2');
+    expect(result.current.currentAcpCachedModelInfo).toEqual({
+      current_model_id: 'xaiwork-2',
+      current_model_label: 'XAIWork Two',
+      available_models: [
+        { id: 'xaiwork-1', label: 'XAIWork One' },
+        { id: 'xaiwork-2', label: 'XAIWork Two' },
+      ],
+    });
   });
 
   it('does not fall back to historical static modes when managed agent catalog has no modes', async () => {

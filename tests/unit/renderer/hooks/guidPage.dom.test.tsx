@@ -160,8 +160,8 @@ vi.mock('@/renderer/pages/guid/hooks/useGuidModelSelection', () => ({
 
 const useGuidAssistantSelectionMock = vi.fn(() => agentSelectionMock);
 
-vi.mock('@/renderer/pages/guid/hooks/useGuidAssistantSelection', () => ({
-  useGuidAssistantSelection: (...args: unknown[]) => useGuidAssistantSelectionMock(...args),
+vi.mock('@/renderer/pages/guid/xaiwork/useXaiworkGuidAssistantSelection', () => ({
+  useXaiworkGuidAssistantSelection: (...args: unknown[]) => useGuidAssistantSelectionMock(...args),
   resolveAssistantSelectionKey: vi.fn(),
   pickDefaultAssistantSelectionKey: vi.fn(),
 }));
@@ -188,7 +188,7 @@ vi.mock('@/renderer/pages/guid/components/AssistantSelectionArea', () => ({
   },
 }));
 
-vi.mock('@/renderer/pages/guid/components/GuidActionRow', () => ({
+vi.mock('@/renderer/pages/guid/xaiwork/XaiworkGuidActionRow', () => ({
   default: (props: Record<string, unknown>) => {
     capturedGuidActionRowProps.push(props);
     return <div data-testid='guid-action-row' />;

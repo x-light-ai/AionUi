@@ -12,7 +12,8 @@ import { classifyConfigSetError, useAcpConfigOptions } from '@/renderer/hooks/ag
 import ChatLayout from '@/renderer/pages/conversation/components/ChatLayout';
 import ChatSlider from '@renderer/pages/conversation/components/ChatSlider.tsx';
 import { useTeamPendingPermissions } from './hooks/useTeamPendingPermissions';
-import AcpModelSelector from '@/renderer/components/agent/AcpModelSelector';
+// FORK-CUSTOM: XAIWork-distributed model selector wrapper.
+import XaiworkAcpModelSelector from '@/renderer/components/agent/xaiwork/XaiworkAcpModelSelector';
 import AionrsModelSelector from '@/renderer/pages/conversation/platforms/aionrs/AionrsModelSelector';
 import { useAionrsModelSelection } from '@/renderer/pages/conversation/platforms/aionrs/useAionrsModelSelection';
 import TeamTabs from './components/TeamTabs';
@@ -163,7 +164,7 @@ const AssistantChatSlot: React.FC<{
         <div className='flex items-center gap-8px shrink-0'>
           {!isMobile && assistant.conversation_id && !isAionrs && isAcpLike && (
             <div className='min-w-0 max-w-140px [&_button]:max-w-full [&_button_span]:truncate'>
-              <AcpModelSelector
+              <XaiworkAcpModelSelector
                 key={assistant.conversation_id}
                 conversation_id={assistant.conversation_id}
                 backend={assistant.assistant_backend}

@@ -4,7 +4,7 @@ import type { Assistant } from '@/common/types/agent/assistantTypes';
 import {
   pickDefaultAssistantSelectionKey,
   resolveAssistantSelectionKey,
-} from '@/renderer/pages/guid/hooks/useGuidAssistantSelection';
+} from '@/renderer/pages/guid/xaiwork/useXaiworkGuidAssistantSelection';
 
 describe('guid assistant selection helpers', () => {
   const assistants: Assistant[] = [
@@ -22,12 +22,21 @@ describe('guid assistant selection helpers', () => {
     expect(resolveAssistantSelectionKey('aionrs', assistants)).toBeUndefined();
   });
 
-  it('defaults to the generated aionrs assistant when available', () => {
-    expect(pickDefaultAssistantSelectionKey(assistants)).toBe('bare-aionrs');
+  // FORK-CUSTOM: generated assistants are hidden, so default should pick builtin/user first
+  it('defaults to a builtin/user assistant when generated assistants are filtered out', () => {
+    const visibleAssistants = assistants.filter((a) => a.source !== 'generated');
+    expect(pickDefaultAssistantSelectionKey(visibleAssistants)).toBe('builtin-writer');
+  });
+
+  // FORK-CUSTOM: fallback to generated assistants when no visible assistants exist
+  it('falls back to generated aionrs assistant when no visible assistants exist', () => {
+    const generatedOnly = assistants.filter((a) => a.source === 'generated');
+    expect(pickDefaultAssistantSelectionKey([], generatedOnly)).toBe('bare-aionrs');
   });
 
   it('returns null when no assistants are available', () => {
     expect(pickDefaultAssistantSelectionKey([])).toBeNull();
+    expect(pickDefaultAssistantSelectionKey([], [])).toBeNull();
   });
 });
 

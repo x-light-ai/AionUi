@@ -12,8 +12,9 @@ import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
 import { getCleanFileNames, FileService } from '@/renderer/services/FileService';
 import { iconColors } from '@/renderer/styles/colors';
 import { isElectronDesktop } from '@/renderer/utils/platform';
+import GuidSkillSelector, { type GuidSkillItem } from '../components/GuidSkillSelector';
 import { Button, Checkbox, Dropdown, Menu, Message, Tooltip } from '@arco-design/web-react';
-import { ArrowUp, Lightning, Plus, Shield, UploadOne } from '@icon-park/react';
+import { ArrowUp, Plus, Shield, UploadOne } from '@icon-park/react';
 import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from '../index.module.css';
@@ -34,9 +35,9 @@ type GuidActionRowProps = {
 
   // Skills management
   allSkills: Array<{ name: string; description: string; isAuto: boolean }>;
-  disabledBuiltinSkills: string[];
-  enabledSkills: string[];
-  onToggleSkill: (name: string, isAuto: boolean) => void;
+  // FORK-CUSTOM: click a skill in the bottom-toolbar selector — adds it to the set
+  // and fills `/skill-name` into the input.
+  onSelectSkill: (skill: GuidSkillItem) => void;
   mcpServers: IMcpServer[];
   selectedMcpServerIds: string[];
   onToggleMcpServer: (serverId: string) => void;
@@ -48,7 +49,7 @@ type GuidActionRowProps = {
   onSend: () => void;
 };
 
-const GuidActionRow: React.FC<GuidActionRowProps> = ({
+const XaiworkGuidActionRow: React.FC<GuidActionRowProps> = ({
   files,
   onFilesUploaded,
   modelSelectorNode,
@@ -57,9 +58,7 @@ const GuidActionRow: React.FC<GuidActionRowProps> = ({
   dynamicModes = [],
   onModeSelect,
   allSkills,
-  disabledBuiltinSkills,
-  enabledSkills,
-  onToggleSkill,
+  onSelectSkill,
   mcpServers,
   selectedMcpServerIds,
   onToggleMcpServer,
@@ -105,10 +104,6 @@ const GuidActionRow: React.FC<GuidActionRowProps> = ({
 
   const isWebUI = !isElectronDesktop();
 
-  const isSkillChecked = (skill: { name: string; isAuto: boolean }) =>
-    skill.isAuto ? !disabledBuiltinSkills.includes(skill.name) : enabledSkills.includes(skill.name);
-
-  const activeSkillCount = allSkills.filter(isSkillChecked).length;
   const activeMcpCount = selectedMcpServerIds.length;
 
   const menuContent = (
@@ -153,44 +148,6 @@ const GuidActionRow: React.FC<GuidActionRowProps> = ({
             <span>{t('common.fileAttach.addFiles')}</span>
           </div>
         </Menu.Item>
-      )}
-      {allSkills.length > 0 && (
-        <Menu.SubMenu
-          key='skills'
-          title={
-            <div className='flex items-center gap-8px'>
-              <Lightning theme='filled' size='16' fill={iconColors.primary} style={{ lineHeight: 0 }} />
-              <span>
-                {t('settings.capabilitiesTab.skills')} ({activeSkillCount}/{allSkills.length})
-              </span>
-            </div>
-          }
-          triggerProps={{
-            popupStyle: {
-              maxHeight: 360,
-              overflowY: 'auto',
-              overflowX: 'hidden',
-            },
-          }}
-        >
-          {allSkills.map((skill) => (
-            <Menu.Item
-              key={`skill-${skill.name}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleSkill(skill.name, skill.isAuto);
-              }}
-            >
-              <Checkbox
-                checked={isSkillChecked(skill)}
-                onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                onChange={() => onToggleSkill(skill.name, skill.isAuto)}
-              >
-                <span className='text-13px'>{skill.name}</span>
-              </Checkbox>
-            </Menu.Item>
-          ))}
-        </Menu.SubMenu>
       )}
       {mcpServers.length > 0 && (
         <Menu.SubMenu
@@ -271,6 +228,10 @@ const GuidActionRow: React.FC<GuidActionRowProps> = ({
             />
           )}
         </div>
+        {/* FORK-CUSTOM: skill selector placed right next to the "+" entry */}
+        {allSkills.length > 0 && (
+          <GuidSkillSelector skills={allSkills} onSelectSkill={onSelectSkill} totalCount={allSkills.length} />
+        )}
       </div>
       <div className={styles.actionSubmit}>
         {configOptionCount > 0 && (
@@ -311,4 +272,4 @@ const GuidActionRow: React.FC<GuidActionRowProps> = ({
   );
 };
 
-export default GuidActionRow;
+export default XaiworkGuidActionRow;

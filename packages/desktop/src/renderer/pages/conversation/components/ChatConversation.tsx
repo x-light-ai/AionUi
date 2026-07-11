@@ -23,7 +23,8 @@ import { emitter } from '../../../utils/emitter';
 import AcpChat from '../platforms/acp/AcpChat';
 import ChatLayout from './ChatLayout';
 import ChatSlider from './ChatSlider.tsx';
-import AcpModelSelector from '@/renderer/components/agent/AcpModelSelector';
+// FORK-CUSTOM: XAIWork-distributed model selector wrapper.
+import XaiworkAcpModelSelector from '@/renderer/components/agent/xaiwork/XaiworkAcpModelSelector';
 import { getConversationOrNull } from '@/renderer/pages/conversation/utils/conversationCache';
 import { getConversationCreateErrorMessage } from '@/renderer/pages/conversation/utils/conversationCreateError';
 import { warmupConversation } from '@/renderer/pages/conversation/utils/warmupConversation';
@@ -314,7 +315,7 @@ const ChatConversation: React.FC<{
     if (conversation.type === 'acp') {
       const extra = conversation.extra as { current_model_id?: string };
       return (
-        <AcpModelSelector
+        <XaiworkAcpModelSelector
           conversation_id={conversation.id}
           backend={resolvedConversationBackend}
           initialModelId={extra.current_model_id}
