@@ -3,6 +3,7 @@ import useSWR from 'swr';
 import { resolveAgentAvatar, useAgentLogos } from '@renderer/utils/model/agentLogo';
 import { usePresetAssistantInfo } from '@renderer/hooks/agent/usePresetAssistantInfo';
 import { getConversationOrNull } from '@/renderer/pages/conversation/utils/conversationCache';
+import { Robot } from '@icon-park/react';
 
 type Props = {
   assistant_name: string;
@@ -16,8 +17,11 @@ type Props = {
   /** Used for emoji presets (text-based avatar) and the first-letter fallback circle. */
   avatarClassName?: string;
   nameClassName?: string;
+  nameStyle?: React.CSSProperties;
   nameTestId?: string;
   crownClassName?: string;
+  /** 叠加在头像右下角的节点（如状态点）。传入时头像外层为 relative 定位容器。 */
+  avatarOverlay?: React.ReactNode;
 };
 
 const TeamAgentIdentity: React.FC<Props> = ({
@@ -30,8 +34,10 @@ const TeamAgentIdentity: React.FC<Props> = ({
   logoClassName,
   avatarClassName,
   nameClassName,
+  nameStyle,
   nameTestId,
   crownClassName,
+  avatarOverlay,
 }) => {
   const logos = useAgentLogos();
   // Share the SWR key with AgentChatSlot / TeamChatEmptyState so this hits cache instead of firing a fetch
@@ -50,6 +56,13 @@ const TeamAgentIdentity: React.FC<Props> = ({
 
   const renderAvatar = () => {
     if (presetInfo) {
+      if (presetInfo.isFallback) {
+        return (
+          <span className={resolvedAvatarClassName}>
+            <Robot theme='outline' size={12} />
+          </span>
+        );
+      }
       if (presetInfo.isEmoji) {
         return <span className={resolvedAvatarClassName}>{presetInfo.logo}</span>;
       }
@@ -61,7 +74,11 @@ const TeamAgentIdentity: React.FC<Props> = ({
     if (agentAvatar.kind === 'emoji') {
       return <span className={resolvedAvatarClassName}>{agentAvatar.value}</span>;
     }
-    return <span className={resolvedAvatarClassName}>{displayName.charAt(0).toUpperCase() || '🤖'}</span>;
+    return (
+      <span className={resolvedAvatarClassName}>
+        <Robot theme='outline' size={12} />
+      </span>
+    );
   };
 
   const crownIcon = (
@@ -86,8 +103,19 @@ const TeamAgentIdentity: React.FC<Props> = ({
 
   return (
     <div className={['flex items-center gap-8px', className].filter(Boolean).join(' ')}>
-      {renderAvatar()}
-      <span data-testid={nameTestId} className={['min-w-0 flex-1 truncate', nameClassName].filter(Boolean).join(' ')}>
+      {avatarOverlay ? (
+        <span className='relative shrink-0 inline-flex'>
+          {renderAvatar()}
+          {avatarOverlay}
+        </span>
+      ) : (
+        renderAvatar()
+      )}
+      <span
+        data-testid={nameTestId}
+        className={['min-w-0 flex-1 truncate', nameClassName].filter(Boolean).join(' ')}
+        style={nameStyle}
+      >
         {displayName}
       </span>
       {isLeader && (

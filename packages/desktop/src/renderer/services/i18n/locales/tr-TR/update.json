@@ -22,11 +22,18 @@
   "readyToInstallDesc": "Güncelleme indirildi. Yeniden başlatmak ve güncellemeyi yüklemek için aşağıdaki düğmeye tıklayın.",
   "installNow": "Şimdi yükle ve yeniden başlat",
   "restartNow": "Şimdi yeniden başlat",
+  "preparingInstall": "Hazırlanıyor...",
   "installWarning": "Kurulum sırasında uygulamayı manuel olarak açmayın. Uygulama otomatik olarak yeniden başlayacaktır.",
   "autoUpdateMode": "Otomatik güncelleme modu",
   "showInFolder": "Klasörde göster",
   "openFile": "Dosyayı aç",
   "errorTitle": "Güncelleme başarısız",
+  "installerLastFailure": {
+    "title": "Son güncelleme tamamlanmadı",
+    "description": "Önceki sessiz güncelleme sırasında AionUi kapatılamadı. Güncellemeyi yeniden deneyebilir, kurulum günlüğünü görüntüleyebilir veya geri bildirim gönderebilirsiniz.",
+    "retryUpdate": "Güncellemeyi yeniden dene",
+    "viewLog": "Günlüğü görüntüle"
+  },
   "errors": {
     "invalidUrl": "Geçersiz indirme URL'si",
     "httpsOnly": "Yalnızca HTTPS indirme URL'lerine izin verilir",
@@ -40,7 +47,9 @@
     "downloadNoBody": "İndirme yanıtında gövde yok",
     "missingUrl": "İndirme URL'si eksik",
     "checkReturnedNull": "Güncelleme kontrolü sonuç döndürmedi. Paketlenmiş uygulama veya zorunlu geliştirme güncelleme yapılandırması gerekir.",
-    "missingDownloadId": "İndirme ID eksik"
+    "missingDownloadId": "İndirme ID eksik",
+    "prepareInstallTimeout": "Kurulum hazırlığı zaman aşımına uğradı. Lütfen daha sonra tekrar deneyin.",
+    "prepareInstallFailed": "Kurulum hazırlığı başarısız oldu. Lütfen daha sonra tekrar deneyin."
   },
   "releaseNotesLoading": "Güncelleme ayrıntıları alınıyor...",
   "releaseNotesFailed": "Ayrıntılar alınamadı.",

@@ -11,17 +11,20 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { IResponseMessage } from '@/common/adapter/ipcBridge';
 import type { AcpConfigOptionDto, AcpModelInfo } from '@/common/types/platform/acpTypes';
 import { useAcpModelInfo } from '@/renderer/hooks/agent/useAcpModelInfo';
+import { resetEnsureConversationRuntimeStateForTests } from '@/renderer/pages/conversation/utils/ensureConversationRuntime';
 
-const { getConfigOptionsInvokeMock, setConfigOptionInvokeMock, responseStreamHandlers } = vi.hoisted(() => ({
-  getConfigOptionsInvokeMock: vi.fn(),
+const { ensureRuntimeInvokeMock, setConfigOptionInvokeMock, responseStreamHandlers } = vi.hoisted(() => ({
+  ensureRuntimeInvokeMock: vi.fn(),
   setConfigOptionInvokeMock: vi.fn(),
   responseStreamHandlers: [] as Array<(message: IResponseMessage) => void>,
 }));
 
 vi.mock('@/common', () => ({
   ipcBridge: {
+    conversation: {
+      ensureRuntime: { invoke: ensureRuntimeInvokeMock },
+    },
     acpConversation: {
-      getConfigOptions: { invoke: getConfigOptionsInvokeMock },
       setConfigOption: { invoke: setConfigOptionInvokeMock },
       responseStream: {
         on: vi.fn().mockImplementation((handler: (message: IResponseMessage) => void) => {
@@ -111,9 +114,10 @@ describe('useAcpModelInfo', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     responseStreamHandlers.length = 0;
-    getConfigOptionsInvokeMock.mockReset();
+    resetEnsureConversationRuntimeStateForTests();
+    ensureRuntimeInvokeMock.mockReset();
     setConfigOptionInvokeMock.mockReset();
-    getConfigOptionsInvokeMock.mockResolvedValue({ config_options: buildConfigOptions() });
+    ensureRuntimeInvokeMock.mockResolvedValue({ recovered: true, config_options: buildConfigOptions(), runtime: null });
     setConfigOptionInvokeMock.mockResolvedValue({
       confirmation: 'observed',
       config_options: buildConfigOptions('opus-4'),
@@ -121,8 +125,10 @@ describe('useAcpModelInfo', () => {
   });
 
   it('derives model info from the model config option and ignores thought_level values', async () => {
-    getConfigOptionsInvokeMock.mockResolvedValue({
+    ensureRuntimeInvokeMock.mockResolvedValue({
+      recovered: true,
       config_options: buildConfigOptions('opus-4'),
+      runtime: null,
     });
 
     const { result } = renderUseAcpModelInfo({
@@ -136,10 +142,140 @@ describe('useAcpModelInfo', () => {
     });
     expect(result.current.model_info?.available_models.map((model) => model.id)).toEqual(['sonnet-4', 'opus-4']);
     expect(result.current.canSwitch).toBe(true);
+    expect(ensureRuntimeInvokeMock).toHaveBeenCalledWith({ conversation_id: 'conv-1' });
+  });
+
+  it('uses an injected config option loader without starting standalone runtime', async () => {
+    const prepareRuntime = vi.fn().mockResolvedValue(undefined);
+    const loadConfigOptions = vi.fn().mockResolvedValue(buildConfigOptions('opus-4'));
+
+    const { result } = renderUseAcpModelInfo({
+      conversation_id: 'conv-1',
+      backend: 'claude',
+      prepareRuntime,
+      loadConfigOptions,
+    });
+
+    await waitFor(() => {
+      expect(result.current.model_info?.current_model_id).toBe('opus-4');
+    });
+    expect(prepareRuntime).toHaveBeenCalled();
+    expect(loadConfigOptions).toHaveBeenCalledWith('conv-1');
+    expect(ensureRuntimeInvokeMock).not.toHaveBeenCalled();
+  });
+
+  it('runs set-only runtime preparation before selecting a model without warming during initial load', async () => {
+    const calls: string[] = [];
+    const prepareSetRuntime = vi.fn(async () => {
+      calls.push('prepare-set');
+    });
+    const loadConfigOptions = vi.fn(async () => {
+      calls.push('load');
+      return buildConfigOptions('sonnet-4');
+    });
+    setConfigOptionInvokeMock.mockImplementation(async () => {
+      calls.push('set');
+      return {
+        confirmation: 'observed',
+        config_options: buildConfigOptions('opus-4'),
+      };
+    });
+
+    const { result } = renderUseAcpModelInfo({
+      conversation_id: 'conv-1',
+      backend: 'claude',
+      prepareSetRuntime,
+      loadConfigOptions,
+    });
+
+    await waitFor(() => {
+      expect(result.current.canSwitch).toBe(true);
+    });
+    expect(calls).toEqual(['load']);
+    expect(prepareSetRuntime).not.toHaveBeenCalled();
+
+    act(() => {
+      result.current.selectModel('opus-4');
+    });
+
+    await waitFor(() => {
+      expect(setConfigOptionInvokeMock).toHaveBeenCalledWith({
+        conversation_id: 'conv-1',
+        option_id: 'model',
+        value: 'opus-4',
+      });
+    });
+    expect(calls).toEqual(['load', 'prepare-set', 'load', 'set']);
+  });
+
+  it('falls back to the persisted model when the initial config option snapshot fails', async () => {
+    const loadConfigOptions = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('runtime not ready'))
+      .mockResolvedValueOnce(buildConfigOptions('opus-4'));
+
+    const { result } = renderUseAcpModelInfo({
+      conversation_id: 'conv-1',
+      backend: 'claude',
+      initialModelId: 'sonnet-4',
+      loadConfigOptions,
+    });
+
+    await waitFor(() => {
+      expect(loadConfigOptions).toHaveBeenCalledTimes(1);
+    });
+    await waitFor(() => {
+      expect(result.current.model_info?.current_model_id).toBe('sonnet-4');
+      expect(result.current.isLoading).toBe(false);
+    });
+    expect(result.current.canSwitch).toBe(false);
+
+    act(() => {
+      emitStream({
+        type: 'agent_status',
+        conversation_id: 'conv-1',
+        data: { status: 'session_active' },
+      } as unknown as IResponseMessage);
+    });
+
+    await waitFor(() => {
+      expect(result.current.model_info?.current_model_id).toBe('opus-4');
+    });
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it('shows the persisted model while an injected config option snapshot is still loading', async () => {
+    const configOptionsDeferred = deferred<AcpConfigOptionDto[]>();
+    const loadConfigOptions = vi.fn().mockReturnValue(configOptionsDeferred.promise);
+
+    const { result } = renderUseAcpModelInfo({
+      conversation_id: 'conv-1',
+      backend: 'claude',
+      initialModelId: 'sonnet-4',
+      loadConfigOptions,
+    });
+
+    await waitFor(() => {
+      expect(loadConfigOptions).toHaveBeenCalledWith('conv-1');
+    });
+    expect(result.current.model_info?.current_model_id).toBe('sonnet-4');
+    expect(result.current.canSwitch).toBe(false);
+    expect(result.current.isLoading).toBe(false);
+
+    await act(async () => {
+      configOptionsDeferred.resolve(buildConfigOptions('opus-4'));
+      await configOptionsDeferred.promise;
+    });
+
+    await waitFor(() => {
+      expect(result.current.model_info?.current_model_id).toBe('opus-4');
+      expect(result.current.canSwitch).toBe(true);
+    });
   });
 
   it('preserves model option descriptions from config options', async () => {
-    getConfigOptionsInvokeMock.mockResolvedValue({
+    ensureRuntimeInvokeMock.mockResolvedValue({
+      recovered: true,
       config_options: [
         {
           id: 'model',
@@ -160,6 +296,7 @@ describe('useAcpModelInfo', () => {
           ],
         },
       ],
+      runtime: null,
     });
 
     const { result } = renderUseAcpModelInfo({
@@ -291,8 +428,42 @@ describe('useAcpModelInfo', () => {
     });
   });
 
+  it('coalesces concurrent runtime ensure loads for the same conversation', async () => {
+    const ensureDeferred = deferred<{
+      recovered: boolean;
+      config_options: AcpConfigOptionDto[];
+      runtime: null;
+    }>();
+    ensureRuntimeInvokeMock.mockReturnValue(ensureDeferred.promise);
+
+    const wrapper = createSwrWrapper();
+    const first = renderHook(
+      () => useAcpModelInfo({ conversation_id: 'conv-1', backend: 'claude', initialModelId: 'sonnet-4' }),
+      { wrapper }
+    );
+    const second = renderHook(
+      () => useAcpModelInfo({ conversation_id: 'conv-1', backend: 'claude', initialModelId: 'sonnet-4' }),
+      { wrapper }
+    );
+
+    await waitFor(() => {
+      expect(ensureRuntimeInvokeMock).toHaveBeenCalledTimes(1);
+    });
+
+    await act(async () => {
+      ensureDeferred.resolve({ recovered: true, config_options: buildConfigOptions(), runtime: null });
+      await ensureDeferred.promise;
+    });
+
+    await waitFor(() => {
+      expect(first.result.current.canSwitch).toBe(true);
+      expect(second.result.current.canSwitch).toBe(true);
+    });
+    expect(ensureRuntimeInvokeMock).toHaveBeenCalledTimes(1);
+  });
+
   it('uses legacy acp_model_info stream only before config options are available', async () => {
-    getConfigOptionsInvokeMock.mockResolvedValue({ config_options: [] });
+    ensureRuntimeInvokeMock.mockResolvedValue({ recovered: true, config_options: [], runtime: null });
 
     const { result } = renderUseAcpModelInfo({
       conversation_id: 'conv-1',

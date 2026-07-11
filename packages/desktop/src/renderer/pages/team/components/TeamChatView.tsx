@@ -1,5 +1,5 @@
 import { ipcBridge } from '@/common';
-import type { IProvider, TChatConversation, TProviderWithModel } from '@/common/config/storage';
+import type { IConversationMcpStatus, IProvider, TChatConversation, TProviderWithModel } from '@/common/config/storage';
 import { Message, Spin } from '@arco-design/web-react';
 import React, { Suspense, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -21,6 +21,11 @@ const LegacyReadOnlyConversation = React.lazy(
 // Narrow to Aionrs conversations so model field is always available
 type AionrsConversation = Extract<TChatConversation, { type: 'aionrs' }>;
 type TeamSendOverride = (payload: { input: string; files: string[] }) => Promise<void>;
+type TeamConversationCapabilitySnapshot = {
+  skills?: string[];
+  mcp_servers?: string[];
+  mcp_statuses?: IConversationMcpStatus[];
+};
 const EMPTY_TEAM_RUN_VIEW: TeamRunViewState = {
   activeRun: undefined,
   childTurnsBySlot: {},
@@ -47,7 +52,19 @@ const AionrsTeamChat: React.FC<{
   assistant_name?: string;
   teamSendMessage?: TeamSendOverride;
   teamRuntime?: ReturnType<typeof buildTeamSendRuntime>;
-}> = ({ conversation, emptySlot, assistant_name, teamSendMessage, teamRuntime }) => {
+  loadedSkills?: string[];
+  loadedMcpServers?: string[];
+  loadedMcpStatuses?: IConversationMcpStatus[];
+}> = ({
+  conversation,
+  emptySlot,
+  assistant_name,
+  teamSendMessage,
+  teamRuntime,
+  loadedSkills,
+  loadedMcpServers,
+  loadedMcpStatuses,
+}) => {
   const onSelectModel = useCallback(
     async (_provider: IProvider, modelName: string) => {
       const selected = { ..._provider, use_model: modelName } as TProviderWithModel;
@@ -68,6 +85,9 @@ const AionrsTeamChat: React.FC<{
       agent_name={assistant_name}
       teamSendMessage={teamSendMessage}
       teamRuntime={teamRuntime}
+      loadedSkills={loadedSkills}
+      loadedMcpServers={loadedMcpServers}
+      loadedMcpStatuses={loadedMcpStatuses}
     />
   );
 };
@@ -106,6 +126,7 @@ const TeamChatView: React.FC<TeamChatViewProps> = ({
 }) => {
   const { t } = useTranslation();
   const { info: presetAssistantInfo } = usePresetAssistantInfo(conversation);
+  const capabilitySnapshot = conversation.extra as TeamConversationCapabilitySnapshot | undefined;
   // Single source of truth for the team greeting. Each *Chat simply forwards
   // `emptySlot` to MessageList. The empty state can derive preset assistant
   // details from the shared SWR-cached conversation record, but it should
@@ -142,11 +163,37 @@ const TeamChatView: React.FC<TeamChatViewProps> = ({
     presetAssistantInfo?.name ?? null,
     assistant_name
   );
+  const slotWork = slot_id ? teamRunView.slotWorkBySlot[slot_id] : undefined;
+  const queuedCount = (slotWork?.queued_foreground_count ?? 0) + (slotWork?.queued_background_count ?? 0);
+  const teamWorkStatusText = (() => {
+    switch (slotWork?.blocked_reason) {
+      case 'runtime_starting':
+        return t('team.work.runtimeStarting', { defaultValue: 'Waiting for this assistant to start…' });
+      case 'runtime_failed':
+        return t('team.work.runtimeFailed', { defaultValue: 'This assistant failed to start.' });
+      case 'removing':
+        return t('team.work.removing', { defaultValue: 'Removing this assistant…' });
+      case 'session_stopped':
+        return t('team.work.sessionStopped', { defaultValue: 'The team session has stopped.' });
+      default:
+        if ((slotWork?.state === 'starting' || slotWork?.state === 'running') && queuedCount > 0) {
+          return t('team.work.processingWithQueued', {
+            count: queuedCount,
+            defaultValue: `Processing… ${queuedCount} queued`,
+          });
+        }
+        if (queuedCount > 0) {
+          return t('team.work.queued', { count: queuedCount, defaultValue: `${queuedCount} queued` });
+        }
+        return undefined;
+    }
+  })();
   const teamRuntime =
     team_id && slot_id
       ? buildTeamSendRuntime({
           slot_id,
           runView: teamRunView,
+          statusText: teamWorkStatusText,
           onStop: buildTeamStopHandler({
             team_id,
             slot_id,
@@ -180,6 +227,9 @@ const TeamChatView: React.FC<TeamChatViewProps> = ({
             emptySlot={emptySlot}
             teamSendMessage={teamSendMessageOverride}
             teamRuntime={teamRuntime}
+            loadedSkills={capabilitySnapshot?.skills}
+            loadedMcpServers={capabilitySnapshot?.mcp_servers}
+            loadedMcpStatuses={capabilitySnapshot?.mcp_statuses}
           />
         );
       case 'aionrs':
@@ -191,6 +241,9 @@ const TeamChatView: React.FC<TeamChatViewProps> = ({
             assistant_name={resolvedAssistantName}
             teamSendMessage={teamSendMessageOverride}
             teamRuntime={teamRuntime}
+            loadedSkills={capabilitySnapshot?.skills}
+            loadedMcpServers={capabilitySnapshot?.mcp_servers}
+            loadedMcpStatuses={capabilitySnapshot?.mcp_statuses}
           />
         );
       default:

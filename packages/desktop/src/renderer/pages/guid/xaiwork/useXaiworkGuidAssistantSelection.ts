@@ -5,7 +5,6 @@
  */
 
 import { assistantRuntimeKey, isAionrsAssistant, type Assistant } from '@/common/types/agent/assistantTypes';
-// FORK-CUSTOM: fork 默认值配置
 import { XAIWORK_DEFAULTS } from '@/common/config/xaiworkDefaults';
 import { configService } from '@/common/config/configService';
 import type { AcpModelInfo } from '../types';
@@ -13,14 +12,23 @@ import type { AgentModeOption } from '@/renderer/utils/model/agentTypes';
 import {
   buildAgentRuntimeModeState,
   buildAgentRuntimeModelInfo,
+  buildAgentRuntimeSlashCommands,
+  buildAgentRuntimeThoughtLevelOption,
   type AgentRuntimeCatalog,
+  type AgentRuntimeDerivedOption,
 } from '@/renderer/utils/model/agentRuntimeCatalog';
+import type { SlashCommandItem } from '@/common/chat/slash/types';
 import { useManagedAgentRuntimeCatalog } from '@/renderer/hooks/agent/useManagedAgents';
-import { useXaiworkAgentModels, buildXaiworkModelInfo } from '@/renderer/hooks/agent/useXaiworkAgentModels';
+import { buildXaiworkModelInfo, useXaiworkAgentModels } from '@/renderer/hooks/agent/useXaiworkAgentModels';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useCustomAgentsLoader } from '../hooks/useCustomAgentsLoader';
 
-export { buildAgentRuntimeModeState, buildAgentRuntimeModelInfo, type AgentRuntimeCatalog };
+export {
+  buildAgentRuntimeModeState,
+  buildAgentRuntimeModelInfo,
+  buildAgentRuntimeSlashCommands,
+  type AgentRuntimeCatalog,
+};
 
 export type GuidAssistantSelectionResult = {
   selectedAssistantId: string | null;
@@ -35,9 +43,15 @@ export type GuidAssistantSelectionResult = {
   selectedAcpModel: string | null;
   setSelectedAcpModel: (model: React.SetStateAction<string | null>, options?: { persistPreference?: boolean }) => void;
   currentAcpCachedModelInfo: AcpModelInfo | null;
-  // FORK-CUSTOM: XAIWork-distributed ids currently backing the guid model dropdown.
   xaiworkModelIds: string[];
+  currentAgentAvailableCommands: SlashCommandItem[];
   currentAgentModeOptions: AgentModeOption[];
+  currentThoughtLevelOption: AgentRuntimeDerivedOption | null;
+  selectedThoughtLevelValue: string;
+  setSelectedThoughtLevelValue: (
+    value: React.SetStateAction<string>,
+    options?: { persistPreference?: boolean }
+  ) => void;
 };
 
 export function resolveInitialAssistantModel(models: string[]): string | null {
@@ -90,43 +104,24 @@ function persistGuidAssistantSelectionKey(assistantId: string): void {
   });
 }
 
-// FORK-CUSTOM: enhanced to support generated-only fallback and configurable default
-export function pickDefaultAssistantSelectionKey(assistants: Assistant[], allAssistants?: Assistant[]): string | null {
+export function pickDefaultAssistantSelectionKey(assistants: Assistant[], allAssistants = assistants): string | null {
   const enabledAssistants = assistants.filter((assistant) => assistant.enabled !== false);
-  const enabledAll = (allAssistants ?? assistants).filter((assistant) => assistant.enabled !== false);
-
-  // FORK-CUSTOM: prefer by configured agent backend (stable across installs)
+  const enabledAll = allAssistants.filter((assistant) => assistant.enabled !== false);
   const configuredBackend = XAIWORK_DEFAULTS.defaultAssistantBackend;
-  if (configuredBackend) {
-    const matchesBackend = (assistant: Assistant): boolean => assistantRuntimeKey(assistant) === configuredBackend;
-    const matched = enabledAssistants.find(matchesBackend) ?? enabledAll.find(matchesBackend);
-    if (matched) {
-      return matched.id;
-    }
-  }
-
-  // FORK-CUSTOM: fallback to explicit assistant id (machine-specific, e.g. bare:<hash>)
-  const configuredDefaultId = XAIWORK_DEFAULTS.defaultAssistantId;
-  if (configuredDefaultId) {
-    const matched =
-      enabledAssistants.find((assistant) => assistant.id === configuredDefaultId) ??
-      enabledAll.find((assistant) => assistant.id === configuredDefaultId);
-    if (matched) {
-      return matched.id;
-    }
-  }
-
-  // FORK-CUSTOM: prefer builtin/user assistants first (generated filtered out by caller)
-  const preferred = enabledAssistants.find((assistant) => isAionrsAssistant(assistant)) ?? enabledAssistants[0];
-
-  // FORK-CUSTOM: fallback to generated assistants when no visible assistants available
-  if (!preferred && allAssistants) {
-    const enabledGenerated = allAssistants.filter(
-      (assistant) => assistant.enabled !== false && assistant.source === 'generated'
-    );
-    return enabledGenerated.find((assistant) => isAionrsAssistant(assistant))?.id ?? enabledGenerated[0]?.id ?? null;
-  }
-
+  const configuredId = XAIWORK_DEFAULTS.defaultAssistantId;
+  const preferred =
+    (configuredBackend
+      ? (enabledAssistants.find((assistant) => assistantRuntimeKey(assistant) === configuredBackend) ??
+        enabledAll.find((assistant) => assistantRuntimeKey(assistant) === configuredBackend))
+      : undefined) ??
+    (configuredId
+      ? (enabledAssistants.find((assistant) => assistant.id === configuredId) ??
+        enabledAll.find((assistant) => assistant.id === configuredId))
+      : undefined) ??
+    enabledAssistants.find((assistant) => isAionrsAssistant(assistant)) ??
+    enabledAssistants[0] ??
+    enabledAll.find((assistant) => assistant.source === 'generated' && isAionrsAssistant(assistant)) ??
+    enabledAll[0];
   return preferred?.id ?? null;
 }
 
@@ -144,7 +139,7 @@ export const useXaiworkGuidAssistantSelection = ({
   const [selectedAssistantIdState, _setSelectedAssistantId] = useState<string | null>(null);
   const [selectedMode, _setSelectedMode] = useState<string>('default');
   const [selectedAcpModel, _setSelectedAcpModel] = useState<string | null>(null);
-  // FORK-CUSTOM: get both filtered and all assistants for fallback
+  const [selectedThoughtLevelValue, _setSelectedThoughtLevelValue] = useState<string>('');
   const { assistants, allAssistants } = useCustomAgentsLoader();
   const managedAgentRuntimeCatalog = useManagedAgentRuntimeCatalog();
 
@@ -168,6 +163,16 @@ export const useXaiworkGuidAssistantSelection = ({
     []
   );
 
+  const setSelectedThoughtLevelValue = useCallback(
+    (value: React.SetStateAction<string>, _options?: { persistPreference?: boolean }) => {
+      _setSelectedThoughtLevelValue((prev) => {
+        const nextValue = typeof value === 'function' ? value(prev) : value;
+        return nextValue;
+      });
+    },
+    []
+  );
+
   const setSelectedAssistantId = useCallback(
     (assistantId: string) => {
       const normalizedId = resolveAssistantSelectionKey(assistantId, assistants) ?? assistantId;
@@ -185,12 +190,10 @@ export const useXaiworkGuidAssistantSelection = ({
   }
 
   useLayoutEffect(() => {
-    // FORK-CUSTOM: use allAssistants for length check to avoid empty state when only generated available
     if (allAssistants.length === 0) return;
     if (resetHandledRef.current) return;
 
     if (preselectAssistantId) {
-      // FORK-CUSTOM: try both filtered and all assistants for preselect resolution
       const resolvedPreselect =
         resolveAssistantSelectionKey(preselectAssistantId, assistants) ??
         resolveAssistantSelectionKey(preselectAssistantId, allAssistants);
@@ -203,7 +206,6 @@ export const useXaiworkGuidAssistantSelection = ({
 
     if (resetAssistant) {
       resetHandledRef.current = true;
-      // FORK-CUSTOM: prefer persisted selection (upstream), then pass allAssistants for generated fallback
       const fallbackId =
         readPersistedGuidAssistantSelectionKey(assistants) ??
         pickDefaultAssistantSelectionKey(assistants, allAssistants);
@@ -212,13 +214,10 @@ export const useXaiworkGuidAssistantSelection = ({
   }, [assistants, allAssistants, preselectAssistantId, resetAssistant]);
 
   useEffect(() => {
-    // FORK-CUSTOM: use allAssistants for length check
     if (allAssistants.length === 0) return;
     if (resetAssistant) return;
     if (preselectAssistantId && resolveAssistantSelectionKey(preselectAssistantId, assistants)) return;
-    // FORK-CUSTOM: check against allAssistants to allow selected generated assistant
     if (!selectedAssistantIdState || !allAssistants.some((assistant) => assistant.id === selectedAssistantIdState)) {
-      // FORK-CUSTOM: prefer persisted selection (upstream), then generated fallback via allAssistants
       _setSelectedAssistantId(
         readPersistedGuidAssistantSelectionKey(assistants) ??
           pickDefaultAssistantSelectionKey(assistants, allAssistants)
@@ -226,7 +225,6 @@ export const useXaiworkGuidAssistantSelection = ({
     }
   }, [assistants, allAssistants, preselectAssistantId, resetAssistant, selectedAssistantIdState]);
 
-  // FORK-CUSTOM: search in allAssistants to allow selected generated assistant to work
   const selectedAssistant = useMemo(
     () =>
       selectedAssistantIdState
@@ -237,12 +235,9 @@ export const useXaiworkGuidAssistantSelection = ({
   const selectedAssistantId = selectedAssistant?.id ?? null;
   const selectedAssistantBackend = assistantRuntimeKey(selectedAssistant);
   const selectedAssistantModels = selectedAssistant?.models ?? [];
-  // FORK-CUSTOM: distributed models for the active backend
   const { models: xaiworkModels, hasModels: xaiworkHasModels } = useXaiworkAgentModels(
     selectedAssistantBackend || undefined
   );
-  // FORK-CUSTOM: expose the exact XAIWork model ids used by the guid dropdown so
-  // click-time apply can share this source of truth instead of re-fetching.
   const xaiworkModelIds = useMemo(() => xaiworkModels.map((model) => model.modelId), [xaiworkModels]);
   const selectedManagedAgentRuntimeCatalog = useMemo(
     () =>
@@ -255,10 +250,25 @@ export const useXaiworkGuidAssistantSelection = ({
     () => buildAgentRuntimeModelInfo(selectedManagedAgentRuntimeCatalog),
     [selectedManagedAgentRuntimeCatalog]
   );
+  const currentAgentAvailableCommands = useMemo(
+    () => buildAgentRuntimeSlashCommands(selectedManagedAgentRuntimeCatalog),
+    [selectedManagedAgentRuntimeCatalog]
+  );
   const selectedAgentRuntimeModeState = useMemo(
     () => buildAgentRuntimeModeState(selectedManagedAgentRuntimeCatalog),
     [selectedManagedAgentRuntimeCatalog]
   );
+  const selectedAgentRuntimeThoughtLevelOption = useMemo(
+    () => buildAgentRuntimeThoughtLevelOption(selectedManagedAgentRuntimeCatalog),
+    [selectedManagedAgentRuntimeCatalog]
+  );
+  const currentThoughtLevelOption = useMemo<AgentRuntimeDerivedOption | null>(() => {
+    if (!selectedAgentRuntimeThoughtLevelOption) return null;
+    return {
+      ...selectedAgentRuntimeThoughtLevelOption,
+      currentValue: selectedThoughtLevelValue || selectedAgentRuntimeThoughtLevelOption.currentValue,
+    };
+  }, [selectedAgentRuntimeThoughtLevelOption, selectedThoughtLevelValue]);
   const currentAgentModeOptions = selectedAgentRuntimeModeState.options;
 
   const selectedAssistantAvailable = useMemo(() => {
@@ -268,19 +278,12 @@ export const useXaiworkGuidAssistantSelection = ({
   const modelSelectionScopeRef = useRef<string | null>(null);
   useEffect(() => {
     if (xaiworkHasModels && xaiworkModels.length > 0) {
-      // FORK-CUSTOM: preserve a user's in-page XAIWork model selection across
-      // same-assistant catalog refreshes; only fall back when the selection is
-      // missing, invalid, or the assistant scope changed.
       const availableModelIds = new Set(xaiworkModels.map((model) => model.modelId));
       const selectionScope = selectedAssistantId ?? '';
       _setSelectedAcpModel((previousModelId) => {
         const scopeChanged = modelSelectionScopeRef.current !== selectionScope;
         modelSelectionScopeRef.current = selectionScope;
-
-        if (!scopeChanged && previousModelId && availableModelIds.has(previousModelId)) {
-          return previousModelId;
-        }
-
+        if (!scopeChanged && previousModelId && availableModelIds.has(previousModelId)) return previousModelId;
         return xaiworkModels[0].modelId;
       });
       return;
@@ -309,15 +312,7 @@ export const useXaiworkGuidAssistantSelection = ({
 
       return fallbackModelId;
     });
-    // FORK-CUSTOM: xaiwork deps added so distributed-model branch re-runs on backend/list change
-  }, [
-    selectedAssistantId,
-    selectedAssistantModels,
-    selectedAgentRuntimeModelInfo,
-    xaiworkHasModels,
-    xaiworkModels,
-    selectedAssistantBackend,
-  ]);
+  }, [selectedAssistantId, selectedAssistantModels, selectedAgentRuntimeModelInfo, xaiworkHasModels, xaiworkModels]);
 
   useEffect(() => {
     const fallbackMode =
@@ -325,21 +320,41 @@ export const useXaiworkGuidAssistantSelection = ({
     _setSelectedMode(fallbackMode);
   }, [selectedAgentRuntimeModeState]);
 
-  const currentAcpCachedModelInfo = useMemo(() => {
-    // FORK-CUSTOM: XAIWork-distributed models replace the dropdown list when present.
-    const xaiworkInfo = buildXaiworkModelInfo(xaiworkModels, [selectedAcpModel]);
-    if (xaiworkInfo) {
-      return xaiworkInfo;
-    }
+  const thoughtLevelSelectionScopeRef = useRef<string | null>(null);
+  useEffect(() => {
+    const optionValues = new Set(selectedAgentRuntimeThoughtLevelOption?.options.map((option) => option.value) ?? []);
+    const fallbackThoughtLevel =
+      selectedAgentRuntimeThoughtLevelOption?.currentValue ||
+      selectedAgentRuntimeThoughtLevelOption?.options[0]?.value ||
+      '';
+    const selectionScope = selectedAssistantId ?? '';
 
+    _setSelectedThoughtLevelValue((previousValue) => {
+      const scopeChanged = thoughtLevelSelectionScopeRef.current !== selectionScope;
+      thoughtLevelSelectionScopeRef.current = selectionScope;
+
+      if (!selectedAgentRuntimeThoughtLevelOption) {
+        return '';
+      }
+
+      if (!scopeChanged && previousValue && optionValues.has(previousValue)) {
+        return previousValue;
+      }
+
+      return fallbackThoughtLevel;
+    });
+  }, [selectedAgentRuntimeThoughtLevelOption, selectedAssistantId]);
+
+  const currentAcpCachedModelInfo = useMemo(() => {
+    const xaiworkInfo = buildXaiworkModelInfo(xaiworkModels, [selectedAcpModel]);
+    if (xaiworkInfo) return xaiworkInfo;
     if (selectedAgentRuntimeModelInfo) {
       return selectedAgentRuntimeModelInfo;
     }
 
     return buildAssistantModelInfo(selectedAssistantModels);
-  }, [selectedAssistantModels, selectedAgentRuntimeModelInfo, xaiworkModels, selectedAcpModel]);
+  }, [selectedAssistantModels, selectedAgentRuntimeModelInfo, selectedAcpModel, xaiworkModels]);
 
-  // FORK-CUSTOM: pass allAssistants for generated fallback
   const defaultAssistantId = useMemo(
     () => pickDefaultAssistantSelectionKey(assistants, allAssistants),
     [assistants, allAssistants]
@@ -359,6 +374,10 @@ export const useXaiworkGuidAssistantSelection = ({
     setSelectedAcpModel,
     currentAcpCachedModelInfo,
     xaiworkModelIds,
+    currentAgentAvailableCommands,
     currentAgentModeOptions,
+    currentThoughtLevelOption,
+    selectedThoughtLevelValue,
+    setSelectedThoughtLevelValue,
   };
 };

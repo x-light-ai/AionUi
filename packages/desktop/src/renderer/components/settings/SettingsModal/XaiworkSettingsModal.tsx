@@ -17,7 +17,6 @@ import { Computer, Earth, Info, LinkCloud, Puzzle, Toolkit } from '@icon-park/re
 import classNames from 'classnames';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-// FORK-CUSTOM: 关于页渲染入口指向 fork 组件（上游 AboutModalContent.tsx 保持原样）
 import AboutModalContent from './contents/XaiworkAboutModalContent';
 import AgentModalContent from './contents/AgentModalContent';
 import ExtensionSettingsTabContent from './contents/ExtensionSettingsTabContent';
@@ -25,7 +24,7 @@ import ModelModalContent from './contents/ModelModalContent';
 import SystemModalContent from './contents/SystemModalContent';
 import ToolsModalContent from './contents/ToolsModalContent';
 import WebuiModalContent from './contents/WebuiModalContent';
-import { SettingsViewModeProvider } from './settingsViewContext';
+import { SettingsTabNavigateProvider, SettingsViewModeProvider } from './settingsViewContext';
 import { resolveSettingsAnchor } from '@/renderer/pages/settings/components/XaiworkSettingsSider';
 
 // ==================== 常量定义 / Constants ====================
@@ -134,9 +133,9 @@ export const SubModal: React.FC<SubModalProps> = ({ visible, onCancel, title, ch
  * openSettings('system');
  * ```
  */
-const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onCancel, defaultTab = 'model' }) => {
+const XaiworkSettingsModal: React.FC<SettingsModalProps> = ({ visible, onCancel, defaultTab = 'model' }) => {
   const { t } = useTranslation();
-  const { hideModelSettingsMenu } = useXaiworkConfig();
+  const { hideModelSettingsMenu, hideAgentSettingsMenu } = useXaiworkConfig();
   const [activeTab, setActiveTab] = useState<SettingTab>(() =>
     hideModelSettingsMenu && defaultTab === 'model' ? 'tools' : defaultTab
   );
@@ -239,7 +238,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onCancel, defaul
         continue;
       }
       const { relativeTo: rawAnchor, placement } = tab.position;
-      const anchor = resolveSettingsAnchor(rawAnchor, hideModelSettingsMenu);
+      const anchor = resolveSettingsAnchor(rawAnchor, hideModelSettingsMenu, hideAgentSettingsMenu);
       if (!builtinItems.some((item) => item.key === anchor)) {
         unanchored.push(tab);
         continue;
@@ -283,14 +282,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onCancel, defaul
     }
 
     return builtinItems;
-  }, [t, isDesktop, extensionTabs, resolveExtTabName, hideModelSettingsMenu]);
-
-  useEffect(() => {
-    if (menuItems.length === 0) return;
-    if (!menuItems.some((item) => item.key === activeTab)) {
-      setActiveTab(menuItems[0].key);
-    }
-  }, [activeTab, menuItems]);
+  }, [t, isDesktop, extensionTabs, resolveExtTabName, hideModelSettingsMenu, hideAgentSettingsMenu]);
 
   // Track which extension tabs have been visited (lazy mount + keep-alive)
   const [mountedExtTabs, setMountedExtTabs] = useState<Set<string>>(new Set());
@@ -400,39 +392,41 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onCancel, defaul
 
   return (
     <SettingsViewModeProvider value='modal'>
-      <AionModal
-        visible={visible}
-        onCancel={onCancel}
-        footer={null}
-        className='settings-modal'
-        style={{
-          width: isMobile
-            ? `min(calc(100vw - 32px), ${MODAL_WIDTH.mobile}px)`
-            : `clamp(var(--app-min-width, 360px), 100vw, ${MODAL_WIDTH.desktop}px)`,
-          maxHeight: isMobile ? MODAL_HEIGHT.mobile : undefined,
-          borderRadius: '16px',
-        }}
-        contentStyle={{ padding: isMobile ? '16px' : '24px 24px 32px' }}
-        title={t('settings.title')}
-      >
-        <div
-          className={classNames('overflow-hidden gap-0', isMobile ? 'flex flex-col min-h-0' : 'flex mt-20px')}
+      <SettingsTabNavigateProvider value={handleTabChange}>
+        <AionModal
+          visible={visible}
+          onCancel={onCancel}
+          footer={null}
+          className='settings-modal'
           style={{
-            height: isMobile ? MODAL_HEIGHT.mobileContent : `${MODAL_HEIGHT.desktop}px`,
+            width: isMobile
+              ? `min(calc(100vw - 32px), ${MODAL_WIDTH.mobile}px)`
+              : `clamp(var(--app-min-width, 360px), 100vw, ${MODAL_WIDTH.desktop}px)`,
+            maxHeight: isMobile ? MODAL_HEIGHT.mobile : undefined,
+            borderRadius: '16px',
           }}
+          contentStyle={{ padding: isMobile ? '16px' : '24px 24px 32px' }}
+          title={t('settings.title')}
         >
-          {isMobile ? mobileMenu : desktopMenu}
-
-          <AionScrollArea
-            className={classNames('flex-1 min-h-0', isMobile ? 'overflow-y-auto' : 'flex flex-col pl-24px gap-16px')}
+          <div
+            className={classNames('overflow-hidden gap-0', isMobile ? 'flex flex-col min-h-0' : 'flex mt-20px')}
+            style={{
+              height: isMobile ? MODAL_HEIGHT.mobileContent : `${MODAL_HEIGHT.desktop}px`,
+            }}
           >
-            {renderBuiltinContent()}
-            {renderExtensionTabs()}
-          </AionScrollArea>
-        </div>
-      </AionModal>
+            {isMobile ? mobileMenu : desktopMenu}
+
+            <AionScrollArea
+              className={classNames('flex-1 min-h-0', isMobile ? 'overflow-y-auto' : 'flex flex-col pl-24px gap-16px')}
+            >
+              {renderBuiltinContent()}
+              {renderExtensionTabs()}
+            </AionScrollArea>
+          </div>
+        </AionModal>
+      </SettingsTabNavigateProvider>
     </SettingsViewModeProvider>
   );
 };
 
-export default SettingsModal;
+export default XaiworkSettingsModal;

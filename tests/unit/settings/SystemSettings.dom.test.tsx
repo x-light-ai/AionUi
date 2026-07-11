@@ -19,7 +19,7 @@ vi.mock('@/renderer/components/settings/SettingsModal/contents/SystemModalConten
   default: () => <div data-testid='system-modal-content'>SystemModalContent</div>,
 }));
 
-vi.mock('@/renderer/components/settings/SettingsModal/contents/AboutModalContent', () => ({
+vi.mock('@/renderer/components/settings/SettingsModal/contents/XaiworkAboutModalContent', () => ({
   default: () => <div data-testid='about-modal-content'>AboutModalContent</div>,
 }));
 

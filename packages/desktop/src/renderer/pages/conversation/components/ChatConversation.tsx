@@ -9,6 +9,7 @@ import type { IConversationMcpStatus, IProvider, TChatConversation, TProviderWit
 import { uuid } from '@/common/utils';
 import addChatIcon from '@/renderer/assets/icons/add-chat.svg';
 import { CronJobManager } from '@/renderer/pages/cron';
+import { resolveCronJobId } from '@/renderer/pages/cron/cronUtils';
 import { classifyConfigSetError, useAcpConfigOptions } from '@/renderer/hooks/agent/useAcpConfigOptions';
 import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
 import { usePresetAssistantInfo } from '@/renderer/hooks/agent/usePresetAssistantInfo';
@@ -27,7 +28,6 @@ import ChatSlider from './ChatSlider.tsx';
 import XaiworkAcpModelSelector from '@/renderer/components/agent/xaiwork/XaiworkAcpModelSelector';
 import { getConversationOrNull } from '@/renderer/pages/conversation/utils/conversationCache';
 import { getConversationCreateErrorMessage } from '@/renderer/pages/conversation/utils/conversationCreateError';
-import { warmupConversation } from '@/renderer/pages/conversation/utils/warmupConversation';
 import GoogleModelSelector from '../platforms/gemini/GoogleModelSelector';
 import AionrsChat from '../platforms/aionrs/AionrsChat';
 import AionrsModelSelector from '../platforms/aionrs/AionrsModelSelector';
@@ -36,6 +36,7 @@ import { useConversationRuntimeView } from '../runtime/useConversationRuntimeVie
 import { isLegacyReadOnlyConversationType } from '../utils/conversationRuntime';
 import { resolveConversationBackend } from '../utils/conversationAssistantIdentity';
 import LegacyReadOnlyConversation from '../platforms/legacy/LegacyReadOnlyConversation';
+import { useActiveLease } from '../hooks/useActiveLease';
 // import SkillRuleGenerator from './components/SkillRuleGenerator'; // Temporarily hidden
 
 const configErrorMessageKey = (error: unknown) => {
@@ -168,6 +169,7 @@ const AionrsConversationPanel: React.FC<{ conversation: AionrsConversation; slid
     onSelectModel,
   });
   const workspaceEnabled = Boolean(conversation.extra?.workspace);
+  const cronJobId = resolveCronJobId(conversation.extra);
   const { info: presetAssistantInfo } = usePresetAssistantInfo(conversation);
   const aionrsAssistantId = presetAssistantInfo?.assistantId;
   const layout = useLayoutContext();
@@ -175,10 +177,8 @@ const AionrsConversationPanel: React.FC<{ conversation: AionrsConversation; slid
   // header space; the dropdown stays available on desktop and tablets ≥768px.
   const isMobile = Boolean(layout?.isMobile);
   const { t } = useTranslation();
-  const prepareRuntimeConfig = useCallback(() => warmupConversation(conversation.id), [conversation.id]);
   const runtimeConfig = useAcpConfigOptions({
     conversation_id: conversation.id,
-    prepareRuntime: prepareRuntimeConfig,
     enabled: !isMobile,
   });
   const handleThoughtLevelSetOption = useCallback(
@@ -201,10 +201,7 @@ const AionrsConversationPanel: React.FC<{ conversation: AionrsConversation; slid
     sider: <ChatSlider conversation={conversation} />,
     headerExtra: (
       <div className='flex items-center gap-8px'>
-        <CronJobManager
-          conversation_id={conversation.id}
-          cron_job_id={conversation.extra?.cron_job_id as string | undefined}
-        />
+        <CronJobManager conversation_id={conversation.id} cron_job_id={cronJobId} />
         {!isMobile && (
           <AionrsModelSelector
             selection={modelSelection}
@@ -230,7 +227,7 @@ const AionrsConversationPanel: React.FC<{ conversation: AionrsConversation; slid
         workspace={conversation.extra.workspace}
         modelSelection={modelSelection}
         session_mode={conversation.extra?.session_mode}
-        cron_job_id={(conversation.extra as { cron_job_id?: string })?.cron_job_id}
+        cron_job_id={cronJobId}
         loadedSkills={(conversation.extra as { skills?: string[] } | undefined)?.skills}
         loadedMcpServers={(conversation.extra as { mcp_servers?: string[] } | undefined)?.mcp_servers}
         loadedMcpStatuses={
@@ -248,7 +245,9 @@ const ChatConversation: React.FC<{
   hideSendBox?: boolean;
 }> = ({ conversation, hideSendBox }) => {
   const { t } = useTranslation();
+  useActiveLease({ type: 'conversation', id: conversation?.id });
   const workspaceEnabled = Boolean(conversation?.extra?.workspace);
+  const cronJobId = resolveCronJobId(conversation?.extra);
   const layout = useLayoutContext();
   const isMobile = Boolean(layout?.isMobile);
 
@@ -281,7 +280,7 @@ const ChatConversation: React.FC<{
             backend={resolvedConversationBackend || 'claude'}
             session_mode={conversation.extra?.session_mode}
             agent_name={assistantDisplayName}
-            cron_job_id={(conversation.extra as { cron_job_id?: string })?.cron_job_id}
+            cron_job_id={cronJobId}
             hideSendBox={resolvedHideSendBox}
             loadedSkills={(conversation.extra as { skills?: string[] } | undefined)?.skills}
             loadedMcpServers={(conversation.extra as { mcp_servers?: string[] } | undefined)?.mcp_servers}
@@ -294,7 +293,16 @@ const ChatConversation: React.FC<{
       default:
         return null;
     }
-  }, [conversation, isAionrsConversation, isLegacyReadOnlyConversation, assistantDisplayName, resolvedHideSendBox]);
+  }, [
+    conversation,
+    isAionrsConversation,
+    isLegacyReadOnlyConversation,
+    resolvedConversationBackend,
+    assistantDisplayName,
+    cronJobId,
+    resolvedHideSendBox,
+    acpAssistantId,
+  ]);
 
   const sliderTitle = useMemo(() => {
     return (
@@ -347,10 +355,7 @@ const ChatConversation: React.FC<{
     <div className='flex items-center gap-8px'>
       {conversation && (
         <div className='shrink-0'>
-          <CronJobManager
-            conversation_id={conversation.id}
-            cron_job_id={conversation.extra?.cron_job_id as string | undefined}
-          />
+          <CronJobManager conversation_id={conversation.id} cron_job_id={cronJobId} />
         </div>
       )}
       {modelSelector && <div className='shrink-0'>{modelSelector}</div>}

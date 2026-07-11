@@ -4,7 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { classifyConfigSetError, useAcpConfigOptions } from '@/renderer/hooks/agent/useAcpConfigOptions';
+import {
+  classifyConfigSetError,
+  type AcpConfigOptionsLoader,
+  useAcpConfigOptions,
+} from '@/renderer/hooks/agent/useAcpConfigOptions';
 import type { AgentModeOption } from '@/renderer/utils/model/agentTypes';
 import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
 import { AgentLogoIcon } from './AgentBadge';
@@ -31,6 +35,8 @@ export interface AgentModeSelectorProps {
   agentLogo?: string;
   /** Whether the logo is an emoji / logo 是否为 emoji */
   agentLogoIsEmoji?: boolean;
+  /** Whether the explicit assistant logo is intentionally empty. */
+  agentLogoIsFallback?: boolean;
   /** Conversation ID for mode switching / 用于切换模式的会话 ID */
   conversation_id?: string;
   /** Compact mode: only show mode label + dropdown, no logo/name / 紧凑模式：仅显示模式标签和下拉 */
@@ -59,6 +65,10 @@ export interface AgentModeSelectorProps {
   dynamicModes?: AgentModeOption[];
   /** Optional runtime preparation before reading active-session mode. */
   beforeRuntimeSync?: () => Promise<void>;
+  /** Optional runtime preparation only before applying a runtime mode change. */
+  beforeRuntimeSet?: () => Promise<void>;
+  /** Optional config option loader for runtime owners such as team sessions. */
+  loadConfigOptions?: AcpConfigOptionsLoader;
 }
 
 /**
@@ -73,6 +83,7 @@ const AgentModeSelector: React.FC<AgentModeSelectorProps> = ({
   agent_name,
   agentLogo,
   agentLogoIsEmoji,
+  agentLogoIsFallback,
   conversation_id,
   compact,
   showLogoInCompact = false,
@@ -87,6 +98,8 @@ const AgentModeSelector: React.FC<AgentModeSelectorProps> = ({
   onModeChanged,
   dynamicModes,
   beforeRuntimeSync,
+  beforeRuntimeSet,
+  loadConfigOptions,
 }) => {
   const { t } = useTranslation();
   const layout = useLayoutContext();
@@ -94,6 +107,8 @@ const AgentModeSelector: React.FC<AgentModeSelectorProps> = ({
   const runtimeConfig = useAcpConfigOptions({
     conversation_id: conversation_id ?? '',
     prepareRuntime: beforeRuntimeSync,
+    prepareSetRuntime: beforeRuntimeSet ?? beforeRuntimeSync,
+    loadConfigOptions,
     enabled: Boolean(conversation_id),
   });
   const runtimeMode = runtimeConfig.mode;
@@ -170,7 +185,6 @@ const AgentModeSelector: React.FC<AgentModeSelectorProps> = ({
 
       setIsLoading(true);
       try {
-        await beforeRuntimeSync?.();
         await setActiveMode();
         setCurrentMode(mode);
         onModeChanged?.(mode);
@@ -182,7 +196,7 @@ const AgentModeSelector: React.FC<AgentModeSelectorProps> = ({
         setIsLoading(false);
       }
     },
-    [beforeRuntimeSync, conversation_id, current_mode, onModeChanged, onModeSelect, runtimeConfig, runtimeMode, t]
+    [conversation_id, current_mode, onModeChanged, onModeSelect, runtimeConfig, runtimeMode, t]
   );
 
   const renderLogo = () => (
@@ -191,6 +205,7 @@ const AgentModeSelector: React.FC<AgentModeSelectorProps> = ({
       agent_name={agent_name}
       agentLogo={agentLogo}
       agentLogoIsEmoji={agentLogoIsEmoji}
+      agentLogoIsFallback={agentLogoIsFallback}
     />
   );
 

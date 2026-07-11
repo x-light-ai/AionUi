@@ -19,6 +19,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { applyXaiworkModelConfig } from '../market/applyXaiworkModelConfig';
 import { readXaiworkRemoteAuth } from '../xaiworkRemoteAuth';
 import { useAcpModelInfo, type UseAcpModelInfoResult } from './useAcpModelInfo';
+import type { AcpConfigOptionsLoader } from './useAcpConfigOptions';
 import { buildXaiworkModelInfo, useXaiworkAgentModels } from './useXaiworkAgentModels';
 
 type UseAcpModelInfoParams = {
@@ -26,21 +27,15 @@ type UseAcpModelInfoParams = {
   backend?: string;
   initialModelId?: string;
   prepareRuntime?: () => Promise<void>;
+  prepareSetRuntime?: () => Promise<void>;
+  loadConfigOptions?: AcpConfigOptionsLoader;
   enabled?: boolean;
-  persistGlobalPreference?: boolean;
   onSelectModelSuccess?: (model_id: string) => void;
   onSelectModelFailed?: (model_id: string, error: unknown) => void;
 };
 
 export const useAcpModelInfoXaiwork = (params: UseAcpModelInfoParams): UseAcpModelInfoResult => {
-  const {
-    backend,
-    initialModelId,
-    enabled = true,
-    persistGlobalPreference = true,
-    onSelectModelSuccess,
-    onSelectModelFailed,
-  } = params;
+  const { backend, initialModelId, enabled = true, onSelectModelSuccess, onSelectModelFailed } = params;
 
   const base = useAcpModelInfo(params);
   const { models, byModelId, hasModels } = useXaiworkAgentModels(enabled ? backend : undefined);
@@ -81,16 +76,7 @@ export const useAcpModelInfoXaiwork = (params: UseAcpModelInfoParams): UseAcpMod
         }
       })();
     },
-    [
-      enabled,
-      backend,
-      byModelId,
-      host,
-      persistGlobalPreference,
-      setSelectedModelId,
-      onSelectModelSuccess,
-      onSelectModelFailed,
-    ]
+    [enabled, backend, byModelId, host, setSelectedModelId, onSelectModelSuccess, onSelectModelFailed]
   );
 
   if (!hasModels || !xaiworkModelInfo) {

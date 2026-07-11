@@ -2,7 +2,7 @@
  * FORK-CUSTOM: XAIWork assistant editor page tests.
  *
  * Guards the fork-only detail page entry so XaiworkMyAssistants keeps using an
- * independent editor page that renders the default-configuration section without
+ * independent editor page that keeps generated-assistant identity visible without
  * introducing a nested scroll container.
  */
 import React from 'react';
@@ -77,6 +77,7 @@ const createEditor = (): AssistantEditorViewModel => ({
   defaults: {
     model: { mode: 'auto', setMode: vi.fn(), value: '', setValue: vi.fn() },
     permission: { mode: 'auto', setMode: vi.fn(), value: '', setValue: vi.fn() },
+    thoughtLevel: { mode: 'auto', setMode: vi.fn(), value: '', setValue: vi.fn() },
     skills: { mode: 'auto', setMode: vi.fn() },
     mcps: { mode: 'auto', setMode: vi.fn(), availableServers: [], selectedIds: [], setSelectedIds: vi.fn() },
   },
@@ -96,7 +97,7 @@ const createEditor = (): AssistantEditorViewModel => ({
 });
 
 describe('XaiworkAssistantEditorPage', () => {
-  it('keeps defaults in the fork editor and lets content expand naturally', () => {
+  it('renders generated-assistant identity and lets content expand naturally', () => {
     renderWithProviders(
       <XaiworkAssistantEditorPage
         editor={createEditor()}
@@ -113,7 +114,9 @@ describe('XaiworkAssistantEditorPage', () => {
       />
     );
 
-    expect(screen.getByTestId('assistant-card-defaults')).toBeInTheDocument();
+    expect(screen.getByTestId('assistant-cli-readonly-banner')).toBeInTheDocument();
+    expect(screen.getByTestId('text-assistant-name')).toHaveTextContent('Data Assistant');
+    expect(screen.queryByTestId('assistant-card-defaults')).not.toBeInTheDocument();
     expect(screen.getByTestId('assistant-editor-page')).not.toHaveClass('h-full');
     expect(screen.getByTestId('assistant-editor-body')).not.toHaveClass('overflow-y-auto');
     expect(screen.getByTestId('assistant-editor-body')).not.toHaveClass('overflow-x-hidden');

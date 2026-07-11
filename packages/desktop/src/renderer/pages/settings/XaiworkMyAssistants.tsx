@@ -5,6 +5,7 @@
 import { Message } from '@arco-design/web-react';
 import { Refresh } from '@icon-park/react';
 import { useAssistantEditor, useAssistantList } from '@/renderer/hooks/assistant';
+import { useManagedAgentRuntimeCatalog } from '@/renderer/hooks/agent/useManagedAgents';
 import SettingsPageWrapper from './components/SettingsPageWrapper';
 import { buildAssistantEditorBackends, resolveAvatarImageSrc } from './AssistantSettings/assistantUtils';
 import XaiworkAssistantListPanel from './XaiworkAssistantListPanel';
@@ -50,6 +51,7 @@ const XaiworkMyAssistants: React.FC<XaiworkMyAssistantsProps> = ({ withWrapper =
     reorderAssistants,
     localeKey,
   } = useAssistantList();
+  const managedAgentRuntimeCatalog = useManagedAgentRuntimeCatalog();
 
   // FORK-CUSTOM: hide AionCore CLI auto-generated assistants from the list.
   // The full `assistants` array is still used for editor backends / avatar
@@ -75,8 +77,6 @@ const XaiworkMyAssistants: React.FC<XaiworkMyAssistantsProps> = ({ withWrapper =
         .filter((option): option is NonNullable<typeof option> => option !== null),
     [assistants, localeKey]
   );
-  const availableBackends = useMemo(() => buildAssistantEditorBackends(assistants, localeKey), [assistants, localeKey]);
-
   const editor = useAssistantEditor({
     localeKey,
     activeAssistant,
@@ -84,6 +84,10 @@ const XaiworkMyAssistants: React.FC<XaiworkMyAssistantsProps> = ({ withWrapper =
     loadAssistants,
     message,
   });
+  const availableBackends = useMemo(
+    () => buildAssistantEditorBackends(managedAgentRuntimeCatalog, localeKey, editor.editAgent),
+    [editor.editAgent, localeKey, managedAgentRuntimeCatalog]
+  );
 
   const editAvatarImage = editor.editAvatarPreview || resolveAvatarImageSrc(editor.editAvatar);
   const hasConsumedNavigationIntentRef = useRef(false);
@@ -122,6 +126,12 @@ const XaiworkMyAssistants: React.FC<XaiworkMyAssistantsProps> = ({ withWrapper =
         setMode: editor.setDefaultPermissionMode,
         value: editor.defaultPermissionValue,
         setValue: editor.setDefaultPermissionValue,
+      },
+      thoughtLevel: {
+        mode: editor.defaultThoughtLevelMode,
+        setMode: editor.setDefaultThoughtLevelMode,
+        value: editor.defaultThoughtLevelValue,
+        setValue: editor.setDefaultThoughtLevelValue,
       },
       skills: {
         mode: editor.defaultSkillsMode,

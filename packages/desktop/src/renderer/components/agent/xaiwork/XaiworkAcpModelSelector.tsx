@@ -4,26 +4,25 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// FORK-CUSTOM: use the XAIWork override wrapper (same signature/return as
-// useAcpModelInfo) so the dropdown shows XAIWork-distributed models when
-// configured, and falls back to ACP-handshake models otherwise.
+// FORK-CUSTOM: use XAIWork-distributed models with upstream runtime behavior.
 import { useAcpModelInfoXaiwork as useAcpModelInfo } from '@/renderer/hooks/agent/useAcpModelInfoXaiwork';
-import { classifyConfigSetError } from '@/renderer/hooks/agent/useAcpConfigOptions';
+import { classifyConfigSetError, type AcpConfigOptionsLoader } from '@/renderer/hooks/agent/useAcpConfigOptions';
 import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
-import { warmupConversation } from '@/renderer/pages/conversation/utils/warmupConversation';
 import { getModelDisplayLabel } from '@/renderer/utils/model/agentLogo';
 import { iconColors } from '@/renderer/styles/colors';
 import { Dropdown, Menu, Message, Tooltip } from '@arco-design/web-react';
 import { Brain, Down } from '@icon-park/react';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import RuntimeSelectorPill from '../RuntimeSelectorPill';
+import RuntimeSelectorPill, { RuntimeSelectorLoadingIndicator } from '../RuntimeSelectorPill';
 import {
   composeRuntimeSelectorLabel,
+  getCurrentThoughtLevelLabel,
   isConfigSetting,
+  RUNTIME_SUBMENU_TRIGGER_PROPS,
   RuntimeSelectorCheckedItem,
-  RuntimeSelectorMenuDivider,
-  renderThoughtLevelMenuGroup,
+  RuntimeSelectorModelList,
+  RuntimeSelectorSubMenuTitle,
 } from '../runtimeSelectorOptions';
 
 const configErrorMessageKey = (error: unknown) => {
@@ -49,21 +48,27 @@ const XaiworkAcpModelSelector: React.FC<{
   backend?: string;
   /** Pre-selected model ID from Guid page */
   initialModelId?: string;
-  /** Wait for ACP warmup before reading runtime model info. */
+  prepareRuntime?: () => Promise<void>;
+  prepareSetRuntime?: () => Promise<void>;
+  loadConfigOptions?: AcpConfigOptionsLoader;
+  /** Deprecated: runtime config loading now ensures the conversation runtime. */
   waitForWarmup?: boolean;
-}> = ({ conversation_id, backend, initialModelId, waitForWarmup = false }) => {
+}> = ({ conversation_id, backend, initialModelId, prepareRuntime, prepareSetRuntime, loadConfigOptions }) => {
   const { t } = useTranslation();
   const layout = useLayoutContext();
   const isMobileHeaderCompact = Boolean(layout?.isMobile);
-  const prepareRuntime = useCallback(() => warmupConversation(conversation_id), [conversation_id]);
-  const { model_info, canSwitch, isSetting, selectModel, thoughtLevel, setStatus, setConfigOption } = useAcpModelInfo({
-    conversation_id,
-    backend,
-    initialModelId,
-    prepareRuntime: waitForWarmup ? prepareRuntime : undefined,
-    onSelectModelSuccess: () => Message.success(t('agent.model.switchSuccess')),
-    onSelectModelFailed: (_modelId, error) => Message.error(t(configErrorMessageKey(error))),
-  });
+  const { model_info, canSwitch, isLoading, isSetting, selectModel, thoughtLevel, setStatus, setConfigOption } =
+    useAcpModelInfo({
+      conversation_id,
+      backend,
+      initialModelId,
+      prepareRuntime,
+      prepareSetRuntime,
+      loadConfigOptions,
+      onSelectModelSuccess: () => Message.success(t('agent.model.switchSuccess')),
+      onSelectModelFailed: (_modelId, error) => Message.error(t(configErrorMessageKey(error))),
+    });
+
   const defaultModelLabel = t('common.defaultModel');
   const rawDisplayLabel =
     (model_info?.current_model_id &&
@@ -94,6 +99,17 @@ const XaiworkAcpModelSelector: React.FC<{
   const tooltipContent = combinedLabel;
 
   const renderLogo = () => <Brain theme='outline' size='14' fill={iconColors.secondary} className='shrink-0' />;
+
+  if (!model_info && isLoading) {
+    return (
+      <div
+        data-testid='acp-model-selector-loading'
+        className='header-model-loading-slot flex h-28px w-28px shrink-0 items-center justify-center leading-none text-t-secondary'
+      >
+        <RuntimeSelectorLoadingIndicator />
+      </div>
+    );
+  }
 
   if (!model_info) {
     return (
@@ -129,31 +145,64 @@ const XaiworkAcpModelSelector: React.FC<{
       {...(isMobileHeaderCompact ? { getPopupContainer: () => document.body } : {})}
       droplist={
         <Menu>
-          {renderThoughtLevelMenuGroup({
-            thoughtLevel,
-            setStatus,
-            title: t('agent.thoughtLevel.label'),
-            onSelect: (value) => void handleThoughtLevelSelect(value),
-          })}
-          {thoughtLevel && <RuntimeSelectorMenuDivider />}
-          <Menu.ItemGroup title={t('common.model', { defaultValue: 'Model' })}>
-            {model_info.available_models.map((model) => (
-              <Menu.Item
-                key={model.id}
-                className={model.id === model_info.current_model_id ? 'bg-2!' : ''}
-                onClick={() => {
-                  if (!isRuntimeSetting) selectModel(model.id);
-                }}
+          {thoughtLevel ? (
+            <>
+              {/* Two-level layout: first level shows model + thought-level rows;
+                  each expands into a left-side submenu with the full option list. */}
+              <Menu.SubMenu
+                key='model'
+                triggerProps={RUNTIME_SUBMENU_TRIGGER_PROPS}
+                title={
+                  <RuntimeSelectorSubMenuTitle
+                    label={t('common.model', { defaultValue: 'Model' })}
+                    value={display_label}
+                  />
+                }
               >
-                <RuntimeSelectorCheckedItem
-                  selected={model.id === model_info.current_model_id}
-                  description={model.description}
-                >
-                  {model.label || model.id}
-                </RuntimeSelectorCheckedItem>
-              </Menu.Item>
-            ))}
-          </Menu.ItemGroup>
+                <RuntimeSelectorModelList
+                  models={model_info.available_models}
+                  currentModelId={model_info.current_model_id}
+                  disabled={isRuntimeSetting}
+                  onSelect={selectModel}
+                />
+              </Menu.SubMenu>
+              <Menu.SubMenu
+                key='thought-level'
+                triggerProps={RUNTIME_SUBMENU_TRIGGER_PROPS}
+                title={
+                  <RuntimeSelectorSubMenuTitle
+                    label={t('agent.thoughtLevel.label')}
+                    value={getCurrentThoughtLevelLabel(thoughtLevel)}
+                  />
+                }
+              >
+                {thoughtLevel.options.map((item) => (
+                  <Menu.Item
+                    key={item.value}
+                    className={item.value === thoughtLevel.currentValue ? 'bg-2!' : ''}
+                    onClick={() => {
+                      if (!isRuntimeSetting) void handleThoughtLevelSelect(item.value);
+                    }}
+                  >
+                    <RuntimeSelectorCheckedItem
+                      selected={item.value === thoughtLevel.currentValue}
+                      description={item.description}
+                    >
+                      {item.label}
+                    </RuntimeSelectorCheckedItem>
+                  </Menu.Item>
+                ))}
+              </Menu.SubMenu>
+            </>
+          ) : (
+            /* No thought level: the dropdown is the model list directly. */
+            <RuntimeSelectorModelList
+              models={model_info.available_models}
+              currentModelId={model_info.current_model_id}
+              disabled={isRuntimeSetting}
+              onSelect={selectModel}
+            />
+          )}
         </Menu>
       }
     >

@@ -38,7 +38,7 @@ vi.mock('@/renderer/pages/conversation/platforms/acp/AcpChat', () => ({
   default: (props: unknown) => acpChatMock(props),
 }));
 
-vi.mock('@/renderer/components/agent/AcpModelSelector', () => ({
+vi.mock('@/renderer/components/agent/xaiwork/XaiworkAcpModelSelector', () => ({
   __esModule: true,
   default: (props: unknown) => acpModelSelectorMock(props),
 }));

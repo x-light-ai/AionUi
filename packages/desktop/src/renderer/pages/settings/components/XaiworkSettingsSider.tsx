@@ -3,7 +3,6 @@ import { isElectronDesktop, resolveExtensionAssetUrl } from '@/renderer/utils/pl
 import { type IExtensionSettingsTab } from '@/common/adapter/ipcBridge';
 import { useExtI18n } from '@/renderer/hooks/system/useExtI18n';
 import { useExtensionSettingsTabs } from '@/renderer/hooks/system/useExtensionSettingsTabs';
-import { useXaiworkConfig } from '@/renderer/hooks/useXaiworkConfig';
 import {
   Cat,
   Communication,
@@ -13,9 +12,9 @@ import {
   Lightning,
   LinkCloud,
   Puzzle,
-  Robot,
   Speed,
   System,
+  Toolkit,
 } from '@icon-park/react';
 import classNames from 'classnames';
 import React, { useMemo } from 'react';
@@ -23,13 +22,14 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Tooltip } from '@arco-design/web-react';
 import { getSiderTooltipProps } from '@/renderer/utils/ui/siderTooltip';
+import { useXaiworkConfig } from '@/renderer/hooks/useXaiworkConfig';
 
 /** Builtin settings tab IDs in display order (must match router paths). */
 export const BUILTIN_TAB_IDS = [
-  'model',
-  'assistants',
-  'capabilities',
   'agent',
+  'model',
+  'skills',
+  'tools',
   'appearance',
   'webui',
   'pet',
@@ -43,14 +43,20 @@ export const BUILTIN_TAB_IDS = [
  * This keeps older extensions working without requiring them to update.
  */
 export const LEGACY_ANCHOR_REMAP: Record<string, string> = {
-  'skills-hub': 'capabilities',
-  tools: 'capabilities',
+  'skills-hub': 'skills',
+  capabilities: 'skills',
   display: 'appearance',
 };
 
-export const resolveSettingsAnchor = (rawAnchor: string, hideModelSettingsMenu: boolean): string => {
+export const resolveSettingsAnchor = (
+  rawAnchor: string,
+  hideModelSettingsMenu: boolean,
+  hideAgentSettingsMenu = false
+): string => {
   const anchor = LEGACY_ANCHOR_REMAP[rawAnchor] ?? rawAnchor;
-  return hideModelSettingsMenu && anchor === 'model' ? 'assistants' : anchor;
+  if (hideModelSettingsMenu && anchor === 'model') return hideAgentSettingsMenu ? 'skills' : 'agent';
+  if (hideAgentSettingsMenu && anchor === 'agent') return 'skills';
+  return anchor;
 };
 
 /**
@@ -59,7 +65,7 @@ export const resolveSettingsAnchor = (rawAnchor: string, hideModelSettingsMenu: 
  * Extension tabs anchored between these builtins inherit the enclosing group visually.
  */
 const GROUP_HEADER_BEFORE: Record<string, string> = {
-  model: 'settings.groupAiCore',
+  agent: 'settings.groupAiCore',
   appearance: 'settings.groupApp',
   about: 'settings.groupAbout',
 };
@@ -73,7 +79,7 @@ type SiderItem = {
   path: string;
 };
 
-const SettingsSider: React.FC<{ collapsed?: boolean; tooltipEnabled?: boolean }> = ({
+const XaiworkSettingsSider: React.FC<{ collapsed?: boolean; tooltipEnabled?: boolean }> = ({
   collapsed = false,
   tooltipEnabled = false,
 }) => {
@@ -90,23 +96,23 @@ const SettingsSider: React.FC<{ collapsed?: boolean; tooltipEnabled?: boolean }>
     // Build builtin items
     const builtinMap: Record<string, SiderItem> = {
       model: { id: 'model', label: t('settings.model'), icon: <LinkCloud />, path: 'model' },
-      assistants: {
-        id: 'assistants',
-        label: t('settings.assistants', { defaultValue: 'Assistants' }),
-        icon: <Robot />,
-        path: 'assistants',
-      },
       agent: {
         id: 'agent',
         label: t('settings.agents', { defaultValue: 'Agents' }),
         icon: <Speed />,
         path: 'agent',
       },
-      capabilities: {
-        id: 'capabilities',
+      skills: {
+        id: 'skills',
         label: t('xaiwork.shell.capabilities', { defaultValue: 'Skills' }),
         icon: <Lightning />,
-        path: 'capabilities',
+        path: 'skills',
+      },
+      tools: {
+        id: 'tools',
+        label: t('settings.tools', { defaultValue: 'Tools' }),
+        icon: <Toolkit />,
+        path: 'tools',
       },
       appearance: { id: 'appearance', label: t('settings.appearancePanel'), icon: <Computer />, path: 'appearance' },
       webui: {
@@ -125,7 +131,6 @@ const SettingsSider: React.FC<{ collapsed?: boolean; tooltipEnabled?: boolean }>
       (id) =>
         (isDesktop || id !== 'pet') &&
         (!hideModelSettingsMenu || id !== 'model') &&
-        // FORK-CUSTOM: 隐藏 Agents 菜单
         (!hideAgentSettingsMenu || id !== 'agent')
     ).map((id) => builtinMap[id]);
 
@@ -140,7 +145,7 @@ const SettingsSider: React.FC<{ collapsed?: boolean; tooltipEnabled?: boolean }>
         continue;
       }
       const { relativeTo: rawAnchor, placement } = tab.position;
-      const anchor = resolveSettingsAnchor(rawAnchor, hideModelSettingsMenu);
+      const anchor = resolveSettingsAnchor(rawAnchor, hideModelSettingsMenu, hideAgentSettingsMenu);
       if (!result.some((item) => item.id === anchor)) {
         unanchored.push(tab);
         continue;
@@ -194,10 +199,9 @@ const SettingsSider: React.FC<{ collapsed?: boolean; tooltipEnabled?: boolean }>
     // above the header and visually belong to the previous group.
     const headerAt = new Map<number, string>();
     for (const [builtinId, headerKey] of Object.entries(GROUP_HEADER_BEFORE)) {
-      const targetBuiltinId = hideModelSettingsMenu && builtinId === 'model' ? 'assistants' : builtinId;
-      const builtinIdx = result.findIndex((item) => item.id === targetBuiltinId);
+      const builtinIdx = result.findIndex((item) => item.id === builtinId);
       if (builtinIdx < 0) continue;
-      const beforeCount = beforeMap.get(targetBuiltinId)?.length ?? 0;
+      const beforeCount = beforeMap.get(builtinId)?.length ?? 0;
       headerAt.set(builtinIdx - beforeCount, headerKey);
     }
 
@@ -276,4 +280,4 @@ const SettingsSider: React.FC<{ collapsed?: boolean; tooltipEnabled?: boolean }>
   );
 };
 
-export default SettingsSider;
+export default XaiworkSettingsSider;

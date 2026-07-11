@@ -7,15 +7,14 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Form, Input, Select, Message, TimePicker, Radio, Button } from '@arco-design/web-react';
-import ModalWrapper from '@renderer/components/base/ModalWrapper';
+import AionModal from '@renderer/components/base/AionModal';
 import { Down, Robot } from '@icon-park/react';
 import { ipcBridge } from '@/common';
 import { resolveLocaleKey } from '@/common/utils';
 import type { ICreateCronJobParams, ICronJob, ICronJobUpdateParams } from '@/common/adapter/ipcBridge';
 import { useConversationAssistants } from '@renderer/pages/conversation/hooks/useConversationAssistants';
-import { resolveAgentLogo, useAgentLogos } from '@renderer/utils/model/agentLogo';
 import dayjs from 'dayjs';
-import type { TProviderWithModel } from '@/common/config/storage';
+import type { TChatConversation, TProviderWithModel } from '@/common/config/storage';
 import { type AcpModelInfo } from '@/common/types/platform/acpTypes';
 import { useManagedAgentRuntimeCatalog } from '@/renderer/hooks/agent/useManagedAgents';
 import { useModelProviderList } from '@renderer/hooks/agent/useModelProviderList';
@@ -123,6 +122,15 @@ function getAssistantSelectionFromJob(job: ICronJob): string | undefined {
   return undefined;
 }
 
+function resolveTeamIdFromExtra(extra: TChatConversation['extra'] | undefined): string | undefined {
+  const maybeExtra = extra as { team_id?: unknown; teamId?: unknown } | undefined;
+  const snakeCase = maybeExtra?.team_id;
+  if (typeof snakeCase === 'string' && snakeCase.trim()) return snakeCase;
+  const camelCase = maybeExtra?.teamId;
+  if (typeof camelCase === 'string' && camelCase.trim()) return camelCase;
+  return undefined;
+}
+
 const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
   visible,
   onClose,
@@ -132,7 +140,6 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const localeKey = resolveLocaleKey(i18n?.language ?? 'en-US');
-  const logos = useAgentLogos();
   const [form] = Form.useForm();
   const [submitting, setSubmitting] = useState(false);
   const { presetAssistants } = useConversationAssistants();
@@ -146,6 +153,7 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
   const isEditMode = !!editJob;
   const [execution_mode, setExecutionMode] = useState<ExecutionMode>('new_conversation');
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [teamOwnershipStatus, setTeamOwnershipStatus] = useState<'checking' | 'team' | 'standalone'>('standalone');
 
   // Advanced settings state
   const [model_id, setModelId] = useState<string | undefined>(undefined);
@@ -197,8 +205,38 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
       setConfigOptions(undefined);
       setWorkspace(undefined);
       setSelectedAssistantId(undefined);
+      setTeamOwnershipStatus('standalone');
     }
   }, [visible, editJob, form]);
+
+  useEffect(() => {
+    if (!visible || !editJob?.metadata.conversation_id) {
+      setTeamOwnershipStatus('standalone');
+      return;
+    }
+
+    let cancelled = false;
+    setTeamOwnershipStatus('checking');
+    ipcBridge.conversation.get
+      .invoke({ id: editJob.metadata.conversation_id })
+      .then((conversation) => {
+        if (cancelled) return;
+        const nextIsTeamOwned = Boolean(resolveTeamIdFromExtra(conversation.extra));
+        setTeamOwnershipStatus(nextIsTeamOwned ? 'team' : 'standalone');
+        if (nextIsTeamOwned) {
+          setExecutionMode('existing');
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setTeamOwnershipStatus('standalone');
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [visible, editJob]);
 
   // Edit mode needs the assistant catalog to map a stored job to its
   // current assistant id. We isolate this in a separate effect so that
@@ -350,7 +388,11 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
   const showModelSelector = Boolean(resolvedBackend && (isGeminiMode || acpCachedModelInfo));
   const advancedFieldCount = Number(showModelSelector) + 1;
   const isOriginalExistingConversationTask = isEditMode && editJob?.target.execution_mode === 'existing';
-  const canEditAgentConfig = !isOriginalExistingConversationTask && (!isEditMode || execution_mode !== 'existing');
+  const isCheckingTeamOwnership = teamOwnershipStatus === 'checking';
+  const isTeamOwnedTask = teamOwnershipStatus === 'team';
+  const isExecutionModeLocked = isCheckingTeamOwnership || isTeamOwnedTask;
+  const canEditAgentConfig =
+    !isExecutionModeLocked && !isOriginalExistingConversationTask && (!isEditMode || execution_mode !== 'existing');
 
   const handleFrequencyChange = (value: FrequencyType) => {
     setFrequency(value);
@@ -359,13 +401,17 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
     }
   };
 
-  const handleAssistantChange = useCallback((value: string) => {
-    setSelectedAssistantId(value);
-    // Reset model and config_options when agent changes
-    setModelId(undefined);
-    setConfigOptions(undefined);
-    // Workspace remains unchanged (agent-agnostic)
-  }, []);
+  const handleAssistantChange = useCallback(
+    (value: string) => {
+      setSelectedAssistantId(value);
+      form.setFieldsValue({ assistant: value });
+      // Reset model and config_options when agent changes
+      setModelId(undefined);
+      setConfigOptions(undefined);
+      // Workspace remains unchanged (agent-agnostic)
+    },
+    [form]
+  );
 
   const handleWorkspaceClear = useCallback(() => {
     setWorkspace(undefined);
@@ -379,25 +425,31 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
       const scheduleExpr = scheduleInfo.expr;
       const scheduleDesc = scheduleInfo.description;
       const schedule = createCronSchedule(scheduleExpr, scheduleDesc);
+      const assistantValue = typeof values.assistant === 'string' ? values.assistant : selectedAssistantId;
+      const resolvedExecutionMode: ExecutionMode = isTeamOwnedTask ? 'existing' : execution_mode;
 
-      const agent_config = canEditAgentConfig
-        ? resolveCronAgentConfig({
-            agentValue: values.assistant,
-            presetAssistants,
-            selectedAionrsProvider: geminiCurrentModel
-              ? {
-                  id: geminiCurrentModel.id as string | undefined,
-                  name: geminiCurrentModel.name,
-                }
-              : undefined,
-            model_id,
-            config_options,
-            workspace,
-            localeKey,
-            getMode: resolveAutoApproveModeFromAgentMetadata,
-            aionrsModelRequiredMessage: t('cron.page.form.aionrsModelRequired'),
-          }).agent_config
-        : undefined;
+      let agent_config: ICreateCronJobParams['agent_config'] | ICronJobUpdateParams['metadata']['agent_config'];
+      if (canEditAgentConfig) {
+        if (!assistantValue) {
+          throw new Error(t('cron.page.form.assistantRequired'));
+        }
+        agent_config = resolveCronAgentConfig({
+          agentValue: assistantValue,
+          presetAssistants,
+          selectedAionrsProvider: geminiCurrentModel
+            ? {
+                id: geminiCurrentModel.id as string | undefined,
+                name: geminiCurrentModel.name,
+              }
+            : undefined,
+          model_id,
+          config_options,
+          workspace,
+          localeKey,
+          getMode: resolveAutoApproveModeFromAgentMetadata,
+          aionrsModelRequiredMessage: t('cron.page.form.aionrsModelRequired'),
+        }).agent_config;
+      }
 
       if (isEditMode) {
         const metadata: ICronJobUpdateParams['metadata'] = {
@@ -413,7 +465,7 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
           schedule,
           target: {
             payload: { kind: 'message', text: values.prompt },
-            execution_mode,
+            execution_mode: resolvedExecutionMode,
           },
           metadata,
           state: {
@@ -435,7 +487,7 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
           conversation_id: _conversation_id ?? '',
           conversation_title,
           created_by: 'user',
-          execution_mode,
+          execution_mode: resolvedExecutionMode,
           agent_config,
         };
         await ipcBridge.cron.addJob.invoke(params);
@@ -451,18 +503,19 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
   };
 
   return (
-    <ModalWrapper
-      title={isEditMode ? t('cron.page.editTask') : t('cron.page.createTask')}
+    <AionModal
+      variant='standard'
+      header={{ title: isEditMode ? t('cron.page.editTask') : t('cron.page.createTask'), showClose: true }}
       visible={visible}
       onCancel={onClose}
       onOk={handleSubmit}
       confirmLoading={submitting}
       okText={t('cron.page.save')}
       cancelText={t('cron.page.cancel')}
-      className='w-[min(560px,calc(100vw-32px))] max-w-560px rd-16px'
+      className='w-[min(560px,calc(100vw-32px))] max-w-560px'
       unmountOnExit
     >
-      <div className='overflow-y-auto px-24px pb-16px pr-18px max-h-[min(68vh,640px)]'>
+      <div>
         <Form form={form} layout='vertical'>
           <FormItem
             label={t('cron.page.form.name')}
@@ -490,9 +543,6 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
                 const assistant = presetAssistants.find((item) => item.id === assistantId);
                 const name = resolveAssistantName(assistant, localeKey, assistantId);
                 const avatar = resolveAssistantAvatar(assistant?.avatar);
-                const logo = resolveAgentLogo(logos, {
-                  backend: assistantRuntimeKey(assistant),
-                });
 
                 return (
                   <div className='flex items-center gap-8px'>
@@ -500,8 +550,6 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
                       <img src={avatar.value} alt={name} className='w-16px h-16px object-contain' />
                     ) : avatar.kind === 'emoji' ? (
                       <span className='text-14px leading-16px'>{avatar.value}</span>
-                    ) : logo ? (
-                      <img src={logo} alt={name} className='w-16px h-16px object-contain' />
                     ) : (
                       <Robot size='16' />
                     )}
@@ -513,10 +561,6 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
               {presetAssistants.map((assistant) => {
                 const name = resolveAssistantName(assistant, localeKey, assistant.name);
                 const avatar = resolveAssistantAvatar(assistant.avatar);
-                const runtimeKey = assistantRuntimeKey(assistant);
-                const logo = resolveAgentLogo(logos, {
-                  backend: runtimeKey,
-                });
                 const disabled = isAionrsAssistant(assistant) && !hasAionrsProvider;
                 return (
                   <Option key={assistant.id} value={assistant.id} disabled={disabled}>
@@ -528,8 +572,6 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
                         <img src={avatar.value} alt={name} className='w-16px h-16px object-contain' />
                       ) : avatar.kind === 'emoji' ? (
                         <span className='text-14px leading-16px'>{avatar.value}</span>
-                      ) : logo ? (
-                        <img src={logo} alt={name} className='w-16px h-16px object-contain' />
                       ) : (
                         <Robot size='16' />
                       )}
@@ -552,6 +594,7 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
           <FormItem label={t('cron.page.form.executionMode')}>
             <Radio.Group
               value={execution_mode}
+              disabled={isExecutionModeLocked}
               onChange={(value) => setExecutionMode(value as ExecutionMode)}
               className='flex flex-wrap items-center gap-20px'
             >
@@ -560,7 +603,7 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
                   <Radio
                     key={option.value}
                     value={option.value}
-                    className='m-0 min-w-0 text-14px text-t-secondary cursor-pointer'
+                    className={`m-0 min-w-0 text-14px text-t-secondary ${isExecutionModeLocked ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                   >
                     <span className='pl-4px text-14px font-medium text-t-primary'>{option.label}</span>
                   </Radio>
@@ -570,6 +613,11 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
             <div className='mt-10px rounded-12px border border-solid border-[var(--color-border-2)] bg-fill-2 px-14px py-12px'>
               <p className='m-0 text-12px leading-18px text-t-primary'>{selectedExecutionModeOption.description}</p>
             </div>
+            {isTeamOwnedTask && (
+              <p className='mb-0 mt-8px text-12px leading-18px text-t-secondary'>
+                {t('cron.page.form.teamTaskExecutionModeLockedReason')}
+              </p>
+            )}
           </FormItem>
 
           <FormItem
@@ -687,7 +735,7 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
           )}
         </Form>
       </div>
-    </ModalWrapper>
+    </AionModal>
   );
 };
 

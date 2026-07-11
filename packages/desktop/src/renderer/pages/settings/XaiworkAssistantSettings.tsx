@@ -19,7 +19,6 @@ import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import XaiworkMyAssistants from './XaiworkMyAssistants';
 import XaiworkAssistantMarketSettings from './XaiworkAssistantMarketSettings';
-import SettingsPageWrapper from './components/SettingsPageWrapper';
 import styles from './XaiworkAssistantSettings.module.css';
 
 type AssistantTab = 'mine' | 'market';
@@ -56,7 +55,7 @@ const XaiworkAssistantSettings: React.FC = () => {
   };
 
   return (
-    <SettingsPageWrapper>
+    <div className='h-full min-h-0 overflow-y-auto px-16px py-14px md:px-40px md:py-32px'>
       <Tabs
         activeTab={activeTab}
         onChange={handleTabChange}
@@ -71,7 +70,7 @@ const XaiworkAssistantSettings: React.FC = () => {
           <XaiworkAssistantMarketSettings />
         </Tabs.TabPane>
       </Tabs>
-    </SettingsPageWrapper>
+    </div>
   );
 };
 

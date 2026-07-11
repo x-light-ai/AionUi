@@ -9,6 +9,7 @@
  */
 
 import { type ChildProcess, spawn } from 'node:child_process';
+import { mkdirSync } from 'node:fs';
 import { connect, createServer, type Socket } from 'node:net';
 import { cleanupRegisteredAgentProcesses } from './agent-process-registry.js';
 import type { AppMetadata, BackendBinaryResolver } from './types.js';
@@ -69,6 +70,11 @@ type SpawnConfig = {
   workDir?: string;
   appVersion: string;
   isPackaged: boolean;
+  recoverCorruptedDatabase?: boolean;
+};
+
+export type BackendLaunchFlags = {
+  recoverCorruptedDatabase?: boolean;
 };
 
 export type BackendDirConfig = {
@@ -193,10 +199,11 @@ export function buildSpawnArgs(config: SpawnConfig): string[] {
     config.appVersion,
   ];
   if (config.isPackaged) args.push('--managed-resources-mode', 'bundled');
-  if (!config.isPackaged) args.push('--dump-prompts');
+  if (!config.isPackaged && process.env.AIONUI_DUMP_PROMPTS === '1') args.push('--dump-prompts');
   if (config.logDir) args.push('--log-dir', config.logDir);
   if (config.workDir) args.push('--work-dir', config.workDir);
   if (config.local) args.push('--local');
+  if (config.recoverCorruptedDatabase) args.push('--recover-corrupted-database');
   return args;
 }
 
@@ -358,6 +365,11 @@ function getResolveDiagnostics(error: unknown): Partial<BackendStartupErrorDetai
   return diagnostics as Partial<BackendStartupErrorDetails>;
 }
 
+function ensureBackendStartupDirectory(dir: string | undefined): void {
+  if (!dir || dir.trim() === '') return;
+  mkdirSync(dir, { recursive: true });
+}
+
 function waitForChildProcessEnd(childProcess: ChildProcess): Promise<void> {
   return new Promise((resolve) => {
     let settled = false;
@@ -486,7 +498,8 @@ export class BackendLifecycleManager {
     logDir?: string,
     dirs?: BackendDirConfig,
     options?: BackendStartOptions,
-    preferredPort?: number
+    preferredPort?: number,
+    launchFlags: BackendLaunchFlags = {}
   ): Promise<number> {
     const appVersion = this.appMeta.version;
     let binaryPath: string;
@@ -565,8 +578,20 @@ export class BackendLifecycleManager {
       workDir: dirs?.workDir,
       appVersion,
       isPackaged: this.appMeta.isPackaged,
+      recoverCorruptedDatabase: launchFlags.recoverCorruptedDatabase === true,
     });
     console.log(`[aioncore] starting: ${binaryPath} ${args.join(' ')}`);
+
+    try {
+      ensureBackendStartupDirectory(dbPath);
+      ensureBackendStartupDirectory(logDir);
+      ensureBackendStartupDirectory(dirs?.cacheDir);
+      ensureBackendStartupDirectory(dirs?.workDir);
+      ensureBackendStartupDirectory(dirs?.logDir);
+    } catch (error) {
+      this._status = 'error';
+      throw makeStartupError('spawn', 'aioncore startup directory preparation failed', error);
+    }
 
     try {
       this.childProcess = spawn(binaryPath, args, {

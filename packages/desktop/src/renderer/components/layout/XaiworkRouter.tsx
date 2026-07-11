@@ -1,24 +1,23 @@
 import React, { Suspense } from 'react';
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import AppLoader from '@renderer/components/layout/AppLoader';
-import { useXaiworkConfig } from '@renderer/hooks/useXaiworkConfig';
 import { useAuth } from '@renderer/hooks/context/AuthContext';
+import { useXaiworkConfig } from '@renderer/hooks/useXaiworkConfig';
 import { TEAM_MODE_ENABLED } from '@/common/config/constants';
 const Conversation = React.lazy(() => import('@renderer/pages/conversation'));
 const Guid = React.lazy(() => import('@renderer/pages/guid'));
 const AgentSettings = React.lazy(() => import('@renderer/pages/settings/AgentSettings'));
 const AgentRepairPage = React.lazy(() => import('@renderer/pages/settings/AgentSettings/AgentRepairPage'));
-// FORK-CUSTOM: 指向 fork 版助手容器（新增"我的助手"/"助手市场"两个 tab，我的助手过滤掉 generated），上游 AssistantSettings 保持原样
+// FORK-CUSTOM: fork pages remain isolated while upstream routes stay intact.
 const AssistantSettings = React.lazy(() => import('@renderer/pages/settings/XaiworkAssistantSettings'));
-// FORK-CUSTOM: 指向 fork 版 Capabilities 容器（新增 Skill Market tab + fork 版 Skills 页），上游 CapabilitiesSettings 保持原样
-const CapabilitiesSettings = React.lazy(() => import('@renderer/pages/settings/XaiworkCapabilitiesSettings'));
+const SkillsSettings = React.lazy(() => import('@renderer/pages/settings/XaiworkCapabilitiesSettings'));
+const ToolsSettings = React.lazy(() => import('@renderer/pages/settings/ToolsSettings'));
 const AppearanceSettings = React.lazy(() => import('@renderer/pages/settings/AppearanceSettings'));
 const ModeSettings = React.lazy(() => import('@renderer/pages/settings/ModeSettings'));
 const SystemSettings = React.lazy(() => import('@renderer/pages/settings/SystemSettings'));
 const WebuiSettings = React.lazy(() => import('@renderer/pages/settings/WebuiSettings'));
 const PetSettings = React.lazy(() => import('@renderer/pages/settings/PetSettings'));
 const ExtensionSettingsPage = React.lazy(() => import('@renderer/pages/settings/ExtensionSettingsPage'));
-// FORK-CUSTOM: 指向 fork 版登录页（微信扫码登录），上游 pages/login/index.tsx 保持原样
 const LoginPage = React.lazy(() => import('@renderer/pages/login/XaiworkLoginPage'));
 const ComponentsShowcase = React.lazy(() => import('@renderer/pages/TestShowcase'));
 const ScheduledTasksPage = React.lazy(() => import('@renderer/pages/cron/ScheduledTasksPage'));
@@ -30,6 +29,16 @@ const withRouteFallback = (Component: React.LazyExoticComponent<React.ComponentT
     <Component />
   </Suspense>
 );
+
+/**
+ * Legacy `/settings/capabilities?tab=tools` deep links now map to the standalone
+ * Tools page; everything else (skills tab or no tab) lands on the Skills page.
+ */
+const CapabilitiesRedirect: React.FC = () => {
+  const { search } = useLocation();
+  const tab = new URLSearchParams(search).get('tab');
+  return <Navigate to={tab === 'tools' ? '/settings/tools' : '/settings/skills'} replace />;
+};
 
 const ProtectedLayout: React.FC<{ layout: React.ReactElement }> = ({ layout }) => {
   const { status } = useAuth();
@@ -47,19 +56,18 @@ const ProtectedLayout: React.FC<{ layout: React.ReactElement }> = ({ layout }) =
 
 const LoginRoute: React.FC = () => {
   const { status } = useAuth();
-  const location = useLocation();
-  const forceXaiworkLogin = new URLSearchParams(location.search).get('xaiwork') === 'expired';
-
-  if (status === 'authenticated' && !forceXaiworkLogin) {
-    return <Navigate to='/guid' replace />;
-  }
-
-  return withRouteFallback(LoginPage);
+  const { search } = useLocation();
+  const forceXaiworkLogin = new URLSearchParams(search).get('xaiwork') === 'expired';
+  return status === 'authenticated' && !forceXaiworkLogin ? (
+    <Navigate to='/guid' replace />
+  ) : (
+    withRouteFallback(LoginPage)
+  );
 };
 
 const PanelRoute: React.FC<{ layout: React.ReactElement }> = ({ layout }) => {
   const { status } = useAuth();
-  const { hideModelSettingsMenu } = useXaiworkConfig();
+  const { hideModelSettingsMenu, hideAgentSettingsMenu } = useXaiworkConfig();
 
   return (
     <HashRouter>
@@ -74,17 +82,23 @@ const PanelRoute: React.FC<{ layout: React.ReactElement }> = ({ layout }) => {
             element={TEAM_MODE_ENABLED ? withRouteFallback(TeamIndex) : <Navigate to='/guid' replace />}
           />
           <Route path='/settings/model' element={withRouteFallback(ModeSettings)} />
-          <Route path='/settings/assistants' element={withRouteFallback(AssistantSettings)} />
+          <Route path='/assistants' element={withRouteFallback(AssistantSettings)} />
+          {/* Assistants moved out of Settings to a top-level entry; keep a redirect
+              so old deep links / back-nav still land on the new page. */}
+          <Route path='/settings/assistants' element={<Navigate to='/assistants' replace />} />
           <Route path='/settings/agent' element={withRouteFallback(AgentSettings)} />
           <Route path='/settings/agent/:id/repair' element={withRouteFallback(AgentRepairPage)} />
-          <Route path='/settings/capabilities' element={withRouteFallback(CapabilitiesSettings)} />
+          {/* Skills and Tools are top-level settings entries. */}
+          <Route path='/settings/skills' element={withRouteFallback(SkillsSettings)} />
+          <Route path='/settings/skills/import-history' element={withRouteFallback(SkillsSettings)} />
+          <Route path='/settings/tools' element={withRouteFallback(ToolsSettings)} />
+          {/* Legacy routes — the previous combined "Capabilities" page is now two pages. */}
+          <Route path='/settings/capabilities' element={<CapabilitiesRedirect />} />
           <Route
             path='/settings/capabilities/skills/import-history'
-            element={withRouteFallback(CapabilitiesSettings)}
+            element={<Navigate to='/settings/skills/import-history' replace />}
           />
-          {/* Legacy routes — redirect to the merged /settings/capabilities page */}
-          <Route path='/settings/skills-hub' element={<Navigate to='/settings/capabilities?tab=skills' replace />} />
-          <Route path='/settings/tools' element={<Navigate to='/settings/capabilities?tab=tools' replace />} />
+          <Route path='/settings/skills-hub' element={<Navigate to='/settings/skills' replace />} />
           <Route path='/settings/appearance' element={withRouteFallback(AppearanceSettings)} />
           <Route path='/settings/display' element={<Navigate to='/settings/appearance' replace />} />
           <Route path='/settings/webui' element={withRouteFallback(WebuiSettings)} />
@@ -94,7 +108,18 @@ const PanelRoute: React.FC<{ layout: React.ReactElement }> = ({ layout }) => {
           <Route path='/settings/ext/:tabId' element={withRouteFallback(ExtensionSettingsPage)} />
           <Route
             path='/settings'
-            element={<Navigate to={hideModelSettingsMenu ? '/settings/assistants' : '/settings/model'} replace />}
+            element={
+              <Navigate
+                to={
+                  hideModelSettingsMenu
+                    ? hideAgentSettingsMenu
+                      ? '/settings/skills'
+                      : '/settings/agent'
+                    : '/settings/model'
+                }
+                replace
+              />
+            }
           />
           <Route path='/test/components' element={withRouteFallback(ComponentsShowcase)} />
           <Route path='/scheduled' element={withRouteFallback(ScheduledTasksPage)} />
