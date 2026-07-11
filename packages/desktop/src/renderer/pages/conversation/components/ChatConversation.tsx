@@ -323,6 +323,7 @@ const ChatConversation: React.FC<{
     if (conversation.type === 'acp') {
       const extra = conversation.extra as { current_model_id?: string };
       return (
+        // FORK-CUSTOM: route ACP conversations through the XAIWork model lifecycle wrapper.
         <XaiworkAcpModelSelector
           conversation_id={conversation.id}
           backend={resolvedConversationBackend}

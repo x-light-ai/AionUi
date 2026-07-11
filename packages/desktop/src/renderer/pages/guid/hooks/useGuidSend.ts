@@ -279,6 +279,7 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
     navigate,
     t,
     localeKey,
+    // FORK-CUSTOM: retain the XAIWork create guard in the send callback dependencies.
     applyXaiworkCreateGuard,
   ]);
 

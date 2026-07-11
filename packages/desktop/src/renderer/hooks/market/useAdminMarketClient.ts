@@ -1,3 +1,4 @@
+// FORK-CUSTOM: fork-only hook that binds the XAIWork admin market client to authentication.
 import { useMemo } from 'react';
 import { useConfig } from '@/renderer/hooks/config/useConfig';
 import { createMarketClient } from './marketClient';

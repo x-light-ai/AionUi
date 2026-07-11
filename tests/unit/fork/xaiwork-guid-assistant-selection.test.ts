@@ -1,3 +1,4 @@
+// FORK-CUSTOM: fork-only unit tests for XAIWork guide Assistant selection.
 import { describe, expect, it } from 'vitest';
 
 import type { Assistant } from '@/common/types/agent/assistantTypes';

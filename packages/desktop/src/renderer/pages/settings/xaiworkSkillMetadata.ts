@@ -1,3 +1,4 @@
+// FORK-CUSTOM: fork-only metadata overlay for XAIWork-installed Skills.
 import type { XaiworkInstalledSkillMetadata } from '@/common/adapter/xaiworkBridge';
 
 export type { XaiworkInstalledSkillMetadata } from '@/common/adapter/xaiworkBridge';

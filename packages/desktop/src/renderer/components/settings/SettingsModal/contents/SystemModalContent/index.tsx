@@ -283,6 +283,7 @@ const SystemModalContent: React.FC = () => {
 
   const preferenceItems = [
     { key: 'language', label: t('settings.language'), component: <LanguageSwitcher /> },
+    // FORK-CUSTOM: desktop-only settings are hidden from the XAIWork web shell.
     ...(isDesktop
       ? [
           {

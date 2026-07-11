@@ -24,10 +24,11 @@ import { ensureAdminPassword } from './ensureAdminPassword.js';
 const PACKAGED_EXE_NAMES = ['xaiwork-web', 'xaiwork-web.exe', 'aionui-web', 'aionui-web.exe'];
 
 function resolveCliRoot(): string {
-  // Heuristic: if the executable path matches a known packaged binary name,
+  // FORK-CUSTOM: if the executable path matches a known XAIWork or legacy package name,
   // treat it as the packaged single-file binary and return its directory.
   const exe = process.execPath;
   const exeName = path.basename(exe).toLowerCase();
+  // FORK-CUSTOM: recognize the branded XAIWork executable while retaining legacy compatibility.
   if (PACKAGED_EXE_NAMES.includes(exeName)) {
     return path.dirname(exe);
   }
@@ -50,6 +51,7 @@ const cliRoot = resolveCliRoot();
 // binary itself can do about first-launch quarantine.
 const isPackaged = (() => {
   const exeName = path.basename(process.execPath).toLowerCase();
+  // FORK-CUSTOM: recognize current and legacy XAIWork package names.
   return PACKAGED_EXE_NAMES.includes(exeName);
 })();
 
@@ -125,6 +127,7 @@ function resolveAllowRemote(flags: Map<string, string | true>): boolean {
   return ['1', 'true', 'yes', 'on'].includes(env.trim().toLowerCase());
 }
 
+// FORK-CUSTOM: resolve the XAIWork OpenAPI proxy target for the web shell.
 function resolveXaiworkTarget(flags: Map<string, string | true>): string | undefined {
   const cli = flags.get('xaiwork-target');
   if (typeof cli === 'string') return cli;
@@ -150,6 +153,7 @@ async function runStart(flags: Map<string, string | true>): Promise<void> {
   fs.mkdirSync(logDir, { recursive: true });
   const port = resolvePort(flags);
   const allowRemote = resolveAllowRemote(flags);
+  // FORK-CUSTOM: pass the XAIWork proxy target through both host modes.
   const xaiworkTarget = resolveXaiworkTarget(flags);
   const version = readPackageVersion();
   const autoOpenBrowser = shouldAutoOpenBrowser({
@@ -190,6 +194,7 @@ async function runStart(flags: Map<string, string | true>): Promise<void> {
       backendPort: 0, // invalid port → API proxy will fail cleanly
       port,
       allowRemote,
+      // FORK-CUSTOM: configure the XAIWork OpenAPI proxy in frontend-only mode.
       xaiworkTarget,
     });
     currentHandle = handle;
@@ -219,6 +224,7 @@ async function runStart(flags: Map<string, string | true>): Promise<void> {
       staticDir,
       port,
       allowRemote,
+      // FORK-CUSTOM: configure the XAIWork OpenAPI proxy in managed mode.
       xaiworkTarget,
       dataDir,
       logDir,
@@ -284,7 +290,7 @@ async function runStart(flags: Map<string, string | true>): Promise<void> {
 }
 
 /**
- * `xaiwork-web resetpass` — spin up the backend just long enough to POST
+ * FORK-CUSTOM: `xaiwork-web resetpass` — spin up the backend just long enough to POST
  * /api/webui/reset-password, print the new plaintext password, then tear down.
  * Uses the same data-dir resolution as `start`, so the reset targets whichever
  * DB the user normally runs against.
@@ -386,6 +392,7 @@ async function main(): Promise<void> {
   }
 
   if (command === '--help' || command === 'help' || command === '-h') {
+    // FORK-CUSTOM: use the XAIWork executable name in help output.
     console.log(`Usage: xaiwork-web <command> [options]
 
 Commands:
@@ -422,6 +429,7 @@ Environment variables:
 
   if (command !== 'start') {
     console.error(`Unknown command: ${command}`);
+    // FORK-CUSTOM: use the XAIWork executable name in error guidance.
     console.error('Usage: xaiwork-web [start|resetpass|version|help]');
     process.exit(1);
   }

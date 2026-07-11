@@ -102,6 +102,7 @@ const GuidPage: React.FC = () => {
       });
   }, []);
 
+  // FORK-CUSTOM: upstream multi-toggle Skill handling moved into the XAIWork single-select callback below.
   const handleToggleMcpServer = useCallback((serverId: string) => {
     setGuidSelectedMcpServerIds((prev) => {
       const current = prev ?? [];
@@ -120,6 +121,7 @@ const GuidPage: React.FC = () => {
   } | null;
   const resetAssistantRequested = navState?.resetAssistant === true;
   const preselectAssistantId = navState?.selectedAssistantId;
+  // FORK-CUSTOM: route guide selection through the isolated XAIWork lifecycle.
   const agentSelection = useXaiworkGuidAssistantSelection({
     resetAssistant: resetAssistantRequested,
     preselectAssistantId,
@@ -500,7 +502,7 @@ const GuidPage: React.FC = () => {
         applyXaiworkGuidModel(model);
       }
     },
-    [agentSelection, hasSelectedAssistant, selectedAssistantId, applyXaiworkGuidModel]
+    [agentSelection, hasSelectedAssistant, selectedAssistantId, applyXaiworkGuidModel] // FORK-CUSTOM: model apply dependency.
   );
   const setGuidSelectedThoughtLevel = useCallback(
     (value: string) => {
@@ -601,6 +603,7 @@ const GuidPage: React.FC = () => {
 
   // Build the action row
   const actionRowNode = (
+    // FORK-CUSTOM: use the fork action row while the upstream component remains untouched.
     <XaiworkGuidActionRow
       files={guidInput.files}
       onFilesUploaded={guidInput.handleFilesUploaded}
@@ -619,7 +622,7 @@ const GuidPage: React.FC = () => {
       dynamicModes={agentSelection.currentAgentModeOptions}
       onModeSelect={setGuidSelectedMode}
       allSkills={allSkills}
-      onSelectSkill={handleSelectSkill}
+      onSelectSkill={handleSelectSkill /* FORK-CUSTOM: XAIWork single-select Skill launcher. */}
       mcpServers={availableMcpServers}
       selectedMcpServerIds={guidSelectedMcpServerIds ?? []}
       onToggleMcpServer={handleToggleMcpServer}

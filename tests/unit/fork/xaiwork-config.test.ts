@@ -1,3 +1,4 @@
+// FORK-CUSTOM: fork-only tests for XAIWork configuration defaults.
 /**
  * FORK-CUSTOM: shape guards for xaiwork-only config constants (xaiworkBrand, xaiworkDefaults).
  * @vitest-environment node

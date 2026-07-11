@@ -1,3 +1,4 @@
+// FORK-CUSTOM: fork-only tests for XAIWork guide model application.
 /**
  * FORK-CUSTOM: tests for the guid-page immediate XAIWork model-apply hook.
  * @vitest-environment jsdom

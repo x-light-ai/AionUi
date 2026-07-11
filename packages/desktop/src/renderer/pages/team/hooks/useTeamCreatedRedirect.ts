@@ -1,3 +1,4 @@
+// FORK-CUSTOM: fork-owned team redirect hook retained outside upstream page logic.
 /**
  * @license
  * Copyright 2025 AionUi (aionui.com)

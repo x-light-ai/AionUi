@@ -35,6 +35,7 @@ export type WebHostOptions = {
   staticDir: string;
   port?: number;
   allowRemote?: boolean;
+  // FORK-CUSTOM: optional XAIWork OpenAPI reverse-proxy target.
   xaiworkTarget?: string;
   dataDir?: string;
   logDir?: string;

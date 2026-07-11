@@ -1,3 +1,4 @@
+// FORK-CUSTOM: fork-only settings sider with XAIWork navigation policies.
 import FlexFullContainer from '@/renderer/components/layout/FlexFullContainer';
 import { isElectronDesktop, resolveExtensionAssetUrl } from '@/renderer/utils/platform';
 import { type IExtensionSettingsTab } from '@/common/adapter/ipcBridge';

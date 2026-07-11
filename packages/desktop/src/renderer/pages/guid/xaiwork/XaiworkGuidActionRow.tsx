@@ -1,3 +1,4 @@
+// FORK-CUSTOM: fork-only guide action row composed from current upstream behavior.
 /**
  * @license
  * Copyright 2025 AionUi (aionui.com)

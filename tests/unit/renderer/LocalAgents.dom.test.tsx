@@ -61,6 +61,7 @@ vi.mock('@renderer/hooks/agent/useManagedAgents', () => ({
   useManagedAgents: () => useManagedAgents(),
 }));
 
+// FORK-CUSTOM: exercise the XAIWork Agent visibility policy.
 vi.mock('@/renderer/hooks/useXaiworkConfig', () => ({
   useXaiworkConfig: () => ({ hideTeamSection: true, hideModelSettingsMenu: true, showAionCliInUi: true }),
 }));

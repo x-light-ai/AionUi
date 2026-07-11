@@ -1,3 +1,4 @@
+// FORK-CUSTOM: fork-only Assistant settings composition.
 /**
  * @license
  * Copyright 2025 AionUi (aionui.com)

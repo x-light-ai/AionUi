@@ -140,6 +140,7 @@ describe('Layout sider brand Home button', () => {
 
     // No actionable role/label in chat routes.
     expect(screen.queryByLabelText(BACK_KEY)).toBeNull();
+    // FORK-CUSTOM: assert the configured XAIWork wordmark.
     const wordmark = screen.getByText('XAIWork');
     fireEvent.click(wordmark);
     expect(navigate).not.toHaveBeenCalled();
@@ -149,6 +150,7 @@ describe('Layout sider brand Home button', () => {
     currentPathname = '/conversation/xyz';
     renderLayout();
 
+    // FORK-CUSTOM: assert the configured XAIWork wordmark.
     fireEvent.click(screen.getByText('XAIWork'));
     expect(navigate).not.toHaveBeenCalled();
   });
@@ -156,9 +158,10 @@ describe('Layout sider brand Home button', () => {
   it('clicking the logo icon counts toward the devtools easter-egg and never navigates', () => {
     currentPathname = '/settings/about';
     sessionStorage.setItem('aion:last-non-settings-path', '/conversation/abc');
+    // FORK-CUSTOM: locate the XAIWork image through its accessible brand name.
     renderLayout();
 
-    // The icon container owns the debug click handler and is separate from the wordmark.
+    // FORK-CUSTOM: the XAIWork icon container owns the debug handler and remains separate from the wordmark.
     const icon = screen.getByAltText('XAIWork').parentElement as HTMLElement;
     expect(icon).toBeTruthy();
     for (let i = 0; i < 4; i++) fireEvent.click(icon);

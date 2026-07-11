@@ -1,3 +1,4 @@
+// FORK-CUSTOM: fork-owned Skill card used by XAIWork Skill management.
 /**
  * @license
  * Copyright 2025 AionUi (aionui.com)

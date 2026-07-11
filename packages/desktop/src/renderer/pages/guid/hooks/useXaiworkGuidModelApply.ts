@@ -1,3 +1,4 @@
+// FORK-CUSTOM: fork-only guide model application lifecycle.
 /**
  * @license
  * Copyright 2025 AionUi (aionui.com)

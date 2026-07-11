@@ -111,6 +111,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
   const [ready, setReady] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
+  // FORK-CUSTOM: accept silent refreshes for the XAIWork QR login confirmation flow.
   const refresh = useCallback(async (options?: { silent?: boolean }) => {
     if (isDesktopRuntime) {
       setStatus('authenticated');

@@ -11,6 +11,7 @@
  */
 
 import http, { type IncomingMessage, type Server, type ServerResponse } from 'node:http';
+// FORK-CUSTOM: support HTTPS XAIWork OpenAPI targets.
 import https from 'node:https';
 import { networkInterfaces } from 'node:os';
 import net, { type Socket } from 'node:net';
@@ -21,6 +22,7 @@ export type StaticServerOptions = {
   backendPort: number;
   port?: number;
   allowRemote?: boolean;
+  // FORK-CUSTOM: optional XAIWork OpenAPI reverse-proxy target.
   xaiworkTarget?: string;
 };
 
@@ -70,6 +72,7 @@ function forwardToBackend(req: IncomingMessage, res: ServerResponse, backendPort
   req.pipe(proxy);
 }
 
+// FORK-CUSTOM: validate and normalize the XAIWork OpenAPI target.
 function resolveXaiworkTarget(target?: string): URL {
   const raw = (target || process.env.AIONUI_XAIWORK_TARGET || DEFAULT_XAIWORK_TARGET).trim().replace(/\/+$/, '');
   const url = new URL(raw);
@@ -177,6 +180,7 @@ export async function startStaticServer(opts: StaticServerOptions): Promise<Stat
   const port = opts.port ?? DEFAULT_PORT;
   const allowRemote = opts.allowRemote === true;
   const host = allowRemote ? '0.0.0.0' : '127.0.0.1';
+  // FORK-CUSTOM: resolve the XAIWork proxy once when the server starts.
   const xaiworkTarget = resolveXaiworkTarget(opts.xaiworkTarget);
 
   // The HTTP server listens only on loopback — user traffic hits the outer

@@ -51,6 +51,7 @@ describe('release packaging configuration', () => {
     expect(script).toMatch(/--mac\s+dmg\s+zip\s+--\$\{targetArch\}\s+--prepackaged/);
   });
 
+  // FORK-CUSTOM: allow the XAIWork release overlay enough time to prepare mock macOS assets.
   itWithBash(
     'fails release asset preparation when a mac zip is missing',
     () => {

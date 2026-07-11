@@ -42,6 +42,7 @@ const stagingDir = path.join(distDir, 'staging');
 fs.rmSync(stagingDir, { recursive: true, force: true });
 fs.mkdirSync(stagingDir, { recursive: true });
 
+// FORK-CUSTOM: stage the archive under the XAIWork executable name.
 const tarballContentDir = path.join(stagingDir, WEB_CLI_NAME);
 fs.mkdirSync(tarballContentDir, { recursive: true });
 
@@ -53,6 +54,7 @@ console.log('4. Compiling web-cli into standalone executable...');
 const bunTargetPlatform = { darwin: 'darwin', linux: 'linux', win32: 'windows' }[platform] || platform;
 const bunTargetArch = { arm64: 'arm64', x64: 'x64', ia32: 'x64' }[arch] || arch;
 const bunTarget = `bun-${bunTargetPlatform}-${bunTargetArch}`;
+// FORK-CUSTOM: compile the branded XAIWork executable name.
 const executableName = platform === 'win32' ? `${WEB_CLI_NAME}.exe` : WEB_CLI_NAME;
 const executablePath = path.join(tarballContentDir, executableName);
 const webCliEntry = path.join(projectRoot, 'packages/web-cli/src/index.ts');
@@ -92,6 +94,7 @@ fs.cpSync(backendSrc, backendDest, { recursive: true });
 
 // 8. Create tarball
 fs.mkdirSync(distDir, { recursive: true });
+// FORK-CUSTOM: archive the branded XAIWork staging directory.
 execSync(`tar -czf ${path.basename(tarballPath)} -C ${stagingDir} ${WEB_CLI_NAME}`, {
   cwd: path.dirname(tarballPath),
   stdio: 'inherit',

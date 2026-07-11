@@ -1,3 +1,4 @@
+// FORK-CUSTOM: fork-only tests for the XAIWork Skill metadata overlay.
 import { describe, expect, it } from 'vitest';
 
 import {

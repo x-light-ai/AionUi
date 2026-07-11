@@ -1,3 +1,4 @@
+// FORK-CUSTOM: fork-only DOM tests for XAIWork guide Assistant selection.
 /**
  * @license
  * Copyright 2025 AionUi (aionui.com)

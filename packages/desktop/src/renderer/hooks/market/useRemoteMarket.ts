@@ -1,3 +1,4 @@
+// FORK-CUSTOM: fork-only remote market state and package import orchestration.
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ipcBridge } from '@/common';
 import { xaiworkBridge } from '@/common/adapter/xaiworkBridge';

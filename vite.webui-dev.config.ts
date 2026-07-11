@@ -1,3 +1,4 @@
+// FORK-CUSTOM: fork-owned web UI development configuration with XAIWork proxy support.
 /**
  * Vite dev server for webui HMR mode (no Electron).
  * Usage: see debug.bat — webhost runs separately for backend/API.

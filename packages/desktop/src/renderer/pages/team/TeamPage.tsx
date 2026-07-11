@@ -160,6 +160,7 @@ const AssistantChatSlot: React.FC<{
           {conversation && <CronJobManager conversation_id={conversation.id} cron_job_id={cronJobId} />}
           {!isMobile && assistant.conversation_id && !isAionrs && isAcpLike && (
             <div className='min-w-0 max-w-140px [&_button]:max-w-full [&_button_span]:truncate'>
+              {/* FORK-CUSTOM: use XAIWork-distributed models for team ACP conversations. */}
               <XaiworkAcpModelSelector
                 key={assistant.conversation_id}
                 conversation_id={assistant.conversation_id}

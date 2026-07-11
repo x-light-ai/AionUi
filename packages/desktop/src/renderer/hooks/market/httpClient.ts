@@ -1,3 +1,4 @@
+// FORK-CUSTOM: fork-owned shared HTTP client for XAIWork market integrations.
 /**
  * HTTP client factory for communicating with remote market APIs.
  */

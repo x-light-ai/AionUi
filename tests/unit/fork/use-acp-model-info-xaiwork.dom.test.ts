@@ -1,3 +1,4 @@
+// FORK-CUSTOM: fork-only tests for XAIWork ACP model information.
 /**
  * FORK-CUSTOM: tests for the XAIWork ACP model-info override hook.
  * @vitest-environment jsdom

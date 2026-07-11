@@ -152,6 +152,7 @@ describe('static-server', () => {
     expect(r.headers.get('set-cookie')).toMatch(/Max-Age=0/);
   });
 
+  // FORK-CUSTOM: cover the XAIWork OpenAPI reverse proxy and its failure path.
   it('/openapi/* reverse-proxies to xaiwork target', async () => {
     const backend = await startMockBackend((_req, res) => res.end('nope'));
     stopBackend = backend.close;

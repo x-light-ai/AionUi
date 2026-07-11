@@ -24,6 +24,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useExtI18n } from '@/renderer/hooks/system/useExtI18n';
+// FORK-CUSTOM: bind the upstream wrapper to the isolated XAIWork navigation policy.
 import { useXaiworkConfig } from '@/renderer/hooks/useXaiworkConfig';
 import { BUILTIN_TAB_IDS, resolveSettingsAnchor } from './XaiworkSettingsSider';
 import './settings.css';
@@ -55,6 +56,7 @@ export function getBuiltinSettingsNavItems(isDesktop: boolean, t: TranslateFn): 
     },
     skills: {
       id: 'skills',
+      // FORK-CUSTOM: present the combined XAIWork capabilities label.
       label: t('xaiwork.shell.capabilities', { defaultValue: 'Skills' }),
       icon: <Lightning theme='outline' size='16' />,
       path: 'skills',
@@ -91,6 +93,7 @@ const SettingsPageWrapper: React.FC<SettingsPageWrapperProps> = ({ children, cla
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { t } = useTranslation();
+  // FORK-CUSTOM: apply XAIWork model and Agent visibility settings.
   const { hideModelSettingsMenu, hideAgentSettingsMenu } = useXaiworkConfig();
   const isDesktop = isElectronDesktop();
 
@@ -99,6 +102,7 @@ const SettingsPageWrapper: React.FC<SettingsPageWrapperProps> = ({ children, cla
   const { resolveExtTabName } = useExtI18n();
 
   const menuItems = React.useMemo(() => {
+    // FORK-CUSTOM: filter hidden XAIWork settings without changing the upstream item factory.
     const builtins = getBuiltinSettingsNavItems(isDesktop, t).filter(
       (item) => (!hideModelSettingsMenu || item.id !== 'model') && (!hideAgentSettingsMenu || item.id !== 'agent')
     );
@@ -115,6 +119,7 @@ const SettingsPageWrapper: React.FC<SettingsPageWrapperProps> = ({ children, cla
         continue;
       }
       const { relativeTo: rawAnchor, placement } = tab.position;
+      // FORK-CUSTOM: remap extension anchors when XAIWork hides an upstream tab.
       const anchor = resolveSettingsAnchor(rawAnchor, hideModelSettingsMenu, hideAgentSettingsMenu);
       if (!result.some((item) => item.id === anchor)) {
         unanchored.push(tab);
@@ -158,6 +163,7 @@ const SettingsPageWrapper: React.FC<SettingsPageWrapperProps> = ({ children, cla
     }
 
     return result;
+    // FORK-CUSTOM: visibility flags participate in XAIWork navigation memoization.
   }, [isDesktop, t, extensionTabs, resolveExtTabName, hideModelSettingsMenu, hideAgentSettingsMenu]);
 
   // Keep only horizontal padding on the scroll container — vertical padding is

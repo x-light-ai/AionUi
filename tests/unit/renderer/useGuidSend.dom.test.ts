@@ -29,6 +29,7 @@ vi.mock('@/renderer/utils/emitter', () => ({
 }));
 
 vi.mock('swr', () => ({
+  // FORK-CUSTOM: provide the SWR shape consumed by the XAIWork create guard.
   default: () => ({ data: undefined }),
   mutate: (...args: unknown[]) => swrMutateMock(...args),
 }));

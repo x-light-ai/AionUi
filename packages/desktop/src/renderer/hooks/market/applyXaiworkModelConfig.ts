@@ -1,3 +1,4 @@
+// FORK-CUSTOM: fork-only adapter for applying XAIWork model configuration through Core.
 /**
  * @license
  * Copyright 2025 AionUi (aionui.com)

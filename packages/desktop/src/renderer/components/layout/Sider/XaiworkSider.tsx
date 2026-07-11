@@ -1,3 +1,4 @@
+// FORK-CUSTOM: fork-only sider composition with XAIWork visibility policies.
 import classNames from 'classnames';
 import React, { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';

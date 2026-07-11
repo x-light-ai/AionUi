@@ -1,3 +1,4 @@
+// FORK-CUSTOM: fork-only tests for XAIWork WeChat login.
 /**
  * FORK-CUSTOM: tests for the XAIWork WeChat QR login hook.
  * @vitest-environment jsdom

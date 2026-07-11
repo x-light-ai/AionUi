@@ -1,3 +1,4 @@
+// FORK-CUSTOM: fork-only tests for the XAIWork remote market client.
 /**
  * FORK-CUSTOM: tests for the XAIWork remote market client (endpoints + XHub unwrap).
  * @vitest-environment node

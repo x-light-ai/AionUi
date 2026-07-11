@@ -1,3 +1,4 @@
+// FORK-CUSTOM: fork-only settings modal composition with XAIWork visibility policies.
 /**
  * @license
  * Copyright 2025 AionUi (aionui.com)

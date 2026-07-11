@@ -8,6 +8,7 @@ export type SkillInfo = {
   name: string;
   description: string;
   location: string;
+  // FORK-CUSTOM: optional XAIWork market metadata kept in the editor-only view model.
   version?: string;
   tags?: string[];
   relative_location?: string;

@@ -160,6 +160,7 @@ vi.mock('@/renderer/pages/guid/hooks/useGuidModelSelection', () => ({
 
 const useGuidAssistantSelectionMock = vi.fn(() => agentSelectionMock);
 
+// FORK-CUSTOM: follow the XAIWork guide selection composition.
 vi.mock('@/renderer/pages/guid/xaiwork/useXaiworkGuidAssistantSelection', () => ({
   useXaiworkGuidAssistantSelection: (...args: unknown[]) => useGuidAssistantSelectionMock(...args),
   resolveAssistantSelectionKey: vi.fn(),
@@ -188,6 +189,7 @@ vi.mock('@/renderer/pages/guid/components/AssistantSelectionArea', () => ({
   },
 }));
 
+// FORK-CUSTOM: follow the XAIWork guide action-row composition.
 vi.mock('@/renderer/pages/guid/xaiwork/XaiworkGuidActionRow', () => ({
   default: (props: Record<string, unknown>) => {
     capturedGuidActionRowProps.push(props);

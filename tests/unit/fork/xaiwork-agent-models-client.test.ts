@@ -1,3 +1,4 @@
+// FORK-CUSTOM: fork-only tests for the XAIWork agent model client.
 /**
  * FORK-CUSTOM: tests for the XAIWork agent model bridge clients (credential-safe distribution).
  * @vitest-environment node

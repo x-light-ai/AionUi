@@ -85,6 +85,7 @@ vi.mock('@/common', () => ({
     cron: {
       removeJob: { invoke: vi.fn() },
     },
+    // FORK-CUSTOM: match the current assistants bridge used by XAIWork team pages.
     assistants: {
       list: { invoke: vi.fn(async () => []) },
     },
@@ -115,6 +116,7 @@ vi.mock('@/renderer/pages/conversation/components/ChatLayout', () => ({
   ),
 }));
 
+// FORK-CUSTOM: follow the XAIWork model selector composition used by TeamPage.
 vi.mock('@/renderer/components/agent/xaiwork/XaiworkAcpModelSelector', () => ({
   __esModule: true,
   default: () => <div data-testid='mock-acp-model-selector' />,

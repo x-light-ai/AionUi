@@ -45,5 +45,6 @@ export default {
   agent,
   team,
   pet,
+  // FORK-CUSTOM: register the isolated XAIWork translation namespace.
   xaiwork,
 };

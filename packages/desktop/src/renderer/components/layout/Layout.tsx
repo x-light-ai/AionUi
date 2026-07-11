@@ -354,12 +354,19 @@ const Layout: React.FC<{
               >
                 {/* FORK-CUSTOM: 品牌 logo 换成 fork 图标（原上游内联 svg 已替换） */}
                 <div
-                  className={classNames('shrink-0 size-32px relative rd-0.5rem overflow-hidden', {
-                    '!size-24px': collapsed,
-                  })}
+                  className={classNames(
+                    /* FORK-CUSTOM: XAIWork logo container styling. */ 'shrink-0 size-32px relative rd-0.5rem overflow-hidden',
+                    {
+                      '!size-24px': collapsed,
+                    }
+                  )}
                   onClick={onClick}
                 >
-                  <img src={xaiworkLogo} alt={XAIWORK_BRAND.appName} className='w-full h-full object-cover' />
+                  <img
+                    src={/* FORK-CUSTOM: render the XAIWork brand asset. */ xaiworkLogo}
+                    alt={XAIWORK_BRAND.appName}
+                    className='w-full h-full object-cover'
+                  />
                 </div>
                 {isSettingsRoute ? (
                   <Tooltip content={t('common.back', { defaultValue: 'Back to Chat' })} position='bottom'>

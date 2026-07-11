@@ -1,3 +1,4 @@
+// FORK-CUSTOM: fork-only router composition for XAIWork pages and authentication.
 import React, { Suspense } from 'react';
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import AppLoader from '@renderer/components/layout/AppLoader';

@@ -38,6 +38,7 @@ vi.mock('@/renderer/pages/conversation/platforms/acp/AcpChat', () => ({
   default: (props: unknown) => acpChatMock(props),
 }));
 
+// FORK-CUSTOM: follow the XAIWork model selector composition used by the runtime.
 vi.mock('@/renderer/components/agent/xaiwork/XaiworkAcpModelSelector', () => ({
   __esModule: true,
   default: (props: unknown) => acpModelSelectorMock(props),

@@ -1,3 +1,4 @@
+// FORK-CUSTOM: fork-only tests for the XAIWork Assistant editor.
 /**
  * FORK-CUSTOM: XAIWork assistant editor page tests.
  *

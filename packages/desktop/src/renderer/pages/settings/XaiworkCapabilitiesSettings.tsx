@@ -1,3 +1,4 @@
+// FORK-CUSTOM: fork-only capabilities settings composition.
 /**
  * @license
  * Copyright 2025 AionUi (aionui.com)
