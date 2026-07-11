@@ -320,7 +320,7 @@ const XaiworkSkillsSettings: React.FC<XaiworkSkillsSettingsProps> = ({ withWrapp
             <span className='font-bold text-t-primary text-14px'>
               {t('settings.skillsHub.tipTitle', { defaultValue: 'Usage Tip:' })}
             </span>
-            <span className='text-13px leading-relaxed'>{t('settings.skillsHub.tipContent')}</span>
+            <span className='text-13px leading-relaxed'>{t('xaiwork.skillsHub.tipContent')}</span>
           </div>
         </div>
       </div>

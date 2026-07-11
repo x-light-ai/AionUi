@@ -13,20 +13,5 @@
     "specifyWorkspace": "프로젝트 폴더 선택",
     "searchPlaceholder": "프로젝트 검색…",
     "noProject": "프로젝트 없음"
-  },
-  "scanning": {
-    "initialMessage": "Current Agent is unavailable, detecting other available agents...",
-    "scanningMessage": "Scanning local available agents...",
-    "connectingMessage": "Connected successfully, please wait...",
-    "establishingConnection": "Establishing connection...",
-    "statusQueued": "Queued",
-    "statusTesting": "Testing latency...",
-    "statusUnreachable": "Unreachable",
-    "statusAvailable": "Available"
-  },
-  "skillSelector": {
-    "title": "스킬",
-    "empty": "사용 가능한 스킬이 없습니다",
-    "goToMarket": "스킬 마켓으로 이동"
   }
 }

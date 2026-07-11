@@ -34,12 +34,12 @@ const GuidSkillSelector: React.FC<GuidSkillSelectorProps> = ({ skills, onSelectS
   const content = (
     <div className='w-280px max-h-360px overflow-y-auto'>
       <div className='text-12px font-500 text-t-secondary px-8px pt-4px pb-8px'>
-        {t('guid.skillSelector.title', { defaultValue: 'Skills' })}
+        {t('xaiwork.skillSelector.title', { defaultValue: 'Skills' })}
       </div>
       {skills.length === 0 ? (
         <div className='flex flex-col items-center gap-8px py-24px px-12px text-center'>
           <span className='text-13px text-t-secondary'>
-            {t('guid.skillSelector.empty', { defaultValue: 'No skills available' })}
+            {t('xaiwork.skillSelector.empty', { defaultValue: 'No skills available' })}
           </span>
           <button
             type='button'
@@ -49,7 +49,7 @@ const GuidSkillSelector: React.FC<GuidSkillSelectorProps> = ({ skills, onSelectS
               void navigate('/settings/capabilities?tab=market');
             }}
           >
-            {t('guid.skillSelector.goToMarket', { defaultValue: 'Go to Skill Market' })}
+            {t('xaiwork.skillSelector.goToMarket', { defaultValue: 'Go to Skill Market' })}
           </button>
         </div>
       ) : (

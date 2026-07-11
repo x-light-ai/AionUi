@@ -67,10 +67,10 @@ const XaiworkCapabilitiesSettings: React.FC = () => {
         animation={{ tabPane: false, inkBar: true }}
         className={`${styles.tabs} flex flex-col flex-1 min-h-0 [&>.arco-tabs-content]:pt-0`}
       >
-        <Tabs.TabPane key='skills' title={t('settings.capabilitiesTab.skills', { defaultValue: 'Skills' })}>
+        <Tabs.TabPane key='skills' title={t('xaiwork.shell.mySkills', { defaultValue: 'My Skills' })}>
           <XaiworkSkillsSettings withWrapper={false} />
         </Tabs.TabPane>
-        <Tabs.TabPane key='market' title={t('settings.capabilitiesTab.market', { defaultValue: 'Skill Market' })}>
+        <Tabs.TabPane key='market' title={t('xaiwork.shell.skillMarket', { defaultValue: 'Skill Market' })}>
           <XaiworkSkillMarketSettings />
         </Tabs.TabPane>
         <Tabs.TabPane key='tools' title={t('settings.capabilitiesTab.tools', { defaultValue: 'Tools' })}>

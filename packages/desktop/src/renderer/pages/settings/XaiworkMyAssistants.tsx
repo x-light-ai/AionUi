@@ -211,7 +211,7 @@ const XaiworkMyAssistants: React.FC<XaiworkMyAssistantsProps> = ({ withWrapper =
             <div className='flex items-center justify-between gap-16px mb-16px shrink-0'>
               <div className='flex items-center gap-10px shrink-0'>
                 <span className='text-16px md:text-18px text-t-primary font-bold tracking-tight'>
-                  {t('settings.assistantTab.mine', { defaultValue: '我的助手' })}
+                  {t('xaiwork.assistantTab.mine', { defaultValue: '我的助手' })}
                 </span>
                 <span className='bg-[rgba(var(--primary-6),0.08)] text-primary-6 text-12px px-10px py-2px rd-[100px] font-medium ml-4px'>
                   {visibleAssistants.length}

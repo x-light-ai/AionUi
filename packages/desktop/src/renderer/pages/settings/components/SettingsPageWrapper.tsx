@@ -21,7 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useExtI18n } from '@/renderer/hooks/system/useExtI18n';
 import { useXaiworkConfig } from '@/renderer/hooks/useXaiworkConfig';
-import { BUILTIN_TAB_IDS, resolveSettingsAnchor } from './SettingsSider';
+import { BUILTIN_TAB_IDS, resolveSettingsAnchor } from './XaiworkSettingsSider';
 import './settings.css';
 
 interface SettingsPageWrapperProps {
@@ -51,7 +51,7 @@ export function getBuiltinSettingsNavItems(isDesktop: boolean, t: TranslateFn): 
     },
     capabilities: {
       id: 'capabilities',
-      label: t('settings.capabilities', { defaultValue: 'Capabilities' }),
+      label: t('xaiwork.shell.capabilities', { defaultValue: 'Skills' }),
       icon: <Lightning theme='outline' size='16' />,
       path: 'capabilities',
     },

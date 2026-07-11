@@ -365,8 +365,7 @@
   "capabilities": "Recursos",
   "capabilitiesTab": {
     "skills": "Habilidades",
-    "tools": "Ferramentas",
-    "market": "Mercado de Habilidades"
+    "tools": "Ferramentas"
   },
   "webui": "Remoto",
   "installed": "Instalado",
@@ -1032,7 +1031,6 @@
     "addAgent": "Adicionar Agente",
     "installFromMarket": "Instalar do Mercado",
     "marketInstall": "Instalar",
-    "marketUninstall": "Desinstalar",
     "marketInstalling": "Instalando...",
     "marketUpdate": "Atualizar",
     "marketEmpty": "Nenhum agente instalável encontrado. Verifique sua conexão de rede e certifique-se de que o GitHub está acessível.",
@@ -1177,14 +1175,6 @@
   },
   "cdP": {
     "title": "CDP (Chrome DevTools Protocol)"
-  },
-  "skillMarket": {
-    "title": "Mercado de Habilidades",
-    "searchPlaceholder": "Pesquisar habilidades do mercado...",
-    "empty": "Nenhuma habilidade disponível no mercado.",
-    "notConfigured": "O endereço do mercado de habilidades não está configurado. Defina-o nas configurações do sistema.",
-    "installSuccess": "Habilidade instalada com sucesso",
-    "installError": "Falha ao instalar habilidade"
   },
   "updateReadyInstall": "{{version}} está pronto, instalar agora",
   "assistantAgentUnavailable": "O agente necessário está indisponível no momento.",

@@ -365,8 +365,7 @@
   "capabilities": "기능 확장",
   "capabilitiesTab": {
     "skills": "스킬",
-    "tools": "도구",
-    "market": "스킬 마켓"
+    "tools": "도구"
   },
   "webui": "원격 연결",
   "installed": "설치됨",
@@ -1022,7 +1021,6 @@
     "addAgent": "에이전트 추가",
     "installFromMarket": "마켓에서 설치",
     "marketInstall": "설치",
-    "marketUninstall": "제거",
     "marketInstalling": "설치 중...",
     "marketUpdate": "업데이트",
     "marketEmpty": "설치 가능한 Agent를 찾지 못했습니다. 네트워크 연결을 확인하고 GitHub에 정상적으로 접속할 수 있는지 확인하세요.",
@@ -1176,14 +1174,6 @@
     "acpTool": "the managed ACP tool",
     "codexAcp": "the Codex ACP runtime component",
     "claudeAgentAcp": "the Claude ACP runtime component"
-  },
-  "skillMarket": {
-    "title": "스킬 마켓",
-    "searchPlaceholder": "마켓 스킬 검색...",
-    "empty": "마켓에 사용 가능한 스킬이 없습니다.",
-    "notConfigured": "스킬 마켓 주소가 설정되지 않았습니다. 시스템 설정에서 설정하세요.",
-    "installSuccess": "스킬이 설치되었습니다",
-    "installError": "스킬 설치 실패"
   },
   "updateReadyInstall": "{{version}} 준비 완료, 지금 설치",
   "assistantAgentUnavailable": "필요한 에이전트를 현재 사용할 수 없습니다.",

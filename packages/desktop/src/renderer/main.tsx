@@ -86,8 +86,9 @@ import { bootstrapRendererConfig } from '@renderer/services/bootstrapRenderer';
 
 // Components and utilities
 import Layout from './components/layout/Layout';
-import Router from './components/layout/Router';
-import Sider from './components/layout/Sider';
+// FORK-CUSTOM: select fork shell variants at the renderer composition root.
+import Router from './components/layout/XaiworkRouter';
+import Sider from './components/layout/Sider/XaiworkSider';
 import { useAuth } from './hooks/context/AuthContext';
 import { ConversationHistoryProvider } from './hooks/context/ConversationHistoryContext';
 import HOC from './utils/ui/HOC';

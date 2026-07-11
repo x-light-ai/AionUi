@@ -13,20 +13,5 @@
     "specifyWorkspace": "Выбрать папку проекта",
     "searchPlaceholder": "Поиск проектов…",
     "noProject": "Без проекта"
-  },
-  "scanning": {
-    "initialMessage": "Текущий агент недоступен, обнаружение других доступных агентов...",
-    "scanningMessage": "Сканирование локальных доступных агентов...",
-    "connectingMessage": "Успешно подключено, пожалуйста, подождите...",
-    "establishingConnection": "Установка подключения...",
-    "statusQueued": "В очереди",
-    "statusTesting": "Тестирование задержки...",
-    "statusUnreachable": "Недоступен",
-    "statusAvailable": "Доступен"
-  },
-  "skillSelector": {
-    "title": "Навыки",
-    "empty": "Нет доступных навыков",
-    "goToMarket": "Перейти в маркет навыков"
   }
 }

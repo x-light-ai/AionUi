@@ -64,10 +64,10 @@ const XaiworkAssistantSettings: React.FC = () => {
         animation={{ tabPane: false, inkBar: true }}
         className={`${styles.tabs} [&>.arco-tabs-content]:pt-0`}
       >
-        <Tabs.TabPane key='mine' title={t('settings.assistantTab.mine', { defaultValue: '我的助手' })}>
+        <Tabs.TabPane key='mine' title={t('xaiwork.assistantTab.mine', { defaultValue: '我的助手' })}>
           <XaiworkMyAssistants withWrapper={false} />
         </Tabs.TabPane>
-        <Tabs.TabPane key='market' title={t('settings.assistantTab.market', { defaultValue: '助手市场' })}>
+        <Tabs.TabPane key='market' title={t('xaiwork.assistantTab.market', { defaultValue: '助手市场' })}>
           <XaiworkAssistantMarketSettings />
         </Tabs.TabPane>
       </Tabs>

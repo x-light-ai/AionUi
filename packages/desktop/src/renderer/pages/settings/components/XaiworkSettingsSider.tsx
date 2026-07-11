@@ -3,6 +3,7 @@ import { isElectronDesktop, resolveExtensionAssetUrl } from '@/renderer/utils/pl
 import { type IExtensionSettingsTab } from '@/common/adapter/ipcBridge';
 import { useExtI18n } from '@/renderer/hooks/system/useExtI18n';
 import { useExtensionSettingsTabs } from '@/renderer/hooks/system/useExtensionSettingsTabs';
+import { useXaiworkConfig } from '@/renderer/hooks/useXaiworkConfig';
 import {
   Cat,
   Communication,
@@ -25,10 +26,10 @@ import { getSiderTooltipProps } from '@/renderer/utils/ui/siderTooltip';
 
 /** Builtin settings tab IDs in display order (must match router paths). */
 export const BUILTIN_TAB_IDS = [
-  'agent',
   'model',
   'assistants',
   'capabilities',
+  'agent',
   'appearance',
   'webui',
   'pet',
@@ -47,13 +48,18 @@ export const LEGACY_ANCHOR_REMAP: Record<string, string> = {
   display: 'appearance',
 };
 
+export const resolveSettingsAnchor = (rawAnchor: string, hideModelSettingsMenu: boolean): string => {
+  const anchor = LEGACY_ANCHOR_REMAP[rawAnchor] ?? rawAnchor;
+  return hideModelSettingsMenu && anchor === 'model' ? 'assistants' : anchor;
+};
+
 /**
  * Group headers displayed above specific builtin tabs.
  * The header is rendered once, immediately before the first item whose id matches.
  * Extension tabs anchored between these builtins inherit the enclosing group visually.
  */
 const GROUP_HEADER_BEFORE: Record<string, string> = {
-  agent: 'settings.groupAiCore',
+  model: 'settings.groupAiCore',
   appearance: 'settings.groupApp',
   about: 'settings.groupAbout',
 };
@@ -75,6 +81,7 @@ const SettingsSider: React.FC<{ collapsed?: boolean; tooltipEnabled?: boolean }>
   const { t } = useTranslation();
   const { pathname } = useLocation();
   const isDesktop = isElectronDesktop();
+  const { hideModelSettingsMenu, hideAgentSettingsMenu } = useXaiworkConfig();
 
   const extensionTabs = useExtensionSettingsTabs();
   const { resolveExtTabName } = useExtI18n();
@@ -97,7 +104,7 @@ const SettingsSider: React.FC<{ collapsed?: boolean; tooltipEnabled?: boolean }>
       },
       capabilities: {
         id: 'capabilities',
-        label: t('settings.capabilities', { defaultValue: 'Capabilities' }),
+        label: t('xaiwork.shell.capabilities', { defaultValue: 'Skills' }),
         icon: <Lightning />,
         path: 'capabilities',
       },
@@ -114,7 +121,13 @@ const SettingsSider: React.FC<{ collapsed?: boolean; tooltipEnabled?: boolean }>
     };
 
     // Start with ordered builtin IDs, hiding desktop-only tabs in browser mode
-    const result: SiderItem[] = BUILTIN_TAB_IDS.filter((id) => isDesktop || id !== 'pet').map((id) => builtinMap[id]);
+    const result: SiderItem[] = BUILTIN_TAB_IDS.filter(
+      (id) =>
+        (isDesktop || id !== 'pet') &&
+        (!hideModelSettingsMenu || id !== 'model') &&
+        // FORK-CUSTOM: 隐藏 Agents 菜单
+        (!hideAgentSettingsMenu || id !== 'agent')
+    ).map((id) => builtinMap[id]);
 
     // Extension tabs with position anchoring
     const beforeMap = new Map<string, IExtensionSettingsTab[]>();
@@ -127,7 +140,7 @@ const SettingsSider: React.FC<{ collapsed?: boolean; tooltipEnabled?: boolean }>
         continue;
       }
       const { relativeTo: rawAnchor, placement } = tab.position;
-      const anchor = LEGACY_ANCHOR_REMAP[rawAnchor] ?? rawAnchor;
+      const anchor = resolveSettingsAnchor(rawAnchor, hideModelSettingsMenu);
       if (!result.some((item) => item.id === anchor)) {
         unanchored.push(tab);
         continue;
@@ -181,14 +194,15 @@ const SettingsSider: React.FC<{ collapsed?: boolean; tooltipEnabled?: boolean }>
     // above the header and visually belong to the previous group.
     const headerAt = new Map<number, string>();
     for (const [builtinId, headerKey] of Object.entries(GROUP_HEADER_BEFORE)) {
-      const builtinIdx = result.findIndex((item) => item.id === builtinId);
+      const targetBuiltinId = hideModelSettingsMenu && builtinId === 'model' ? 'assistants' : builtinId;
+      const builtinIdx = result.findIndex((item) => item.id === targetBuiltinId);
       if (builtinIdx < 0) continue;
-      const beforeCount = beforeMap.get(builtinId)?.length ?? 0;
+      const beforeCount = beforeMap.get(targetBuiltinId)?.length ?? 0;
       headerAt.set(builtinIdx - beforeCount, headerKey);
     }
 
     return { menus: result, groupHeaderAt: headerAt };
-  }, [t, isDesktop, extensionTabs, resolveExtTabName]);
+  }, [t, isDesktop, extensionTabs, resolveExtTabName, hideModelSettingsMenu, hideAgentSettingsMenu]);
 
   const siderTooltipProps = getSiderTooltipProps(tooltipEnabled);
   return (

@@ -365,8 +365,7 @@
   "capabilities": "Yetenekler",
   "capabilitiesTab": {
     "skills": "Beceriler",
-    "tools": "Araçlar",
-    "market": "Beceri Pazarı"
+    "tools": "Araçlar"
   },
   "webui": "Uzak Bağlantı",
   "installed": "Yüklü",
@@ -1020,7 +1019,6 @@
     "addAgent": "Ajan Ekle",
     "installFromMarket": "Marketten Yükle",
     "marketInstall": "Yükle",
-    "marketUninstall": "Kaldır",
     "marketInstalling": "Yükleniyor...",
     "marketUpdate": "Güncelle",
     "marketEmpty": "Yüklenebilir Agent bulunamadı. Ağ bağlantınızı kontrol edin ve GitHub'a erişilebildiğinden emin olun.",
@@ -1174,14 +1172,6 @@
     "acpTool": "the managed ACP tool",
     "codexAcp": "the Codex ACP runtime component",
     "claudeAgentAcp": "the Claude ACP runtime component"
-  },
-  "skillMarket": {
-    "title": "Beceri Pazarı",
-    "searchPlaceholder": "Pazar becerilerinde ara...",
-    "empty": "Pazarda kullanılabilir beceri yok.",
-    "notConfigured": "Beceri pazarı adresi yapılandırılmadı. Sistem ayarlarından ayarlayın.",
-    "installSuccess": "Beceri yüklendi",
-    "installError": "Beceri yüklenemedi"
   },
   "updateReadyInstall": "{{version}} hazır, şimdi yükle",
   "assistantAgentUnavailable": "Gereken aracı şu anda kullanılamıyor.",

@@ -1,5 +1,31 @@
 {
+  "common": {
+    "all": "All"
+  },
+  "wechat": {
+    "title": "WeChat QR Login",
+    "generating": "Generating QR code",
+    "loading": "Please wait...",
+    "waiting": "Scan with WeChat and follow AI Glimmer to log in",
+    "confirmed": "Login successful, entering the app...",
+    "expired": "QR code expired, please refresh and try again",
+    "error": "Failed to load QR code, please refresh and try again",
+    "refresh": "Refresh QR code",
+    "tip": "Sign in with WeChat",
+    "agreementPrefix": "By scanning, you confirm that you have read and accepted ",
+    "agreementName": "the User Agreement"
+  },
+  "skillSelector": {
+    "title": "Skills",
+    "empty": "No skills available",
+    "goToMarket": "Go to Skill Market"
+  },
   "skillMarket": {
+    "title": "Skill Market",
+    "searchPlaceholder": "Search market skills...",
+    "empty": "No skills available in the market.",
+    "installSuccess": "Skill installed successfully",
+    "installError": "Failed to install skill",
     "uninstallSuccess": "Skill uninstalled",
     "uninstallError": "Error uninstalling skill",
     "uninstallConfirmTitle": "Uninstall Skill",
@@ -7,13 +33,28 @@
     "uninstallOkText": "Uninstall"
   },
   "assistantMarket": {
+    "title": "Assistant Market",
+    "searchPlaceholder": "Search market assistants...",
+    "empty": "No assistants available in the market.",
+    "installSuccess": "Assistant installed successfully",
+    "installError": "Failed to install assistant",
     "uninstallSuccess": "Assistant uninstalled",
     "uninstallError": "Error uninstalling assistant",
     "uninstallConfirmTitle": "Uninstall Assistant",
     "uninstallConfirmContent": "Are you sure you want to uninstall \"{{name}}\"?",
     "uninstallOkText": "Uninstall"
   },
+  "assistantTab": {
+    "mine": "My Assistants",
+    "market": "Assistant Market"
+  },
+  "shell": {
+    "capabilities": "Skills",
+    "mySkills": "My Skills",
+    "skillMarket": "Skill Market"
+  },
   "skillsHub": {
+    "tipContent": "Import a Skill directory, parent directory, or zip archive.",
     "uninstallTooltip": "Uninstall",
     "uninstallConfirmTitle": "Uninstall Skill",
     "uninstallConfirmContent": "Are you sure you want to uninstall \"{{name}}\"?",

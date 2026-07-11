@@ -33,10 +33,10 @@ const XaiworkAssistantMarketSettings: React.FC = () => {
   const handleInstall = async (item: RemoteMarketCard) => {
     try {
       await remoteMarket.install(item);
-      Message.success(t('settings.assistantMarket.installSuccess', { defaultValue: '助手安装成功' }));
+      Message.success(t('xaiwork.assistantMarket.installSuccess', { defaultValue: '助手安装成功' }));
     } catch (error) {
       console.error('Failed to install remote market assistant:', error);
-      Message.error(t('settings.assistantMarket.installError', { defaultValue: '安装助手失败' }));
+      Message.error(t('xaiwork.assistantMarket.installError', { defaultValue: '安装助手失败' }));
     }
   };
 
@@ -68,7 +68,7 @@ const XaiworkAssistantMarketSettings: React.FC = () => {
           <div className='flex items-center justify-between gap-16px mb-24px'>
             <div className='flex items-center gap-10px shrink-0'>
               <span className='text-16px md:text-18px text-t-primary font-bold tracking-tight'>
-                {t('settings.assistantMarket.title', { defaultValue: '助手市场' })}
+                {t('xaiwork.assistantMarket.title', { defaultValue: '助手市场' })}
               </span>
               <span className='bg-[rgba(var(--primary-6),0.08)] text-primary-6 text-12px px-10px py-2px rd-[100px] font-medium ml-4px'>
                 {remoteMarket.items.length}
@@ -94,7 +94,7 @@ const XaiworkAssistantMarketSettings: React.FC = () => {
               data-testid='input-search-assistant-market'
               type='text'
               className='w-full bg-fill-1 hover:bg-fill-2 border border-border-1 focus:border-primary-5 focus:bg-base outline-none rd-8px py-6px pl-36px pr-12px text-13px text-t-primary placeholder:text-t-tertiary transition-all shadow-sm box-border m-0'
-              placeholder={t('settings.assistantMarket.searchPlaceholder', { defaultValue: '搜索市场助手...' })}
+              placeholder={t('xaiwork.assistantMarket.searchPlaceholder', { defaultValue: '搜索市场助手...' })}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -106,7 +106,7 @@ const XaiworkAssistantMarketSettings: React.FC = () => {
                 className={`text-12px px-12px py-4px rd-[100px] font-medium border border-solid transition-colors cursor-pointer outline-none ${activeTagId == null ? 'bg-[rgba(var(--primary-6),0.08)] text-primary-6 border-[rgba(var(--primary-6),0.2)]' : 'bg-transparent text-t-secondary border-border-1 hover:border-border-2'}`}
                 onClick={() => setActiveTagId(null)}
               >
-                {t('common.all', { defaultValue: 'All' })}
+                {t('xaiwork.common.all', { defaultValue: 'All' })}
               </button>
               {remoteMarket.tags.map((tag) => (
                 <button
@@ -121,10 +121,10 @@ const XaiworkAssistantMarketSettings: React.FC = () => {
           )}
 
           <XaiworkMarketCardGrid
-            emptyText={t('settings.assistantMarket.empty', { defaultValue: '市场暂无可用助手。' })}
+            emptyText={t('xaiwork.assistantMarket.empty', { defaultValue: '市场暂无可用助手。' })}
             installText={t('settings.agentManagement.marketInstall', { defaultValue: 'Install' })}
             installedText={t('settings.installed', { defaultValue: 'Installed' })}
-            removeText={t('settings.agentManagement.marketUninstall', { defaultValue: 'Uninstall' })}
+            removeText={t('xaiwork.assistantMarket.uninstallOkText', { defaultValue: 'Uninstall' })}
             loading={remoteMarket.loading}
             items={filteredItems}
             error={remoteMarket.error}

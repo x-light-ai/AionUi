@@ -99,8 +99,6 @@
   "assistants": "Assistants",
   "assistantBackToList": "All assistants",
   "agents": "Agents",
-  "agentSelectorEnable": "Enable Agent Selector in Chat",
-  "agentSelectorEnableDesc": "When enabled, the agent selection bar appears on the home chat page.",
   "assistantsList": "Available assistants",
   "assistantsEmpty": "No assistants configured.",
   "pdfToPptAssistantName": "PDF to PPT",
@@ -367,8 +365,7 @@
   "capabilities": "Capabilities",
   "capabilitiesTab": {
     "skills": "Skills",
-    "tools": "Tools",
-    "market": "Skill Market"
+    "tools": "Tools"
   },
   "webui": "Remote",
   "installed": "Installed",
@@ -1034,7 +1031,6 @@
     "addAgent": "Add Agent",
     "installFromMarket": "Install from Market",
     "marketInstall": "Install",
-    "marketUninstall": "Uninstall",
     "marketInstalling": "Installing...",
     "marketUpdate": "Update",
     "marketEmpty": "No installable agents found. Check your network connection and make sure GitHub is reachable.",
@@ -1176,14 +1172,6 @@
     "conversation": "Conversation",
     "mcp": "MCP",
     "customAgent": "Custom Agent"
-  },
-  "skillMarket": {
-    "title": "Skill Market",
-    "searchPlaceholder": "Search market skills...",
-    "empty": "No skills available in the market.",
-    "notConfigured": "Skill market address is not configured. Set it in System settings.",
-    "installSuccess": "Skill installed successfully",
-    "installError": "Failed to install skill"
   },
   "updateReadyInstall": "{{version}} is ready, install now",
   "assistantAgentUnavailable": "The required agent is currently unavailable.",

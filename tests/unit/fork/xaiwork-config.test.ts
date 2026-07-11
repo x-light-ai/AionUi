@@ -18,14 +18,15 @@ describe('config/xaiworkBrand', () => {
     expect(Object.keys(XAIWORK_BRAND).toSorted()).toEqual(
       [
         'apiHost',
+        'appDescription',
         'appName',
         'changelogUrl',
         'contactUrl',
         'helpDocsUrl',
         'officialWebsite',
-        'repoUrl',
         'updateRepo',
         'wechatAppCode',
+        'wechatLoginMode',
       ].toSorted()
     );
   });
@@ -44,15 +45,14 @@ describe('config/xaiworkBrand', () => {
     expect(XAIWORK_BRAND.wechatAppCode.length).toBeGreaterThan(0);
   });
 
-  it('uses absolute https URLs for outbound links', () => {
+  it('uses absolute https URLs when optional outbound links are configured', () => {
     for (const url of [
-      XAIWORK_BRAND.repoUrl,
       XAIWORK_BRAND.helpDocsUrl,
       XAIWORK_BRAND.changelogUrl,
       XAIWORK_BRAND.officialWebsite,
       XAIWORK_BRAND.contactUrl,
     ]) {
-      expect(url).toMatch(/^https:\/\//);
+      expect(url === '' || url.startsWith('https://')).toBe(true);
     }
   });
 });

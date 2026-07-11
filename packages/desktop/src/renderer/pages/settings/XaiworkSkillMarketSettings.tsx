@@ -33,10 +33,10 @@ const XaiworkSkillMarketSettings: React.FC = () => {
   const handleInstall = async (item: RemoteMarketCard) => {
     try {
       await remoteMarket.install(item);
-      Message.success(t('settings.skillMarket.installSuccess', { defaultValue: 'Skill installed successfully' }));
+      Message.success(t('xaiwork.skillMarket.installSuccess', { defaultValue: 'Skill installed successfully' }));
     } catch (error) {
       console.error('Failed to install remote market skill:', error);
-      Message.error(t('settings.skillMarket.installError', { defaultValue: 'Failed to install skill' }));
+      Message.error(t('xaiwork.skillMarket.installError', { defaultValue: 'Failed to install skill' }));
     }
   };
 
@@ -68,7 +68,7 @@ const XaiworkSkillMarketSettings: React.FC = () => {
           <div className='flex items-center justify-between gap-16px mb-24px'>
             <div className='flex items-center gap-10px shrink-0'>
               <span className='text-16px md:text-18px text-t-primary font-bold tracking-tight'>
-                {t('settings.skillMarket.title', { defaultValue: 'Skill Market' })}
+                {t('xaiwork.skillMarket.title', { defaultValue: 'Skill Market' })}
               </span>
               <span className='bg-[rgba(var(--primary-6),0.08)] text-primary-6 text-12px px-10px py-2px rd-[100px] font-medium ml-4px'>
                 {remoteMarket.items.length}
@@ -94,7 +94,7 @@ const XaiworkSkillMarketSettings: React.FC = () => {
               data-testid='input-search-market'
               type='text'
               className='w-full bg-fill-1 hover:bg-fill-2 border border-border-1 focus:border-primary-5 focus:bg-base outline-none rd-8px py-6px pl-36px pr-12px text-13px text-t-primary placeholder:text-t-tertiary transition-all shadow-sm box-border m-0'
-              placeholder={t('settings.skillMarket.searchPlaceholder', { defaultValue: 'Search market skills...' })}
+              placeholder={t('xaiwork.skillMarket.searchPlaceholder', { defaultValue: 'Search market skills...' })}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -106,7 +106,7 @@ const XaiworkSkillMarketSettings: React.FC = () => {
                 className={`text-12px px-12px py-4px rd-[100px] font-medium border border-solid transition-colors cursor-pointer outline-none ${activeTagId == null ? 'bg-[rgba(var(--primary-6),0.08)] text-primary-6 border-[rgba(var(--primary-6),0.2)]' : 'bg-transparent text-t-secondary border-border-1 hover:border-border-2'}`}
                 onClick={() => setActiveTagId(null)}
               >
-                {t('common.all', { defaultValue: 'All' })}
+                {t('xaiwork.common.all', { defaultValue: 'All' })}
               </button>
               {remoteMarket.tags.map((tag) => (
                 <button
@@ -121,10 +121,10 @@ const XaiworkSkillMarketSettings: React.FC = () => {
           )}
 
           <XaiworkMarketCardGrid
-            emptyText={t('settings.skillMarket.empty', { defaultValue: 'No skills available in the market.' })}
+            emptyText={t('xaiwork.skillMarket.empty', { defaultValue: 'No skills available in the market.' })}
             installText={t('settings.agentManagement.marketInstall', { defaultValue: 'Install' })}
             installedText={t('settings.installed', { defaultValue: 'Installed' })}
-            removeText={t('settings.agentManagement.marketUninstall', { defaultValue: 'Uninstall' })}
+            removeText={t('xaiwork.skillMarket.uninstallOkText', { defaultValue: 'Uninstall' })}
             loading={remoteMarket.loading}
             items={filteredItems}
             error={remoteMarket.error}

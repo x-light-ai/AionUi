@@ -5,7 +5,8 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import SettingsModal, { type SettingTab } from './index';
+// FORK-CUSTOM: select the fork settings shell without modifying the upstream modal.
+import SettingsModal, { type SettingTab } from './XaiworkSettingsModal';
 
 /**
  * 设置弹窗 Hook 返回值类型 / Settings modal hook return type

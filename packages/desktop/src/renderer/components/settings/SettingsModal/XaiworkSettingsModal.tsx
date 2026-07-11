@@ -11,12 +11,14 @@ import { isElectronDesktop, resolveExtensionAssetUrl } from '@/renderer/utils/pl
 import { type IExtensionSettingsTab } from '@/common/adapter/ipcBridge';
 import { useExtI18n } from '@/renderer/hooks/system/useExtI18n';
 import { useExtensionSettingsTabs } from '@/renderer/hooks/system/useExtensionSettingsTabs';
+import { useXaiworkConfig } from '@/renderer/hooks/useXaiworkConfig';
 import { Tabs } from '@arco-design/web-react';
 import { Computer, Earth, Info, LinkCloud, Puzzle, Toolkit } from '@icon-park/react';
 import classNames from 'classnames';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import AboutModalContent from './contents/AboutModalContent';
+// FORK-CUSTOM: 关于页渲染入口指向 fork 组件（上游 AboutModalContent.tsx 保持原样）
+import AboutModalContent from './contents/XaiworkAboutModalContent';
 import AgentModalContent from './contents/AgentModalContent';
 import ExtensionSettingsTabContent from './contents/ExtensionSettingsTabContent';
 import ModelModalContent from './contents/ModelModalContent';
@@ -24,7 +26,7 @@ import SystemModalContent from './contents/SystemModalContent';
 import ToolsModalContent from './contents/ToolsModalContent';
 import WebuiModalContent from './contents/WebuiModalContent';
 import { SettingsViewModeProvider } from './settingsViewContext';
-import { LEGACY_ANCHOR_REMAP } from '@/renderer/pages/settings/components/SettingsSider';
+import { resolveSettingsAnchor } from '@/renderer/pages/settings/components/XaiworkSettingsSider';
 
 // ==================== 常量定义 / Constants ====================
 
@@ -134,7 +136,10 @@ export const SubModal: React.FC<SubModalProps> = ({ visible, onCancel, title, ch
  */
 const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onCancel, defaultTab = 'model' }) => {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<SettingTab>(defaultTab);
+  const { hideModelSettingsMenu } = useXaiworkConfig();
+  const [activeTab, setActiveTab] = useState<SettingTab>(() =>
+    hideModelSettingsMenu && defaultTab === 'model' ? 'tools' : defaultTab
+  );
   const [isMobile, setIsMobile] = useState(false);
   const resizeTimerRef = useRef<number | undefined>(undefined);
   const extensionTabs = useExtensionSettingsTabs();
@@ -190,11 +195,15 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onCancel, defaul
 
     // Modal built-in tabs (subset — no display/agent route pages)
     const builtinItems: MenuItem[] = [
-      {
-        key: 'model',
-        label: t('settings.model'),
-        icon: <LinkCloud theme='outline' size='20' fill={iconColors.secondary} />,
-      },
+      ...(!hideModelSettingsMenu
+        ? [
+            {
+              key: 'model',
+              label: t('settings.model'),
+              icon: <LinkCloud theme='outline' size='20' fill={iconColors.secondary} />,
+            },
+          ]
+        : []),
       {
         key: 'tools',
         label: t('settings.tools'),
@@ -230,7 +239,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onCancel, defaul
         continue;
       }
       const { relativeTo: rawAnchor, placement } = tab.position;
-      const anchor = LEGACY_ANCHOR_REMAP[rawAnchor] ?? rawAnchor;
+      const anchor = resolveSettingsAnchor(rawAnchor, hideModelSettingsMenu);
       if (!builtinItems.some((item) => item.key === anchor)) {
         unanchored.push(tab);
         continue;
@@ -274,7 +283,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onCancel, defaul
     }
 
     return builtinItems;
-  }, [t, isDesktop, extensionTabs, resolveExtTabName]);
+  }, [t, isDesktop, extensionTabs, resolveExtTabName, hideModelSettingsMenu]);
+
+  useEffect(() => {
+    if (menuItems.length === 0) return;
+    if (!menuItems.some((item) => item.key === activeTab)) {
+      setActiveTab(menuItems[0].key);
+    }
+  }, [activeTab, menuItems]);
 
   // Track which extension tabs have been visited (lazy mount + keep-alive)
   const [mountedExtTabs, setMountedExtTabs] = useState<Set<string>>(new Set());

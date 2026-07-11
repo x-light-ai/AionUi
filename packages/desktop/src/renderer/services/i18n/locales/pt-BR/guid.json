@@ -13,20 +13,5 @@
     "specifyWorkspace": "Selecionar pasta do projeto",
     "searchPlaceholder": "Procurar projetos…",
     "noProject": "Nenhum Projeto"
-  },
-  "scanning": {
-    "initialMessage": "O Agente atual não está disponível, detectando outros agentes disponíveis...",
-    "scanningMessage": "Verificando agentes locais disponíveis...",
-    "connectingMessage": "Conectado com sucesso, por favor aguarde...",
-    "establishingConnection": "Estabelecendo conexão...",
-    "statusQueued": "Na fila",
-    "statusTesting": "Testando latência...",
-    "statusUnreachable": "Inacessível",
-    "statusAvailable": "Disponível"
-  },
-  "skillSelector": {
-    "title": "Habilidades",
-    "empty": "Nenhuma habilidade disponível",
-    "goToMarket": "Ir para o Mercado de Habilidades"
   }
 }

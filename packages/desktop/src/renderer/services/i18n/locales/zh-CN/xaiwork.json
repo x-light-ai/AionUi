@@ -1,5 +1,31 @@
 {
+  "common": {
+    "all": "全部"
+  },
+  "wechat": {
+    "title": "微信扫码登录",
+    "generating": "正在生成二维码",
+    "loading": "请稍候...",
+    "waiting": "微信扫码关注【AI微光者】即可快速登录",
+    "confirmed": "登录成功，正在进入系统...",
+    "expired": "二维码已失效，请刷新后重试",
+    "error": "二维码加载失败，请刷新后重试",
+    "refresh": "刷新二维码",
+    "tip": "使用微信扫码登录",
+    "agreementPrefix": "扫码即表示已阅读并接受",
+    "agreementName": "《用户协议》"
+  },
+  "skillSelector": {
+    "title": "技能",
+    "empty": "暂无可用技能",
+    "goToMarket": "去技能市场"
+  },
   "skillMarket": {
+    "title": "技能市场",
+    "searchPlaceholder": "搜索市场技能...",
+    "empty": "市场暂无可用技能。",
+    "installSuccess": "技能安装成功",
+    "installError": "安装技能失败",
     "uninstallSuccess": "技能已卸载",
     "uninstallError": "卸载技能出错",
     "uninstallConfirmTitle": "卸载技能",
@@ -7,13 +33,28 @@
     "uninstallOkText": "卸载"
   },
   "assistantMarket": {
+    "title": "助手市场",
+    "searchPlaceholder": "搜索市场助手...",
+    "empty": "市场暂无可用助手。",
+    "installSuccess": "助手安装成功",
+    "installError": "安装助手失败",
     "uninstallSuccess": "助手已卸载",
     "uninstallError": "卸载助手失败",
     "uninstallConfirmTitle": "卸载助手",
     "uninstallConfirmContent": "确定要卸载 \"{{name}}\" 吗？",
     "uninstallOkText": "卸载"
   },
+  "assistantTab": {
+    "mine": "我的助手",
+    "market": "助手市场"
+  },
+  "shell": {
+    "capabilities": "技能",
+    "mySkills": "我的技能",
+    "skillMarket": "技能市场"
+  },
   "skillsHub": {
+    "tipContent": "支持导入单个技能目录、父目录或 zip 压缩包。",
     "uninstallTooltip": "卸载",
     "uninstallConfirmTitle": "卸载技能",
     "uninstallConfirmContent": "确定要卸载 \"{{name}}\" 吗？",

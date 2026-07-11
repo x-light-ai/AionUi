@@ -1012,7 +1012,6 @@
     "addAgent": "Добавить агента",
     "installFromMarket": "Установить из маркета",
     "marketInstall": "Установить",
-    "marketUninstall": "Удалить",
     "marketInstalling": "Установка...",
     "marketUpdate": "Обновить",
     "marketEmpty": "Не найдено агентов для установки. Проверьте сетевое подключение и убедитесь, что GitHub доступен.",
@@ -1134,8 +1133,7 @@
   "capabilitiesTab": {
     "name": "Возможности",
     "skills": "Навыки",
-    "tools": "Инструменты",
-    "market": "Маркет навыков"
+    "tools": "Инструменты"
   },
   "capabilities": "Возможности",
   "mcpEditNameLocked": "Во время редактирования имя MCP менять нельзя. Сохраните имя сервера верхнего уровня как «{{name}}».",
@@ -1176,14 +1174,6 @@
     "acpTool": "the managed ACP tool",
     "codexAcp": "the Codex ACP runtime component",
     "claudeAgentAcp": "the Claude ACP runtime component"
-  },
-  "skillMarket": {
-    "title": "Маркет навыков",
-    "searchPlaceholder": "Поиск навыков в маркете...",
-    "empty": "В маркете нет доступных навыков.",
-    "notConfigured": "Адрес маркета навыков не настроен. Укажите его в системных настройках.",
-    "installSuccess": "Навык установлен",
-    "installError": "Не удалось установить навык"
   },
   "updateReadyInstall": "{{version}} готова, установить сейчас",
   "assistantAgentUnavailable": "Требуемый агент сейчас недоступен.",

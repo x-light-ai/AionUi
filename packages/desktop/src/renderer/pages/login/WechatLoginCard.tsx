@@ -38,15 +38,15 @@ const WechatLoginCard: React.FC = () => {
   const hint = (() => {
     switch (status) {
       case 'loading':
-        return t('login.wechat.loading');
+        return t('xaiwork.wechat.loading');
       case 'waiting':
-        return t('login.wechat.waiting');
+        return t('xaiwork.wechat.waiting');
       case 'confirmed':
-        return t('login.wechat.confirmed');
+        return t('xaiwork.wechat.confirmed');
       case 'expired':
-        return t('login.wechat.expired');
+        return t('xaiwork.wechat.expired');
       case 'error':
-        return errorText ?? t('login.wechat.error');
+        return errorText ?? t('xaiwork.wechat.error');
       default:
         return '';
     }
@@ -54,12 +54,12 @@ const WechatLoginCard: React.FC = () => {
 
   // Title tracks status: show "generating" only while the QR is being fetched,
   // then fall back to the stable login title once it (or an error) is ready.
-  const title = status === 'loading' || status === 'idle' ? t('login.wechat.generating') : t('login.wechat.title');
+  const title = status === 'loading' || status === 'idle' ? t('xaiwork.wechat.generating') : t('xaiwork.wechat.title');
 
   const showOverlay = status === 'expired' || status === 'error';
 
   return (
-    <div className='login-page__wechat' aria-label={t('login.wechat.title')}>
+    <div className='login-page__wechat' aria-label={t('xaiwork.wechat.title')}>
       <div className='login-page__wechat-panel'>
         <div className='login-page__wechat-qr-shell'>
           {(status === 'loading' || status === 'idle') && (
@@ -73,7 +73,7 @@ const WechatLoginCard: React.FC = () => {
             <img
               className='login-page__wechat-qr-image'
               src={qrCodeUrl}
-              alt={t('login.wechat.title')}
+              alt={t('xaiwork.wechat.title')}
               width={212}
               height={212}
             />
@@ -88,7 +88,7 @@ const WechatLoginCard: React.FC = () => {
             <div className='login-page__wechat-overlay'>
               <span className='login-page__wechat-overlay-text'>{hint}</span>
               <button type='button' className='login-page__wechat-refresh' onClick={() => void start()}>
-                {t('login.wechat.refresh')}
+                {t('xaiwork.wechat.refresh')}
               </button>
             </div>
           )}
@@ -107,10 +107,10 @@ const WechatLoginCard: React.FC = () => {
         </div>
       </div>
 
-      <p className='login-page__wechat-tip'>{t('login.wechat.tip')}</p>
+      <p className='login-page__wechat-tip'>{t('xaiwork.wechat.tip')}</p>
       <p className='login-page__agreement'>
-        {t('login.wechat.agreementPrefix')}
-        <span>{t('login.wechat.agreementName')}</span>
+        {t('xaiwork.wechat.agreementPrefix')}
+        <span>{t('xaiwork.wechat.agreementName')}</span>
       </p>
     </div>
   );

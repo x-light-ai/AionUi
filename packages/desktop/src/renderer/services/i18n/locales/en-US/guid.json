@@ -13,20 +13,5 @@
     "specifyWorkspace": "Select project folder",
     "searchPlaceholder": "Search projects…",
     "noProject": "No Project"
-  },
-  "scanning": {
-    "initialMessage": "Current Agent is unavailable, detecting other available agents...",
-    "scanningMessage": "Scanning local available agents...",
-    "connectingMessage": "Connected successfully, please wait...",
-    "establishingConnection": "Establishing connection...",
-    "statusQueued": "Queued",
-    "statusTesting": "Testing latency...",
-    "statusUnreachable": "Unreachable",
-    "statusAvailable": "Available"
-  },
-  "skillSelector": {
-    "title": "Skills",
-    "empty": "No skills available",
-    "goToMarket": "Go to Skill Market"
   }
 }

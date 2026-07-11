@@ -13,20 +13,5 @@
     "specifyWorkspace": "选择项目文件夹",
     "searchPlaceholder": "搜索项目…",
     "noProject": "不使用项目"
-  },
-  "scanning": {
-    "initialMessage": "当前Agent不可用, 正在检测其他可用agent...",
-    "scanningMessage": "正在扫描本地可用agent...",
-    "connectingMessage": "已连接成功，请稍后...",
-    "establishingConnection": "正在建立连接...",
-    "statusQueued": "排队中",
-    "statusTesting": "正在测试延迟...",
-    "statusUnreachable": "不可达",
-    "statusAvailable": "可用"
-  },
-  "skillSelector": {
-    "title": "技能",
-    "empty": "暂无可用技能",
-    "goToMarket": "去技能市场"
   }
 }
