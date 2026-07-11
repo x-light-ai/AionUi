@@ -1,0 +1,186 @@
+// FORK-CUSTOM: XAIWork 关于页 —— fork 独立组件，替换上游 AboutModalContent 的渲染入口。
+//
+// 与上游 AboutModalContent 的差异：品牌名/链接取自 xaiworkBrand.ts，描述用 fork 品牌标语，
+// 去掉 GitHub 图标入口。上游 AboutModalContent.tsx 保持纯上游、rebase 无冲突。
+// 上游更新检查逻辑（runUpdateCheck / updateReadyState）原样沿用。
+
+import { Divider, Typography, Button, Switch, Message } from '@arco-design/web-react';
+import { Right } from '@icon-park/react';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import classNames from 'classnames';
+import { useSettingsViewMode } from '../settingsViewContext';
+import { isElectronDesktop, openExternalUrl } from '@/renderer/utils/platform';
+import FeedbackReportModal from './FeedbackReportModal';
+import { XAIWORK_BRAND } from '@/common/config/xaiworkBrand';
+import { ipcBridge } from '@/common';
+import { getIncludePrerelease, runUpdateCheck } from '@/renderer/components/settings/checkForUpdatesShared';
+import { UPDATE_AVAILABLE_EVENT } from '@/renderer/components/settings/useUpdateNotificationController';
+import {
+  getUpdateReadyState,
+  subscribeUpdateReadyState,
+  type UpdateReadyState,
+} from '@/renderer/components/settings/updateReadyState';
+
+// __APP_VERSION__ is injected by electron.vite.config.ts `define:` from the repo-root package.json.
+declare const __APP_VERSION__: string;
+
+type LinkItem =
+  | { title: string; url: string; icon: React.ReactNode; onClick?: never }
+  | { title: string; onClick: () => void; icon: React.ReactNode; url?: never };
+
+const XaiworkAboutModalContent: React.FC = () => {
+  const { t } = useTranslation();
+  const viewMode = useSettingsViewMode();
+  const isPageMode = viewMode === 'page';
+  const isElectron = isElectronDesktop();
+
+  const [includePrerelease, setIncludePrerelease] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [updateReadyState, setUpdateReadyState] = useState<UpdateReadyState>(() => getUpdateReadyState());
+  const [checking, setChecking] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('update.includePrerelease');
+    setIncludePrerelease(saved === 'true');
+  }, []);
+
+  useEffect(() => subscribeUpdateReadyState(setUpdateReadyState), []);
+
+  const handlePrereleaseChange = (val: boolean) => {
+    setIncludePrerelease(val);
+    localStorage.setItem('update.includePrerelease', String(val));
+  };
+
+  const openLink = async (url: string) => {
+    try {
+      await openExternalUrl(url);
+    } catch (error) {
+      console.log('Failed to open link:', error);
+    }
+  };
+
+  const checkUpdate = async () => {
+    if (updateReadyState.ready) {
+      if (updateReadyState.filePath) {
+        void ipcBridge.shell.openFile.invoke(updateReadyState.filePath);
+        return;
+      }
+      void ipcBridge.autoUpdate.quitAndInstall.invoke();
+      return;
+    }
+
+    if (checking) return;
+    setChecking(true);
+    try {
+      const outcome = await runUpdateCheck({
+        includePrerelease: getIncludePrerelease(),
+        fallbackVersion: __APP_VERSION__,
+        checkFailedLabel: t('update.checkFailed'),
+      });
+      if (outcome.kind === 'available') {
+        window.dispatchEvent(new CustomEvent(UPDATE_AVAILABLE_EVENT, { detail: outcome }));
+      } else if (outcome.kind === 'upToDate') {
+        Message.info(t('update.alreadyLatest'));
+      } else {
+        Message.error(outcome.message || t('update.checkFailed'));
+      }
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  const linkItems: LinkItem[] = [
+    {
+      title: t('settings.helpDocumentation'),
+      url: XAIWORK_BRAND.helpDocsUrl,
+      icon: <Right theme='outline' size='16' />,
+    },
+    { title: t('settings.updateLog'), url: XAIWORK_BRAND.changelogUrl, icon: <Right theme='outline' size='16' /> },
+    {
+      title: t('settings.bugReport'),
+      onClick: () => setShowFeedbackModal(true),
+      icon: <Right theme='outline' size='16' />,
+    },
+    { title: t('settings.contactMe'), url: XAIWORK_BRAND.contactUrl, icon: <Right theme='outline' size='16' /> },
+    {
+      title: t('settings.officialWebsite'),
+      url: XAIWORK_BRAND.officialWebsite,
+      icon: <Right theme='outline' size='16' />,
+    },
+  ];
+
+  return (
+    <div className='flex flex-col h-full w-full'>
+      <div
+        className={classNames(
+          'flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-24px',
+          isPageMode && 'px-0 overflow-visible'
+        )}
+      >
+        <div className='flex flex-col max-w-500px mx-auto'>
+          {/* App Info Section */}
+          <div className='flex flex-col items-center pb-24px'>
+            <Typography.Title heading={3} className='text-24px font-bold text-t-primary mb-8px'>
+              {XAIWORK_BRAND.appName}
+            </Typography.Title>
+            <Typography.Text className='text-14px text-t-secondary mb-12px text-center'>
+              {XAIWORK_BRAND.appDescription}
+            </Typography.Text>
+            <div className='flex items-center justify-center gap-8px mb-16px'>
+              <span className='px-10px py-4px rd-6px text-13px bg-fill-2 text-t-primary font-500'>
+                v{__APP_VERSION__}
+              </span>
+            </div>
+
+            {/* Check Update Section */}
+            {isElectron && (
+              <div className='flex flex-col items-center gap-12px w-full max-w-300px bg-fill-2 p-16px rounded-lg'>
+                <Button type='primary' long loading={checking} onClick={() => void checkUpdate()}>
+                  {updateReadyState.ready
+                    ? t('settings.updateReadyInstall', { version: updateReadyState.version })
+                    : checking
+                      ? t('settings.checkingForUpdates')
+                      : t('settings.checkForUpdates')}
+                </Button>
+                <div className='flex items-center justify-between w-full'>
+                  <Typography.Text className='text-12px text-t-secondary'>
+                    {t('settings.includePrereleaseUpdates')}
+                  </Typography.Text>
+                  <Switch size='small' checked={includePrerelease} onChange={handlePrereleaseChange} />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <Divider className='my-16px' />
+
+          {/* Links Section */}
+          <div className='flex flex-col gap-4px pt-8px'>
+            {linkItems.map((item, index) => (
+              <div
+                key={index}
+                className='flex items-center justify-between px-16px py-12px rd-8px hover:bg-fill-2 transition-all cursor-pointer group'
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if ('url' in item) {
+                    openLink(item.url).catch((error) => console.error('Failed to open link:', error));
+                  } else {
+                    item.onClick();
+                  }
+                }}
+              >
+                <Typography.Text className='text-14px text-t-primary'>{item.title}</Typography.Text>
+                <div className='text-t-secondary group-hover:text-t-primary transition-colors'>{item.icon}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <FeedbackReportModal visible={showFeedbackModal} onCancel={() => setShowFeedbackModal(false)} />
+    </div>
+  );
+};
+
+export default XaiworkAboutModalContent;

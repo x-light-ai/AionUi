@@ -23,6 +23,9 @@ import { useDirectorySelection } from '@renderer/hooks/file/useDirectorySelectio
 import { cleanupSiderTooltips } from '@renderer/utils/ui/siderTooltip';
 import { useConversationShortcuts } from '@renderer/hooks/ui/useConversationShortcuts';
 import { isElectronDesktop } from '@renderer/utils/platform';
+// FORK-CUSTOM: 侧边栏品牌 logo/名称取自 fork 资源与 xaiworkBrand.ts
+import xaiworkLogo from '@renderer/assets/logos/brand/xaiwork-app.png';
+import { XAIWORK_BRAND } from '@/common/config/xaiworkBrand';
 import '@renderer/styles/layout.css';
 
 const SidebarIcon: React.FC<{ size?: number; strokeWidth?: number }> = ({ size = 18, strokeWidth = 4 }) => (
@@ -349,34 +352,14 @@ const Layout: React.FC<{
                   }
                 )}
               >
+                {/* FORK-CUSTOM: 品牌 logo 换成 fork 图标（原上游内联 svg 已替换） */}
                 <div
-                  className={classNames('bg-black shrink-0 size-32px relative rd-0.5rem', {
+                  className={classNames('shrink-0 size-32px relative rd-0.5rem overflow-hidden', {
                     '!size-24px': collapsed,
                   })}
                   onClick={onClick}
                 >
-                  <svg
-                    className={classNames('w-5.5 h-5.5 absolute inset-0 m-auto', {
-                      'scale-140': !collapsed,
-                    })}
-                    viewBox='0 0 80 80'
-                    fill='none'
-                  >
-                    <path
-                      key='logo-path-1'
-                      d='M40 20 Q38 22 25 40 Q23 42 26 42 L30 42 Q32 40 40 30 Q48 40 50 42 L54 42 Q57 42 55 40 Q42 22 40 20'
-                      fill='white'
-                    ></path>
-                    <circle key='logo-circle' cx='40' cy='46' r='3' fill='white'></circle>
-                    <path
-                      key='logo-path-2'
-                      d='M18 50 Q40 70 62 50'
-                      stroke='white'
-                      strokeWidth='3.5'
-                      fill='none'
-                      strokeLinecap='round'
-                    ></path>
-                  </svg>
+                  <img src={xaiworkLogo} alt={XAIWORK_BRAND.appName} className='w-full h-full object-cover' />
                 </div>
                 {isSettingsRoute ? (
                   <Tooltip content={t('common.back', { defaultValue: 'Back to Chat' })} position='bottom'>
@@ -393,11 +376,13 @@ const Layout: React.FC<{
                         }
                       }}
                     >
-                      AionUi
+                      {/* FORK-CUSTOM: 品牌名取自 xaiworkBrand.ts */}
+                      {XAIWORK_BRAND.appName}
                     </div>
                   </Tooltip>
                 ) : (
-                  <div className='text-16px text-t-primary collapsed-hidden font-semibold'>AionUi</div>
+                  // FORK-CUSTOM: 品牌名取自 xaiworkBrand.ts
+                  <div className='text-16px text-t-primary collapsed-hidden font-semibold'>{XAIWORK_BRAND.appName}</div>
                 )}
                 {isMobile && !collapsed && (
                   <button

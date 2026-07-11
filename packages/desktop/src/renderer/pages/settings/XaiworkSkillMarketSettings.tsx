@@ -9,7 +9,7 @@ import { useRemoteMarket, type RemoteMarketCard } from '@/renderer/hooks/market/
 
 const XaiworkSkillMarketSettings: React.FC = () => {
   const { t } = useTranslation();
-  
+
   const remoteMarket = useRemoteMarket('skill');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTagId, setActiveTagId] = useState<number | null>(null);
@@ -42,20 +42,20 @@ const XaiworkSkillMarketSettings: React.FC = () => {
 
   const handleRemove = (item: RemoteMarketCard) => {
     Modal.confirm({
-      title: t('fork.skillMarket.uninstallConfirmTitle', { defaultValue: 'Uninstall Skill' }),
-      content: t('fork.skillMarket.uninstallConfirmContent', {
+      title: t('xaiwork.skillMarket.uninstallConfirmTitle', { defaultValue: 'Uninstall Skill' }),
+      content: t('xaiwork.skillMarket.uninstallConfirmContent', {
         name: item.name,
         defaultValue: `Are you sure you want to uninstall "${item.name}"?`,
       }),
       okButtonProps: { status: 'danger' },
-      okText: t('fork.skillMarket.uninstallOkText', { defaultValue: 'Uninstall' }),
+      okText: t('xaiwork.skillMarket.uninstallOkText', { defaultValue: 'Uninstall' }),
       onOk: async () => {
         try {
           await remoteMarket.remove(item);
-          Message.success(t('fork.skillMarket.uninstallSuccess', { defaultValue: 'Skill uninstalled' }));
+          Message.success(t('xaiwork.skillMarket.uninstallSuccess', { defaultValue: 'Skill uninstalled' }));
         } catch (error) {
           console.error('Failed to remove remote market skill:', error);
-          Message.error(t('fork.skillMarket.uninstallError', { defaultValue: 'Error uninstalling skill' }));
+          Message.error(t('xaiwork.skillMarket.uninstallError', { defaultValue: 'Error uninstalling skill' }));
         }
       },
     });
@@ -77,7 +77,9 @@ const XaiworkSkillMarketSettings: React.FC = () => {
             <button
               data-testid='btn-refresh-market'
               className='outline-none border-none bg-transparent cursor-pointer p-6px text-t-tertiary hover:text-primary-6 transition-colors rd-full hover:bg-fill-2'
-              onClick={() => { void remoteMarket.reload(); }}
+              onClick={() => {
+                void remoteMarket.reload();
+              }}
               title={t('common.refresh', { defaultValue: 'Refresh' })}
             >
               <Refresh theme='outline' size={16} className={remoteMarket.loading ? 'animate-spin' : ''} />

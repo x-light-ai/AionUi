@@ -7,6 +7,7 @@ import { FolderOpen, Info, Puzzle, Search, Refresh } from '@icon-park/react';
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
+import { mergeXaiworkSkillMetadata, type XaiworkInstalledSkillMetadata } from './xaiworkSkillMetadata';
 import SettingsPageWrapper from './components/SettingsPageWrapper';
 import SkillCard, { type SkillCardVariant } from './components/SkillCard';
 
@@ -66,10 +67,18 @@ const XaiworkSkillsSettings: React.FC<XaiworkSkillsSettingsProps> = ({ withWrapp
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const skills = await ipcBridge.fs.listAvailableSkills.invoke();
-      setAvailableSkills(skills);
-
-      const paths = await ipcBridge.fs.getSkillPaths.invoke();
+      const metadataRequest = ipcBridge.fs.listXaiworkSkillMetadata
+        .invoke()
+        .catch((error): XaiworkInstalledSkillMetadata[] => {
+          console.warn('Failed to fetch XAIWork skill metadata; using the standard skill list:', error);
+          return [];
+        });
+      const [skills, metadata, paths] = await Promise.all([
+        ipcBridge.fs.listAvailableSkills.invoke(),
+        metadataRequest,
+        ipcBridge.fs.getSkillPaths.invoke(),
+      ]);
+      setAvailableSkills(mergeXaiworkSkillMetadata(skills, metadata));
       setSkillPaths(paths);
     } catch (error) {
       console.error('Failed to fetch skills:', error);
@@ -129,11 +138,11 @@ const XaiworkSkillsSettings: React.FC<XaiworkSkillsSettingsProps> = ({ withWrapp
   const handleDelete = async (skillName: string) => {
     try {
       await ipcBridge.fs.deleteSkill.invoke({ skill_name: skillName });
-      Message.success(t('fork.skillsHub.uninstallSuccess', { defaultValue: 'Skill uninstalled' }));
+      Message.success(t('xaiwork.skillsHub.uninstallSuccess', { defaultValue: 'Skill uninstalled' }));
       void fetchData();
     } catch (error) {
       console.error('Failed to delete skill:', error);
-      Message.error(t('fork.skillsHub.uninstallError', { defaultValue: 'Error uninstalling skill' }));
+      Message.error(t('xaiwork.skillsHub.uninstallError', { defaultValue: 'Error uninstalling skill' }));
     }
   };
 
@@ -153,13 +162,13 @@ const XaiworkSkillsSettings: React.FC<XaiworkSkillsSettingsProps> = ({ withWrapp
 
   const confirmDelete = (skillName: string) => {
     Modal.confirm({
-      title: t('fork.skillsHub.uninstallConfirmTitle', { defaultValue: 'Uninstall Skill' }),
-      content: t('fork.skillsHub.uninstallConfirmContent', {
+      title: t('xaiwork.skillsHub.uninstallConfirmTitle', { defaultValue: 'Uninstall Skill' }),
+      content: t('xaiwork.skillsHub.uninstallConfirmContent', {
         name: skillName,
         defaultValue: `Are you sure you want to uninstall "${skillName}"?`,
       }),
       okButtonProps: { status: 'danger' },
-      okText: t('fork.skillsHub.uninstallOkText', { defaultValue: 'Uninstall' }),
+      okText: t('xaiwork.skillsHub.uninstallOkText', { defaultValue: 'Uninstall' }),
       onOk: () => void handleDelete(skillName),
       wrapClassName: 'modal-delete-skill',
     });
@@ -254,7 +263,7 @@ const XaiworkSkillsSettings: React.FC<XaiworkSkillsSettingsProps> = ({ withWrapp
                     tags={skill.tags}
                     highlighted={highlightedSkill === skill.name}
                     onDelete={() => confirmDelete(skill.name)}
-                    deleteTitle={t('fork.skillsHub.uninstallTooltip', { defaultValue: 'Uninstall' })}
+                    deleteTitle={t('xaiwork.skillsHub.uninstallTooltip', { defaultValue: 'Uninstall' })}
                     deleteTestId={`btn-delete-${normalizeTestId(skill.name)}`}
                   />
                 );

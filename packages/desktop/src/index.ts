@@ -365,7 +365,8 @@ const createWindow = ({ showOnReady = true }: { showOnReady?: boolean } = {}): v
   if (!app.isPackaged) {
     try {
       // Windows: app.ico (no dev version), Linux: app_dev.png (with padding)
-      const iconFile = process.platform === 'win32' ? 'app.ico' : 'app_dev.png';
+      // FORK-CUSTOM: dev 窗口图标用 fork 品牌图（上游 app.ico/app_dev.png 保持原样）
+      const iconFile = process.platform === 'win32' ? 'xaiwork-app.ico' : 'xaiwork-app_dev.png';
       const iconPath = path.join(process.cwd(), 'resources', iconFile);
       if (fs.existsSync(iconPath)) {
         devIcon = nativeImage.createFromPath(iconPath);
@@ -573,7 +574,8 @@ const handleAppReady = async (): Promise<void> => {
   // In production, the icon is set via forge.config.ts packagerConfig.icon
   if (process.platform === 'darwin' && !app.isPackaged && app.dock) {
     try {
-      const iconPath = path.join(process.cwd(), 'resources', 'app_dev.png');
+      // FORK-CUSTOM: dev dock 图标用 fork 品牌图（上游 app_dev.png 保持原样）
+      const iconPath = path.join(process.cwd(), 'resources', 'xaiwork-app_dev.png');
       if (fs.existsSync(iconPath)) {
         const icon = nativeImage.createFromPath(iconPath);
         if (!icon.isEmpty()) {

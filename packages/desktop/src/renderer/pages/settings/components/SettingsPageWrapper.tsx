@@ -20,7 +20,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useExtI18n } from '@/renderer/hooks/system/useExtI18n';
-import { useForkConfig } from '@/renderer/hooks/useForkConfig';
+import { useXaiworkConfig } from '@/renderer/hooks/useXaiworkConfig';
 import { BUILTIN_TAB_IDS, resolveSettingsAnchor } from './SettingsSider';
 import './settings.css';
 
@@ -81,7 +81,7 @@ const SettingsPageWrapper: React.FC<SettingsPageWrapperProps> = ({ children, cla
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { t } = useTranslation();
-  const { hideModelSettingsMenu } = useForkConfig();
+  const { hideModelSettingsMenu } = useXaiworkConfig();
   const isDesktop = isElectronDesktop();
 
   const extensionTabs = useExtensionSettingsTabs();

@@ -12,8 +12,6 @@ import classNames from 'classnames';
 import { useSettingsViewMode } from '../settingsViewContext';
 import { isElectronDesktop, openExternalUrl } from '@/renderer/utils/platform';
 import FeedbackReportModal from './FeedbackReportModal';
-// FORK-CUSTOM: 品牌链接集中管理，见 src/common/config/forkBrand.ts
-import { FORK_BRAND } from '@/common/config/forkBrand';
 import { ipcBridge } from '@/common';
 import { getIncludePrerelease, runUpdateCheck } from '@/renderer/components/settings/checkForUpdatesShared';
 import { UPDATE_AVAILABLE_EVENT } from '@/renderer/components/settings/useUpdateNotificationController';
@@ -99,12 +97,12 @@ const AboutModalContent: React.FC = () => {
   const linkItems: LinkItem[] = [
     {
       title: t('settings.helpDocumentation'),
-      url: FORK_BRAND.helpDocsUrl,
+      url: 'https://github.com/iOfficeAI/AionUi/wiki',
       icon: <Right theme='outline' size='16' />,
     },
     {
       title: t('settings.updateLog'),
-      url: FORK_BRAND.changelogUrl,
+      url: 'https://github.com/iOfficeAI/AionUi/releases',
       icon: <Right theme='outline' size='16' />,
     },
     {
@@ -114,12 +112,12 @@ const AboutModalContent: React.FC = () => {
     },
     {
       title: t('settings.contactMe'),
-      url: FORK_BRAND.contactUrl,
+      url: 'https://x.com/WailiVery',
       icon: <Right theme='outline' size='16' />,
     },
     {
       title: t('settings.officialWebsite'),
-      url: FORK_BRAND.officialWebsite,
+      url: 'https://www.aionui.com',
       icon: <Right theme='outline' size='16' />,
     },
   ];
@@ -149,7 +147,9 @@ const AboutModalContent: React.FC = () => {
               <div
                 className='text-t-primary cursor-pointer hover:text-t-secondary transition-colors p-4px'
                 onClick={() =>
-                  openLink(FORK_BRAND.repoUrl).catch((error) => console.error('Failed to open link:', error))
+                  openLink('https://github.com/iOfficeAI/AionUi').catch((error) =>
+                    console.error('Failed to open link:', error)
+                  )
                 }
               >
                 <Github theme='outline' size='20' />

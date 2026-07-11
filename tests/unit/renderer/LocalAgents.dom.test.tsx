@@ -61,8 +61,8 @@ vi.mock('@renderer/hooks/agent/useManagedAgents', () => ({
   useManagedAgents: () => useManagedAgents(),
 }));
 
-vi.mock('@/renderer/hooks/useForkConfig', () => ({
-  useForkConfig: () => ({ hideTeamSection: true, hideModelSettingsMenu: true, showAionCliInUi: true }),
+vi.mock('@/renderer/hooks/useXaiworkConfig', () => ({
+  useXaiworkConfig: () => ({ hideTeamSection: true, hideModelSettingsMenu: true, showAionCliInUi: true }),
 }));
 
 // Bridge is only touched by user-action handlers, not on render — stub the

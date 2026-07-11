@@ -17,7 +17,11 @@ const archMap = { arm64: 'arm64', x64: 'x86_64', ia32: 'x86' };
 const normalizedPlatform = platformMap[platform] || platform;
 const normalizedArch = archMap[arch] || arch;
 
-const tarballName = `aionui-web-${version}-${normalizedPlatform}-${normalizedArch}.tar.gz`;
+// FORK-CUSTOM: web-cli 产物统一用 xaiwork-web 品牌名（上游为 aionui-web）。
+// 与运行时 packages/web-cli/src/index.ts 的可执行文件名判断保持一致。
+const WEB_CLI_NAME = 'xaiwork-web';
+
+const tarballName = `${WEB_CLI_NAME}-${version}-${normalizedPlatform}-${normalizedArch}.tar.gz`;
 const distDir = path.join(projectRoot, 'dist-web-cli');
 const tarballPath = path.join(distDir, tarballName);
 
@@ -38,7 +42,7 @@ const stagingDir = path.join(distDir, 'staging');
 fs.rmSync(stagingDir, { recursive: true, force: true });
 fs.mkdirSync(stagingDir, { recursive: true });
 
-const tarballContentDir = path.join(stagingDir, 'aionui-web');
+const tarballContentDir = path.join(stagingDir, WEB_CLI_NAME);
 fs.mkdirSync(tarballContentDir, { recursive: true });
 
 // 4. Compile web-cli into a standalone executable with bun
@@ -49,7 +53,7 @@ console.log('4. Compiling web-cli into standalone executable...');
 const bunTargetPlatform = { darwin: 'darwin', linux: 'linux', win32: 'windows' }[platform] || platform;
 const bunTargetArch = { arm64: 'arm64', x64: 'x64', ia32: 'x64' }[arch] || arch;
 const bunTarget = `bun-${bunTargetPlatform}-${bunTargetArch}`;
-const executableName = platform === 'win32' ? 'aionui-web.exe' : 'aionui-web';
+const executableName = platform === 'win32' ? `${WEB_CLI_NAME}.exe` : WEB_CLI_NAME;
 const executablePath = path.join(tarballContentDir, executableName);
 const webCliEntry = path.join(projectRoot, 'packages/web-cli/src/index.ts');
 execSync(`bun build --compile --target=${bunTarget} --outfile="${executablePath}" "${webCliEntry}"`, {
@@ -88,7 +92,7 @@ fs.cpSync(backendSrc, backendDest, { recursive: true });
 
 // 8. Create tarball
 fs.mkdirSync(distDir, { recursive: true });
-execSync(`tar -czf ${path.basename(tarballPath)} -C ${stagingDir} aionui-web`, {
+execSync(`tar -czf ${path.basename(tarballPath)} -C ${stagingDir} ${WEB_CLI_NAME}`, {
   cwd: path.dirname(tarballPath),
   stdio: 'inherit',
 });

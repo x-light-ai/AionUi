@@ -1,7 +1,7 @@
 appId: com.aionui.app
-productName: AionUi
-executableName: AionUi
-copyright: Copyright © 2024 AionUi
+productName: XAIWork
+executableName: XAIWork
+copyright: Copyright © 2024 XAIWork
 
 protocols:
   - name: AionUi Protocol
@@ -107,7 +107,8 @@ files:
 extraResources:
   - from: public
     to: .
-  - from: resources/app.png
+  # FORK-CUSTOM: 源用 fork 图标 xaiwork-app.png，打包后名字保持 app.png（tray/通知按此名读取，无需改上游代码）
+  - from: resources/xaiwork-app.png
     to: app.png
   # aioncore binary (pre-compiled per platform/arch, ships its own bun runtime)
   - from: resources/bundled-aioncore
@@ -118,7 +119,7 @@ win:
   target:
     - nsis
     #    - msi
-  icon: resources/app.ico # Use the checked-in Windows icon resource for executable metadata/icon patching
+  icon: resources/xaiwork-app.ico # FORK-CUSTOM: fork 品牌 Windows 图标（上游 app.ico 保持原样）
   artifactName: ${productName}-${version}-${os}-${arch}.${ext}
 
 nsis:
@@ -135,7 +136,7 @@ mac:
   target:
     - dmg
     - zip
-  icon: resources/app.icns
+  icon: resources/xaiwork-app.icns # FORK-CUSTOM: fork 品牌 macOS 图标（上游 app.icns 保持原样）
   artifactName: ${productName}-${version}-${os}-${arch}.${ext}
   category: public.app-category.productivity
   hardenedRuntime: true
@@ -168,7 +169,7 @@ afterSign: scripts/afterSign.js
 linux:
   target:
     - deb
-  icon: resources/app.png
+  icon: resources/xaiwork-app.png # FORK-CUSTOM: fork 品牌 Linux 图标（上游 app.png 保持原样）
   artifactName: ${productName}-${version}-${os}-${arch}.${ext}
   category: Utility
   maintainer: aionui

@@ -35,8 +35,7 @@ const XaiworkMarketCardGrid: React.FC<XaiworkMarketCardGridProps> = ({
   // FORK-CUSTOM: per-item processing state for debounce
   const [processingIds, setProcessingIds] = useState<Set<string>>(() => new Set());
 
-  const addProcessing = (key: string) =>
-    setProcessingIds((prev) => new Set(prev).add(key));
+  const addProcessing = (key: string) => setProcessingIds((prev) => new Set(prev).add(key));
   const removeProcessing = (key: string) =>
     setProcessingIds((prev) => {
       const next = new Set(prev);
@@ -55,7 +54,7 @@ const XaiworkMarketCardGrid: React.FC<XaiworkMarketCardGridProps> = ({
         removeProcessing(key);
       }
     },
-    [onInstall, processingIds],
+    [onInstall, processingIds]
   );
 
   const handleRemoveClick = useCallback(
@@ -69,7 +68,7 @@ const XaiworkMarketCardGrid: React.FC<XaiworkMarketCardGridProps> = ({
         removeProcessing(key);
       }
     },
-    [onRemove, processingIds],
+    [onRemove, processingIds]
   );
 
   if (loading) {

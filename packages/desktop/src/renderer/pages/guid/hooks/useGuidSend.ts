@@ -16,7 +16,7 @@ import type { NavigateFunction } from 'react-router-dom';
 import { mutate as swrMutate } from 'swr';
 import { getConversationCreateErrorMessage } from '@/renderer/pages/conversation/utils/conversationCreateError';
 // FORK-CUSTOM: XAIWork model config application on new-conversation create.
-import { useConfig } from '@/renderer/hooks/config/useConfig';
+import { XAIWORK_BRAND } from '@/common/config/xaiworkBrand';
 import { useXaiworkAgentModels } from '@/renderer/hooks/agent/useXaiworkAgentModels';
 import { applyXaiworkModelConfig } from '@/renderer/hooks/market/applyXaiworkModelConfig';
 import { readXaiworkRemoteAuth } from '@/renderer/hooks/xaiworkRemoteAuth';
@@ -110,7 +110,8 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
   const { byModelId: xaiworkByModelId, hasModels: xaiworkHasModels } = useXaiworkAgentModels(
     xaiworkBackend || undefined
   );
-  const [xaiworkHost] = useConfig('xaiwork.adminApiHost');
+  // FORK-CUSTOM: fixed XAIWork host from brand config (see XAIWORK_BRAND.apiHost).
+  const xaiworkHost = XAIWORK_BRAND.apiHost;
 
   const handleSend = useCallback(async () => {
     if (!selectedAssistantId) {

@@ -5,11 +5,10 @@
 import { Message } from '@arco-design/web-react';
 import { Refresh } from '@icon-park/react';
 import { useAssistantEditor, useAssistantList } from '@/renderer/hooks/assistant';
-import TalkToButlerButton from '@/renderer/components/base/TalkToButlerButton';
 import SettingsPageWrapper from './components/SettingsPageWrapper';
 import { buildAssistantEditorBackends, resolveAvatarImageSrc } from './AssistantSettings/assistantUtils';
-import AssistantEditorPage from './AssistantSettings/AssistantEditorPage';
 import XaiworkAssistantListPanel from './XaiworkAssistantListPanel';
+import XaiworkAssistantEditorPage from './XaiworkAssistantEditor/XaiworkAssistantEditorPage';
 import XaiworkDeleteAssistantModal from './XaiworkDeleteAssistantModal';
 import SkillConfirmModals from './AssistantSettings/SkillConfirmModals';
 import type { AssistantEditorViewModel } from './AssistantSettings/types';
@@ -194,11 +193,11 @@ const XaiworkMyAssistants: React.FC<XaiworkMyAssistantsProps> = ({ withWrapper =
   }, [assistants, editor, navigationState]);
 
   const mainContent = (
-    <div className='flex flex-col h-full w-full'>
+    <div className={showEditor ? 'flex flex-col w-full' : 'flex flex-col h-full w-full'}>
       {messageContext}
-      <div className='flex-1 min-h-0'>
+      <div className={showEditor ? 'min-h-0' : 'flex-1 min-h-0'}>
         {showEditor ? (
-          <AssistantEditorPage
+          <XaiworkAssistantEditorPage
             editor={editorViewModel}
             activeAssistant={activeAssistant}
             onBack={() => editor.setEditVisible(false)}
@@ -207,8 +206,8 @@ const XaiworkMyAssistants: React.FC<XaiworkMyAssistantsProps> = ({ withWrapper =
           <div
             className={`${styles.card} bg-base rd-16px md:rd-24px shadow-sm border border-b-base px-[16px] md:px-[32px] py-32px`}
           >
-            {/* FORK-CUSTOM: 自渲染 toolbar（标题「我的助手」+ 计数 + 创建按钮），与「我的技能」一致；
-                上游 AssistantListPanel 自带的 header 由 CSS 隐藏，避免重复标题。 */}
+            {/* FORK-CUSTOM: 自渲染 toolbar（标题「我的助手」+ 计数 + 刷新按钮），与「我的技能」一致；
+                上游 AssistantListPanel 自带的 header 由 CSS 隐藏，避免重复标题。创建助手入口已按需求移除。 */}
             <div className='flex items-center justify-between gap-16px mb-16px shrink-0'>
               <div className='flex items-center gap-10px shrink-0'>
                 <span className='text-16px md:text-18px text-t-primary font-bold tracking-tight'>
@@ -235,17 +234,6 @@ const XaiworkMyAssistants: React.FC<XaiworkMyAssistantsProps> = ({ withWrapper =
                 >
                   <Refresh theme='outline' size={16} className={loading ? 'animate-spin' : ''} />
                 </button>
-                <TalkToButlerButton
-                  className='shrink-0'
-                  label={t('settings.createAssistant', { defaultValue: 'Create Assistant' })}
-                  chatLabel={t('settings.talkToButler.createViaChat', { defaultValue: 'Create via chat' })}
-                  onManual={() => void editor.handleCreate()}
-                  manualLabel={t('settings.talkToButler.createManually', { defaultValue: 'Create manually' })}
-                  prompt={t('settings.talkToButler.prompt.createAssistant', {
-                    defaultValue: 'Help me create a new assistant and walk me through setting it up.',
-                  })}
-                  data-testid='btn-create-assistant-xaiwork'
-                />
               </div>
             </div>
             <XaiworkAssistantListPanel

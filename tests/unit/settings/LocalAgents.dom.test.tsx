@@ -11,7 +11,7 @@ import { MemoryRouter } from 'react-router-dom';
 import LocalAgents from '@/renderer/pages/settings/AgentSettings/LocalAgents';
 
 const useManagedAgentsMock = vi.fn();
-const useForkConfigMock = vi.fn();
+const useXaiworkConfigMock = vi.fn();
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -23,8 +23,8 @@ vi.mock('@/renderer/hooks/agent/useManagedAgents', () => ({
   useManagedAgents: () => useManagedAgentsMock(),
 }));
 
-vi.mock('@/renderer/hooks/useForkConfig', () => ({
-  useForkConfig: () => useForkConfigMock(),
+vi.mock('@/renderer/hooks/useXaiworkConfig', () => ({
+  useXaiworkConfig: () => useXaiworkConfigMock(),
 }));
 
 vi.mock('@/common', () => ({
@@ -80,7 +80,7 @@ describe('LocalAgents', () => {
   });
 
   it('renders official agents (Aion CLI is no longer gated behind a fork switch)', () => {
-    useForkConfigMock.mockReturnValue({ hideTeamSection: true });
+    useXaiworkConfigMock.mockReturnValue({ hideTeamSection: true });
 
     renderWithRouter(<LocalAgents />);
 

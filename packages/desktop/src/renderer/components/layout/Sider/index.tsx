@@ -9,7 +9,7 @@ import { blurActiveElement } from '@renderer/utils/ui/focus';
 import { useThemeContext } from '@renderer/hooks/context/ThemeContext';
 import { useTeamCreatedRedirect } from '@renderer/pages/team/hooks/useTeamCreatedRedirect';
 // FORK-CUSTOM: UI visibility flags
-import { useForkConfig } from '@renderer/hooks/useForkConfig';
+import { useXaiworkConfig } from '@renderer/hooks/useXaiworkConfig';
 import { SiderToolbar, SiderSearchEntry, SiderScheduledEntry } from './SiderNav';
 import SiderFooter from './SiderFooter';
 import TeamSiderSection from './TeamSiderSection';
@@ -35,7 +35,7 @@ const Sider: React.FC<SiderProps> = ({ onSessionClick, collapsed = false }) => {
   const { theme, setTheme } = useThemeContext();
   const [isBatchMode, setIsBatchMode] = useState(false);
   useTeamCreatedRedirect();
-  const { hideTeamSection, hideModelSettingsMenu } = useForkConfig();
+  const { hideTeamSection, hideModelSettingsMenu } = useXaiworkConfig();
   const isSettings = pathname.startsWith('/settings');
   const lastNonSettingsPathRef = useRef('/guid');
   const showLogout =

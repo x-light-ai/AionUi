@@ -25,6 +25,7 @@
     "uninstallMenuItem": "Uninstall",
     "uninstallTitle": "Uninstall Assistant",
     "uninstallOkText": "Uninstall",
-    "uninstallConfirm": "Are you sure you want to uninstall this assistant? This action cannot be undone."
+    "uninstallConfirm": "Are you sure you want to uninstall this assistant? This action cannot be undone.",
+    "skillCount": "{{count}} skills"
   }
 }

@@ -1,9 +1,9 @@
 // FORK-CUSTOM: fork 行为默认值集中配置（新建文件，合并上游不会冲突）
 //
 // 此文件集中存放所有"上游有默认逻辑，fork 想覆盖为具体值"的配置。
-// 与 forkBrand.ts 关注点分离：forkBrand 是品牌/链接，本文件是行为默认值。
+// 与 xaiworkBrand.ts 关注点分离：xaiworkBrand 是品牌/链接，本文件是行为默认值。
 
-export const FORK_DEFAULTS = {
+export const XAIWORK_DEFAULTS = {
   /**
    * 推荐方式：按 agent backend 指定默认助手（稳定可移植）。
    *

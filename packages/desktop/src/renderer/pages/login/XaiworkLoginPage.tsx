@@ -1,8 +1,11 @@
 // FORK-CUSTOM: XAIWork login page — WeChat QR login replaces upstream username/password form.
 // Upstream pages/login/index.tsx is kept pristine (upstream island); Router lazy-imports this file instead.
-import loginLogo from '@renderer/assets/logos/brand/app.png';
+// FORK-CUSTOM: 登录页 logo 用 fork 品牌图（上游 assets/logos/brand/app.png 保持原样）
+import loginLogo from '@renderer/assets/logos/brand/xaiwork-app.png';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+// FORK-CUSTOM: 品牌名集中取自 xaiworkBrand.ts，不再依赖 login.json 的 brand/pageTitle
+import { XAIWORK_BRAND } from '@/common/config/xaiworkBrand';
 import { changeLanguage } from '@/renderer/services/i18n';
 import { useLocation, useNavigate } from 'react-router-dom';
 import AppLoader from '@renderer/components/layout/AppLoader';
@@ -25,8 +28,9 @@ const LoginPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    document.title = t('login.pageTitle');
-  }, [t]);
+    // FORK-CUSTOM: 窗口标题用品牌名
+    document.title = XAIWORK_BRAND.appName;
+  }, []);
 
   useEffect(() => {
     document.documentElement.lang = i18n.language;
@@ -90,9 +94,10 @@ const LoginPage: React.FC = () => {
 
         <div className='login-page__header'>
           <div className='login-page__logo'>
-            <img src={loginLogo} alt={t('login.brand')} />
+            {/* FORK-CUSTOM: 品牌名取自 xaiworkBrand.ts */}
+            <img src={loginLogo} alt={XAIWORK_BRAND.appName} />
           </div>
-          <h1 className='login-page__title'>{t('login.brand')}</h1>
+          <h1 className='login-page__title'>{XAIWORK_BRAND.appName}</h1>
           <p className='login-page__subtitle'>{t('login.subtitle')}</p>
         </div>
 

@@ -1,5 +1,5 @@
 // FORK-CUSTOM: 替代上游 AssistantListPanel，改动点：
-// 1. 菜单"删除"→"卸载"（fork.myAssistant.uninstallMenuItem）
+// 1. 菜单"删除"→"卸载"（xaiwork.myAssistant.uninstallMenuItem）
 // 2. user source 的标签改为显示版本号
 import type { DragEndEvent } from '@dnd-kit/core';
 import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
@@ -44,8 +44,17 @@ type SortableAssistantCardProps = {
 };
 
 const SortableAssistantCard: React.FC<SortableAssistantCardProps> = ({
-  assistant, localeKey, highlightedId, onEdit, onDuplicate, onDelete,
-  onToggleEnabled, setActiveAssistantId, renderSourceTag, cardRefSetter, sortingEnabled,
+  assistant,
+  localeKey,
+  highlightedId,
+  onEdit,
+  onDuplicate,
+  onDelete,
+  onToggleEnabled,
+  setActiveAssistantId,
+  renderSourceTag,
+  cardRefSetter,
+  sortingEnabled,
 }) => {
   const { t } = useTranslation();
   const canDelete = assistant.source === 'user';
@@ -53,9 +62,17 @@ const SortableAssistantCard: React.FC<SortableAssistantCardProps> = ({
   const actionMenu = (
     <Menu
       onClickMenuItem={(key) => {
-        if (key === 'edit') { onEdit(assistant); return; }
-        if (key === 'duplicate') { onDuplicate(assistant); return; }
-        if (key === 'delete') { onDelete(assistant); }
+        if (key === 'edit') {
+          onEdit(assistant);
+          return;
+        }
+        if (key === 'duplicate') {
+          onDuplicate(assistant);
+          return;
+        }
+        if (key === 'delete') {
+          onDelete(assistant);
+        }
       }}
     >
       <Menu.Item key='edit'>
@@ -72,34 +89,54 @@ const SortableAssistantCard: React.FC<SortableAssistantCardProps> = ({
       ) : null}
       {canDelete ? (
         <Menu.Item key='delete'>
-          <div data-testid={`menu-delete-${assistant.id}`} className='flex items-center gap-8px text-[rgb(var(--danger-6))]'>
+          <div
+            data-testid={`menu-delete-${assistant.id}`}
+            className='flex items-center gap-8px text-[rgb(var(--danger-6))]'
+          >
             {/* FORK-CUSTOM: 将"删除"改为"卸载" */}
-            <span>{t('fork.myAssistant.uninstallMenuItem', { defaultValue: 'Uninstall' })}</span>
+            <span>{t('xaiwork.myAssistant.uninstallMenuItem', { defaultValue: 'Uninstall' })}</span>
           </div>
         </Menu.Item>
       ) : null}
     </Menu>
   );
   const { attributes, listeners, setActivatorNodeRef, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: assistant.id, disabled: !sortingEnabled,
+    id: assistant.id,
+    disabled: !sortingEnabled,
   });
   const style: React.CSSProperties = {
-    transform: CSS.Transform.toString(transform), transition,
-    opacity: isDragging ? 0.72 : undefined, zIndex: isDragging ? 1 : undefined,
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.72 : undefined,
+    zIndex: isDragging ? 1 : undefined,
   };
   return (
     <div
-      ref={(node) => { setNodeRef(node); cardRefSetter(assistant.id)(node); }}
-      key={assistant.id} style={style}
+      ref={(node) => {
+        setNodeRef(node);
+        cardRefSetter(assistant.id)(node);
+      }}
+      key={assistant.id}
+      style={style}
       data-testid={`assistant-card-${assistant.id}`}
       className={`group flex cursor-pointer items-center justify-between gap-12px rounded-12px border border-solid px-14px py-10px transition-all duration-180 hover:border-border-1 hover:bg-fill-1 ${highlightedId === assistant.id ? 'border-primary-5 bg-primary-1' : 'border-transparent bg-base'}`}
-      onClick={() => { setActiveAssistantId(assistant.id); onEdit(assistant); }}
+      onClick={() => {
+        setActiveAssistantId(assistant.id);
+        onEdit(assistant);
+      }}
     >
       <div className='flex min-w-0 flex-1 items-center gap-12px'>
-        <Button ref={setActivatorNodeRef} type='text' size='small' disabled={!sortingEnabled}
+        <Button
+          ref={setActivatorNodeRef}
+          type='text'
+          size='small'
+          disabled={!sortingEnabled}
           data-testid={`assistant-reorder-handle-${assistant.id}`}
           className={`!min-w-0 !rounded-6px !px-4px !py-0 !text-t-tertiary ${sortingEnabled ? 'cursor-grab active:cursor-grabbing' : '!opacity-40'}`}
-          onClick={(event) => event.stopPropagation()} {...attributes} {...listeners}>
+          onClick={(event) => event.stopPropagation()}
+          {...attributes}
+          {...listeners}
+        >
           <Drag size={16} fill='currentColor' />
         </Button>
         <AssistantAvatar assistant={assistant} size={28} />
@@ -107,10 +144,19 @@ const SortableAssistantCard: React.FC<SortableAssistantCardProps> = ({
           <div className='flex min-w-0 items-center gap-8px font-medium text-t-primary'>
             <span className='truncate'>{assistant.name_i18n?.[localeKey] || assistant.name}</span>
             {assistant.agent_status !== 'online' && (
-              <Tooltip content={assistant.agent_status === 'missing'
-                ? t('settings.assistantAgentMissing', { defaultValue: 'The required agent is not installed.' })
-                : t('settings.assistantAgentUnavailable', { defaultValue: 'The required agent is currently unavailable.' })}>
-                <span className='flex flex-shrink-0 items-center text-warning-6' data-testid={`assistant-agent-unavailable-${assistant.id}`}>
+              <Tooltip
+                content={
+                  assistant.agent_status === 'missing'
+                    ? t('settings.assistantAgentMissing', { defaultValue: 'The required agent is not installed.' })
+                    : t('settings.assistantAgentUnavailable', {
+                        defaultValue: 'The required agent is currently unavailable.',
+                      })
+                }
+              >
+                <span
+                  className='flex flex-shrink-0 items-center text-warning-6'
+                  data-testid={`assistant-agent-unavailable-${assistant.id}`}
+                >
                   <Attention size={15} fill='currentColor' />
                 </span>
               </Tooltip>
@@ -122,15 +168,27 @@ const SortableAssistantCard: React.FC<SortableAssistantCardProps> = ({
           </div>
         </div>
       </div>
-      <div className='ml-12px flex flex-shrink-0 items-center gap-8px text-t-secondary' onClick={(e) => e.stopPropagation()}>
-        <Switch size='small' data-testid={`switch-enabled-${assistant.id}`}
+      <div
+        className='ml-12px flex flex-shrink-0 items-center gap-8px text-t-secondary'
+        onClick={(e) => e.stopPropagation()}
+      >
+        <Switch
+          size='small'
+          data-testid={`switch-enabled-${assistant.id}`}
           checked={assistant.enabled !== false}
-          onChange={(checked) => { onToggleEnabled(assistant, checked); }} />
+          onChange={(checked) => {
+            onToggleEnabled(assistant, checked);
+          }}
+        />
         <Dropdown droplist={actionMenu} trigger='click' position='br' getPopupContainer={() => document.body}>
-          <Button type='outline' size='small' icon={<MoreOne theme='outline' size='14' fill='currentColor' />}
+          <Button
+            type='outline'
+            size='small'
+            icon={<MoreOne theme='outline' size='14' fill='currentColor' />}
             aria-label={t('common.more', { defaultValue: 'More' })}
             className='!h-30px !rounded-8px !border-border-2 !bg-base !px-8px !text-t-primary hover:!border-border-1 hover:!bg-fill-1'
-            data-testid={`btn-assistant-more-${assistant.id}`}>
+            data-testid={`btn-assistant-more-${assistant.id}`}
+          >
             {null}
           </Button>
         </Dropdown>
@@ -140,8 +198,17 @@ const SortableAssistantCard: React.FC<SortableAssistantCardProps> = ({
 };
 
 const XaiworkAssistantListPanel: React.FC<XaiworkAssistantListPanelProps> = ({
-  assistants, localeKey, onEdit, onDuplicate, onDelete, onCreate,
-  onToggleEnabled, onReorder, setActiveAssistantId, highlightId, onHighlightConsumed,
+  assistants,
+  localeKey,
+  onEdit,
+  onDuplicate,
+  onDelete,
+  onCreate,
+  onToggleEnabled,
+  onReorder,
+  setActiveAssistantId,
+  highlightId,
+  onHighlightConsumed,
 }) => {
   const { t } = useTranslation();
   const layout = useLayoutContext();
@@ -150,7 +217,10 @@ const XaiworkAssistantListPanel: React.FC<XaiworkAssistantListPanelProps> = ({
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
   const cardRefSetter = useCallback(
-    (id: string) => (el: HTMLDivElement | null) => { cardRefs.current[id] = el; }, []
+    (id: string) => (el: HTMLDivElement | null) => {
+      cardRefs.current[id] = el;
+    },
+    []
   );
 
   useEffect(() => {
@@ -160,7 +230,10 @@ const XaiworkAssistantListPanel: React.FC<XaiworkAssistantListPanelProps> = ({
     const timer = setTimeout(() => {
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       setHighlightedId(highlightId);
-      setTimeout(() => { setHighlightedId(null); onHighlightConsumed?.(); }, 2000);
+      setTimeout(() => {
+        setHighlightedId(null);
+        onHighlightConsumed?.();
+      }, 2000);
     }, 150);
     return () => clearTimeout(timer);
   }, [highlightId, assistants, onHighlightConsumed]);
@@ -174,16 +247,22 @@ const XaiworkAssistantListPanel: React.FC<XaiworkAssistantListPanelProps> = ({
     if (tag === null) return null;
     if (tag === 'builtin') {
       return (
-        <Tag size='small' bordered={false}
-          className='!rounded-10px !bg-fill-1 !px-8px !py-1px !text-10px !font-600 !leading-16px !text-primary-6'>
+        <Tag
+          size='small'
+          bordered={false}
+          className='!rounded-10px !bg-fill-1 !px-8px !py-1px !text-10px !font-600 !leading-16px !text-primary-6'
+        >
           {t('settings.builtin', { defaultValue: 'Built-in' })}
         </Tag>
       );
     }
     if (tag === 'cli') {
       return (
-        <Tag size='small' bordered={false}
-          className='!rounded-10px !bg-fill-1 !px-8px !py-1px !text-10px !font-600 !leading-16px !text-[rgb(var(--arcoblue-6))]'>
+        <Tag
+          size='small'
+          bordered={false}
+          className='!rounded-10px !bg-fill-1 !px-8px !py-1px !text-10px !font-600 !leading-16px !text-[rgb(var(--arcoblue-6))]'
+        >
           {t('settings.assistantSourceCli', { defaultValue: 'CLI' })}
         </Tag>
       );
@@ -191,8 +270,11 @@ const XaiworkAssistantListPanel: React.FC<XaiworkAssistantListPanelProps> = ({
     // user source: 有版本号则显示版本，否则不显示标签
     if (assistant.version) {
       return (
-        <Tag size='small' bordered={false}
-          className='!rounded-10px !bg-[rgba(var(--primary-6),0.08)] !px-8px !py-1px !text-10px !font-600 !leading-16px !text-primary-6'>
+        <Tag
+          size='small'
+          bordered={false}
+          className='!rounded-10px !bg-[rgba(var(--primary-6),0.08)] !px-8px !py-1px !text-10px !font-600 !leading-16px !text-primary-6'
+        >
           {assistant.version}
         </Tag>
       );
@@ -200,11 +282,14 @@ const XaiworkAssistantListPanel: React.FC<XaiworkAssistantListPanelProps> = ({
     return null;
   };
 
-  const handleSectionDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!sortingEnabled || !over || active.id === over.id) return;
-    void onReorder(String(active.id), String(over.id));
-  }, [onReorder, sortingEnabled]);
+  const handleSectionDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!sortingEnabled || !over || active.id === over.id) return;
+      void onReorder(String(active.id), String(over.id));
+    },
+    [onReorder, sortingEnabled]
+  );
 
   const renderList = (sectionAssistants: AssistantListItem[]) => (
     <div className='rounded-12px border border-border-2 bg-2 p-8px md:rounded-16px md:p-10px'>
@@ -213,11 +298,18 @@ const XaiworkAssistantListPanel: React.FC<XaiworkAssistantListPanelProps> = ({
           <div className='space-y-8px'>
             {sectionAssistants.map((assistant) => (
               <SortableAssistantCard
-                key={assistant.id} assistant={assistant} localeKey={localeKey}
-                highlightedId={highlightedId} onEdit={onEdit} onDuplicate={onDuplicate}
-                onDelete={onDelete} onToggleEnabled={onToggleEnabled}
-                setActiveAssistantId={setActiveAssistantId} renderSourceTag={renderSourceTag}
-                cardRefSetter={cardRefSetter} sortingEnabled={sortingEnabled}
+                key={assistant.id}
+                assistant={assistant}
+                localeKey={localeKey}
+                highlightedId={highlightedId}
+                onEdit={onEdit}
+                onDuplicate={onDuplicate}
+                onDelete={onDelete}
+                onToggleEnabled={onToggleEnabled}
+                setActiveAssistantId={setActiveAssistantId}
+                renderSourceTag={renderSourceTag}
+                cardRefSetter={cardRefSetter}
+                sortingEnabled={sortingEnabled}
               />
             ))}
           </div>
@@ -228,8 +320,10 @@ const XaiworkAssistantListPanel: React.FC<XaiworkAssistantListPanelProps> = ({
 
   return (
     <div data-testid='assistant-list-shell' className='flex h-full min-h-0 flex-col overflow-hidden bg-transparent'>
-      <div data-testid='assistant-list-header'
-        className={`sticky top-0 z-10 border-b border-border-2 bg-bg-0 ${isMobile ? 'px-8px py-12px' : 'px-18px py-18px'}`}>
+      <div
+        data-testid='assistant-list-header'
+        className={`sticky top-0 z-10 border-b border-border-2 bg-bg-0 ${isMobile ? 'px-8px py-12px' : 'px-18px py-18px'}`}
+      >
         <div className='mx-auto w-full max-w-760px'>
           <div className={`flex gap-12px ${isMobile ? 'flex-col' : 'items-start justify-between'}`}>
             <div className='min-w-0'>
@@ -258,10 +352,14 @@ const XaiworkAssistantListPanel: React.FC<XaiworkAssistantListPanelProps> = ({
           </div>
         </div>
       </div>
-      <div data-testid='assistant-list-body'
-        className={`min-h-0 flex-1 overflow-auto ${isMobile ? 'px-8px pt-0 pb-12px' : 'px-18px pt-0 pb-24px'}`}>
+      <div
+        data-testid='assistant-list-body'
+        className={`min-h-0 flex-1 overflow-auto ${isMobile ? 'px-8px pt-0 pb-12px' : 'px-18px pt-0 pb-24px'}`}
+      >
         <div className='mx-auto w-full max-w-760px'>
-          {listAssistants.length > 0 ? renderList(listAssistants) : (
+          {listAssistants.length > 0 ? (
+            renderList(listAssistants)
+          ) : (
             <div className='py-12px text-center text-t-secondary'>
               {t('settings.assistantNoMatch', { defaultValue: 'No assistants match the current filters.' })}
             </div>

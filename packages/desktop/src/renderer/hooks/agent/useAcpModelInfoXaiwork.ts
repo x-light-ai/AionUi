@@ -14,12 +14,12 @@
 // empty list), this transparently falls back to the upstream useAcpModelInfo
 // behaviour.
 import type { AcpModelInfo } from '@/common/types/platform/acpTypes';
-import { useConfig } from '@/renderer/hooks/config/useConfig';
+import { XAIWORK_BRAND } from '@/common/config/xaiworkBrand';
 import { useCallback, useMemo, useState } from 'react';
 import { applyXaiworkModelConfig } from '../market/applyXaiworkModelConfig';
 import { readXaiworkRemoteAuth } from '../xaiworkRemoteAuth';
 import { useAcpModelInfo, type UseAcpModelInfoResult } from './useAcpModelInfo';
-import { useXaiworkAgentModels } from './useXaiworkAgentModels';
+import { buildXaiworkModelInfo, useXaiworkAgentModels } from './useXaiworkAgentModels';
 
 type UseAcpModelInfoParams = {
   conversation_id: string;
@@ -43,29 +43,19 @@ export const useAcpModelInfoXaiwork = (params: UseAcpModelInfoParams): UseAcpMod
   } = params;
 
   const base = useAcpModelInfo(params);
-  const { byModelId, hasModels } = useXaiworkAgentModels(enabled ? backend : undefined);
+  const { models, byModelId, hasModels } = useXaiworkAgentModels(enabled ? backend : undefined);
   const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
-  const [host] = useConfig('xaiwork.adminApiHost');
+  // FORK-CUSTOM: fixed XAIWork host from brand config (see XAIWORK_BRAND.apiHost).
+  const host = XAIWORK_BRAND.apiHost;
 
   // Build the overridden model_info from the XAIWork distribution.
-  const xaiworkModelInfo = useMemo<AcpModelInfo | null>(() => {
-    if (!hasModels) return null;
-    const available = Array.from(byModelId.values()).map((m) => ({ id: m.modelId, label: m.name }));
-    // Priority: user's explicit selection → base hook's current (if still valid)
-    // → caller's initial preference → first distributed model.
-    const baseCurrent = base.model_info?.current_model_id ?? null;
-    const current =
-      (selectedModelId && byModelId.has(selectedModelId) && selectedModelId) ||
-      (baseCurrent && byModelId.has(baseCurrent) && baseCurrent) ||
-      (initialModelId && byModelId.has(initialModelId) && initialModelId) ||
-      available[0]?.id ||
-      null;
-    return {
-      current_model_id: current,
-      current_model_label: (current && byModelId.get(current)?.name) || current,
-      available_models: available,
-    };
-  }, [hasModels, byModelId, selectedModelId, base.model_info?.current_model_id, initialModelId]);
+  // Priority: user's explicit selection → base hook's current (if still valid)
+  // → caller's initial preference → first distributed model.
+  const baseCurrentModelId = base.model_info?.current_model_id ?? null;
+  const xaiworkModelInfo = useMemo<AcpModelInfo | null>(
+    () => buildXaiworkModelInfo(models, [selectedModelId, baseCurrentModelId, initialModelId]),
+    [models, selectedModelId, baseCurrentModelId, initialModelId]
+  );
 
   const selectModelXaiwork = useCallback(
     (model_id: string) => {

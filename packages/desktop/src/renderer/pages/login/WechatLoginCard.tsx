@@ -7,6 +7,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { QRCodeSVG } from 'qrcode.react';
 import { useAuth } from '../../hooks/context/AuthContext';
 import { useWechatLogin } from '../../hooks/useWechatLogin';
 
@@ -18,7 +19,7 @@ const WechatLoginCard: React.FC = () => {
   // re-validates the session cookie via refresh(); without this guard a remount
   // would call start() again and spawn a fresh (unscanned -> pending) QR code.
   const confirmedRef = useRef(false);
-  const { status, qrCodeUrl, errorText, start } = useWechatLogin(() => {
+  const { status, mode, qrCodeUrl, qrContent, errorText, start } = useWechatLogin(() => {
     confirmedRef.current = true;
     // Re-validate the freshly set session cookie, then navigate to a clean
     // route. A stale `?xaiwork=expired` on the login URL keeps the route guards
@@ -51,6 +52,10 @@ const WechatLoginCard: React.FC = () => {
     }
   })();
 
+  // Title tracks status: show "generating" only while the QR is being fetched,
+  // then fall back to the stable login title once it (or an error) is ready.
+  const title = status === 'loading' || status === 'idle' ? t('login.wechat.generating') : t('login.wechat.title');
+
   const showOverlay = status === 'expired' || status === 'error';
 
   return (
@@ -63,7 +68,8 @@ const WechatLoginCard: React.FC = () => {
             </div>
           )}
 
-          {qrCodeUrl && status !== 'loading' && status !== 'idle' && (
+          {/* sa 模式:后端返回可显示的二维码图片地址,直接展示 */}
+          {mode === 'sa' && qrCodeUrl && status !== 'loading' && status !== 'idle' && (
             <img
               className='login-page__wechat-qr-image'
               src={qrCodeUrl}
@@ -71,6 +77,11 @@ const WechatLoginCard: React.FC = () => {
               width={212}
               height={212}
             />
+          )}
+
+          {/* miniprogram 模式:后端只返回二维码内容文本,前端自行生成二维码 */}
+          {mode === 'miniprogram' && qrContent && status !== 'loading' && status !== 'idle' && (
+            <QRCodeSVG className='login-page__wechat-qr-image' value={qrContent} size={212} />
           )}
 
           {showOverlay && (
@@ -83,7 +94,7 @@ const WechatLoginCard: React.FC = () => {
           )}
         </div>
 
-        <p className='login-page__wechat-title'>{t('login.wechat.generating')}</p>
+        <p className='login-page__wechat-title'>{title}</p>
         {hint && !showOverlay && (
           <p className='login-page__wechat-hint' role='status' aria-live='polite'>
             {hint}

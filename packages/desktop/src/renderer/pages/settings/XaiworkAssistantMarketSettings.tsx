@@ -9,7 +9,7 @@ import { useRemoteMarket, type RemoteMarketCard } from '@/renderer/hooks/market/
 
 const XaiworkAssistantMarketSettings: React.FC = () => {
   const { t } = useTranslation();
-  
+
   const remoteMarket = useRemoteMarket('assistant');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTagId, setActiveTagId] = useState<number | null>(null);
@@ -42,20 +42,20 @@ const XaiworkAssistantMarketSettings: React.FC = () => {
 
   const handleRemove = (item: RemoteMarketCard) => {
     Modal.confirm({
-      title: t('fork.assistantMarket.uninstallConfirmTitle', { defaultValue: 'Uninstall Assistant' }),
-      content: t('fork.assistantMarket.uninstallConfirmContent', {
+      title: t('xaiwork.assistantMarket.uninstallConfirmTitle', { defaultValue: 'Uninstall Assistant' }),
+      content: t('xaiwork.assistantMarket.uninstallConfirmContent', {
         name: item.name,
         defaultValue: `Are you sure you want to uninstall "${item.name}"?`,
       }),
       okButtonProps: { status: 'danger' },
-      okText: t('fork.assistantMarket.uninstallOkText', { defaultValue: 'Uninstall' }),
+      okText: t('xaiwork.assistantMarket.uninstallOkText', { defaultValue: 'Uninstall' }),
       onOk: async () => {
         try {
           await remoteMarket.remove(item);
-          Message.success(t('fork.assistantMarket.uninstallSuccess', { defaultValue: 'Assistant uninstalled' }));
+          Message.success(t('xaiwork.assistantMarket.uninstallSuccess', { defaultValue: 'Assistant uninstalled' }));
         } catch (error) {
           console.error('Failed to remove remote market assistant:', error);
-          Message.error(t('fork.assistantMarket.uninstallError', { defaultValue: 'Error uninstalling assistant' }));
+          Message.error(t('xaiwork.assistantMarket.uninstallError', { defaultValue: 'Error uninstalling assistant' }));
         }
       },
     });
@@ -77,7 +77,9 @@ const XaiworkAssistantMarketSettings: React.FC = () => {
             <button
               data-testid='btn-refresh-assistant-market'
               className='outline-none border-none bg-transparent cursor-pointer p-6px text-t-tertiary hover:text-primary-6 transition-colors rd-full hover:bg-fill-2'
-              onClick={() => { void remoteMarket.reload(); }}
+              onClick={() => {
+                void remoteMarket.reload();
+              }}
               title={t('common.refresh', { defaultValue: 'Refresh' })}
             >
               <Refresh theme='outline' size={16} className={remoteMarket.loading ? 'animate-spin' : ''} />

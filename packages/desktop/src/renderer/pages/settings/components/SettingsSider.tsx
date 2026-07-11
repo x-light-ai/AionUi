@@ -3,7 +3,7 @@ import { isElectronDesktop, resolveExtensionAssetUrl } from '@/renderer/utils/pl
 import { type IExtensionSettingsTab } from '@/common/adapter/ipcBridge';
 import { useExtI18n } from '@/renderer/hooks/system/useExtI18n';
 import { useExtensionSettingsTabs } from '@/renderer/hooks/system/useExtensionSettingsTabs';
-import { useForkConfig } from '@/renderer/hooks/useForkConfig';
+import { useXaiworkConfig } from '@/renderer/hooks/useXaiworkConfig';
 import {
   Cat,
   Communication,
@@ -81,7 +81,7 @@ const SettingsSider: React.FC<{ collapsed?: boolean; tooltipEnabled?: boolean }>
   const { t } = useTranslation();
   const { pathname } = useLocation();
   const isDesktop = isElectronDesktop();
-  const { hideModelSettingsMenu } = useForkConfig();
+  const { hideModelSettingsMenu, hideAgentSettingsMenu } = useXaiworkConfig();
 
   const extensionTabs = useExtensionSettingsTabs();
   const { resolveExtTabName } = useExtI18n();
@@ -122,7 +122,11 @@ const SettingsSider: React.FC<{ collapsed?: boolean; tooltipEnabled?: boolean }>
 
     // Start with ordered builtin IDs, hiding desktop-only tabs in browser mode
     const result: SiderItem[] = BUILTIN_TAB_IDS.filter(
-      (id) => (isDesktop || id !== 'pet') && (!hideModelSettingsMenu || id !== 'model')
+      (id) =>
+        (isDesktop || id !== 'pet') &&
+        (!hideModelSettingsMenu || id !== 'model') &&
+        // FORK-CUSTOM: 隐藏 Agents 菜单
+        (!hideAgentSettingsMenu || id !== 'agent')
     ).map((id) => builtinMap[id]);
 
     // Extension tabs with position anchoring
@@ -198,7 +202,7 @@ const SettingsSider: React.FC<{ collapsed?: boolean; tooltipEnabled?: boolean }>
     }
 
     return { menus: result, groupHeaderAt: headerAt };
-  }, [t, isDesktop, extensionTabs, resolveExtTabName, hideModelSettingsMenu]);
+  }, [t, isDesktop, extensionTabs, resolveExtTabName, hideModelSettingsMenu, hideAgentSettingsMenu]);
 
   const siderTooltipProps = getSiderTooltipProps(tooltipEnabled);
   return (

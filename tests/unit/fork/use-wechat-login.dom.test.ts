@@ -17,8 +17,12 @@ vi.mock('@/renderer/hooks/xaiworkRemoteAuth', () => ({
   saveXaiworkRemoteAuth: (auth: unknown) => saveRemoteAuthMock(auth),
 }));
 
-vi.mock('@/common/config/forkBrand', () => ({
-  FORK_BRAND: { wechatAppCode: 'xaiwork' },
+// mutable so individual tests can flip login mode before importing the hook state.
+const brandMock = { wechatAppCode: 'xaiwork', wechatLoginMode: 'sa' as 'sa' | 'miniprogram' };
+vi.mock('@/common/config/xaiworkBrand', () => ({
+  get XAIWORK_BRAND() {
+    return brandMock;
+  },
 }));
 
 import { useWechatLogin } from '@renderer/hooks/useWechatLogin';
@@ -30,6 +34,7 @@ describe('renderer/useWechatLogin', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
+    brandMock.wechatLoginMode = 'sa';
   });
 
   afterEach(() => {
@@ -49,9 +54,30 @@ describe('renderer/useWechatLogin', () => {
     });
 
     const calledUrl = fetchSpy.mock.calls[0][0] as string;
-    expect(calledUrl).toContain('/openapi/WeixinAuth/qrcode');
+    expect(calledUrl).toContain('/openapi/weixin/SAAuth/qrcode');
     expect(calledUrl).toContain('app=xaiwork');
     expect(result.current.qrCodeUrl).toBe('https://qr/img');
+    expect(result.current.status).toBe('waiting');
+  });
+
+  it('miniprogram 模式取小程序端点并暴露二维码内容供前端生成', async () => {
+    brandMock.wechatLoginMode = 'miniprogram';
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ data: { ticket: 't-mp', qrContent: 'https://mp/open?ticket=t-mp' } }));
+    vi.stubGlobal('fetch', fetchSpy);
+
+    const { result } = renderHook(() => useWechatLogin(vi.fn()));
+
+    await act(async () => {
+      await result.current.start();
+    });
+
+    const calledUrl = fetchSpy.mock.calls[0][0] as string;
+    expect(calledUrl).toContain('/openapi/weixin/MiniProgramAuth/qrcode');
+    expect(result.current.mode).toBe('miniprogram');
+    expect(result.current.qrContent).toBe('https://mp/open?ticket=t-mp');
+    expect(result.current.qrCodeUrl).toBeNull();
     expect(result.current.status).toBe('waiting');
   });
 

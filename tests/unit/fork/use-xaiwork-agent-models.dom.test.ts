@@ -2,27 +2,23 @@
  * FORK-CUSTOM: tests for the XAIWork agent models SWR hook.
  * @vitest-environment jsdom
  *
- * useXaiworkAgentModels gates the model fetch on backend + host + token being
- * all present (credential safety: no relay call without a logged-in XAIWork
- * session), and exposes models + a byModelId lookup + hasModels.
+ * useXaiworkAgentModels uses the fixed XAIWORK_BRAND.apiHost and gates the fetch
+ * on backend + a logged-in XAIWork token, exposing models + byModelId + hasModels.
  */
 
 import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { useConfigMock, readRemoteAuthMock, listModelsMock, createClientMock } = vi.hoisted(() => {
+import { XAIWORK_BRAND } from '@/common/config/xaiworkBrand';
+
+const { readRemoteAuthMock, listModelsMock, createClientMock } = vi.hoisted(() => {
   const listModelsMock = vi.fn();
   return {
-    useConfigMock: vi.fn(),
     readRemoteAuthMock: vi.fn(),
     listModelsMock,
     createClientMock: vi.fn(() => ({ listModels: listModelsMock })),
   };
 });
-
-vi.mock('@/renderer/hooks/config/useConfig', () => ({
-  useConfig: (key: string) => useConfigMock(key),
-}));
 
 vi.mock('@/renderer/hooks/xaiworkRemoteAuth', () => ({
   readXaiworkRemoteAuth: () => readRemoteAuthMock(),
@@ -37,7 +33,6 @@ import { useXaiworkAgentModels } from '@renderer/hooks/agent/useXaiworkAgentMode
 describe('renderer/useXaiworkAgentModels', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    useConfigMock.mockReturnValue(['https://api.xaiwork.com', vi.fn()]);
     readRemoteAuthMock.mockReturnValue({
       accessToken: 'jwt-token-1234567890abcdef',
       refreshToken: 'r',
@@ -45,7 +40,7 @@ describe('renderer/useXaiworkAgentModels', () => {
     });
   });
 
-  it('fetches and exposes models + byModelId when backend, host and token are present', async () => {
+  it('fetches with the fixed brand host + token when backend is present', async () => {
     listModelsMock.mockResolvedValue([{ modelId: 'x-1', name: 'X One' }]);
 
     const { result } = renderHook(() => useXaiworkAgentModels('claude'));
@@ -53,7 +48,8 @@ describe('renderer/useXaiworkAgentModels', () => {
     await waitFor(() => expect(result.current.hasModels).toBe(true));
     expect(result.current.models).toEqual([{ modelId: 'x-1', name: 'X One' }]);
     expect(result.current.byModelId.get('x-1')).toEqual({ modelId: 'x-1', name: 'X One' });
-    expect(createClientMock).toHaveBeenCalledWith('https://api.xaiwork.com', 'jwt-token-1234567890abcdef');
+    // Host is the fixed XAIWORK_BRAND.apiHost, not a runtime config value.
+    expect(createClientMock).toHaveBeenCalledWith(XAIWORK_BRAND.apiHost, 'jwt-token-1234567890abcdef');
   });
 
   it('does not fetch when backend is missing', () => {
@@ -66,15 +62,6 @@ describe('renderer/useXaiworkAgentModels', () => {
 
   it('does not fetch when the XAIWork session token is missing', () => {
     readRemoteAuthMock.mockReturnValue(null);
-
-    const { result } = renderHook(() => useXaiworkAgentModels('claude'));
-
-    expect(listModelsMock).not.toHaveBeenCalled();
-    expect(result.current.hasModels).toBe(false);
-  });
-
-  it('does not fetch when the admin host is unset', () => {
-    useConfigMock.mockReturnValue([undefined, vi.fn()]);
 
     const { result } = renderHook(() => useXaiworkAgentModels('claude'));
 

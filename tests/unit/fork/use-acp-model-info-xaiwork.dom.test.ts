@@ -20,9 +20,14 @@ vi.mock('@renderer/hooks/agent/useAcpModelInfo', () => ({
   useAcpModelInfo: (params: unknown) => useAcpModelInfoMock(params),
 }));
 
-vi.mock('@renderer/hooks/agent/useXaiworkAgentModels', () => ({
-  useXaiworkAgentModels: (backend?: string) => useXaiworkAgentModelsMock(backend),
-}));
+vi.mock('@renderer/hooks/agent/useXaiworkAgentModels', async (importOriginal) => {
+  // Keep the real buildXaiworkModelInfo helper; only stub the SWR hook.
+  const actual = await importOriginal<typeof import('@renderer/hooks/agent/useXaiworkAgentModels')>();
+  return {
+    ...actual,
+    useXaiworkAgentModels: (backend?: string) => useXaiworkAgentModelsMock(backend),
+  };
+});
 
 vi.mock('@renderer/hooks/config/useConfig', () => ({
   useConfig: (key: string) => useConfigMock(key),

@@ -7,7 +7,8 @@
 // FORK-CUSTOM: Fetch the model list a builtin agent may use via AionCore's
 // XAIWork config broker (`POST /api/agents/xaiwork/models`). The renderer
 // only receives `{modelId, name}`; credentials stay server-side.
-import { useConfig } from '@/renderer/hooks/config/useConfig';
+import type { AcpModelInfo } from '@/common/types/platform/acpTypes';
+import { XAIWORK_BRAND } from '@/common/config/xaiworkBrand';
 import { createAgentModelsClient, type XaiworkAgentModel } from '@/renderer/hooks/market/agentModelsClient';
 import { readXaiworkRemoteAuth } from '@/renderer/hooks/xaiworkRemoteAuth';
 import { useMemo } from 'react';
@@ -21,9 +22,33 @@ export interface UseXaiworkAgentModelsResult {
 
 const EMPTY: XaiworkAgentModel[] = [];
 
+/**
+ * Build an AcpModelInfo from XAIWork-distributed models. Shared by the ACP
+ * model selector and the guid page so the dropdown list + current-model
+ * resolution stay identical. Returns null when there are no distributed models.
+ *
+ * @param models - distributed models for the active backend
+ * @param preferredModelIds - candidate current-model ids in priority order;
+ *   the first one present in `models` wins, else the first distributed model.
+ */
+export function buildXaiworkModelInfo(
+  models: XaiworkAgentModel[],
+  preferredModelIds: Array<string | null | undefined>
+): AcpModelInfo | null {
+  if (models.length === 0) return null;
+  const available = models.map((m) => ({ id: m.modelId, label: m.name }));
+  const byId = new Map(models.map((m) => [m.modelId, m]));
+  const current = preferredModelIds.find((id): id is string => !!id && byId.has(id)) ?? available[0].id;
+  return {
+    current_model_id: current,
+    current_model_label: byId.get(current)?.name ?? current,
+    available_models: available,
+  };
+}
+
 export function useXaiworkAgentModels(backend?: string): UseXaiworkAgentModelsResult {
-  const [host] = useConfig('xaiwork.adminApiHost');
-  const effectiveHost = host?.trim() || '';
+  // FORK-CUSTOM: fixed XAIWork host from brand config (see XAIWORK_BRAND.apiHost).
+  const effectiveHost = XAIWORK_BRAND.apiHost;
   const remote = readXaiworkRemoteAuth();
   const authToken = remote?.accessToken ?? '';
   // Trailing 16 chars of the JWT act as a stable-per-user cache tag so account
@@ -31,9 +56,10 @@ export function useXaiworkAgentModels(backend?: string): UseXaiworkAgentModelsRe
   // user's model list. Never log or render this tag.
   const tokenTag = authToken.slice(-16);
 
-  const key = backend && effectiveHost && authToken
-    ? (['xaiwork-agent-models', effectiveHost, backend, tokenTag] as const)
-    : null;
+  const key =
+    backend && effectiveHost && authToken
+      ? (['xaiwork-agent-models', effectiveHost, backend, tokenTag] as const)
+      : null;
 
   const { data } = useSWR(
     key,

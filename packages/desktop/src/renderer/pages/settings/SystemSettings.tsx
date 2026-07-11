@@ -7,7 +7,8 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import SystemModalContent from '@/renderer/components/settings/SettingsModal/contents/SystemModalContent';
-import AboutModalContent from '@/renderer/components/settings/SettingsModal/contents/AboutModalContent';
+// FORK-CUSTOM: 关于页渲染入口指向 fork 组件（上游 AboutModalContent.tsx 保持原样）
+import AboutModalContent from '@/renderer/components/settings/SettingsModal/contents/XaiworkAboutModalContent';
 import SettingsPageWrapper from './components/SettingsPageWrapper';
 
 const SystemSettings: React.FC = () => {

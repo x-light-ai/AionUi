@@ -8,9 +8,9 @@ import { fileURLToPath } from 'node:url';
 import { openBrowserUrl, shouldAutoOpenBrowser } from './browser.js';
 import { ensureAdminPassword } from './ensureAdminPassword.js';
 
-// tarball layout:
-//   aionui-web/
-//   ├── aionui-web              ← bun-compiled standalone binary (process.execPath)
+// tarball layout (FORK-CUSTOM: 品牌名 xaiwork-web，上游为 aionui-web):
+//   xaiwork-web/
+//   ├── xaiwork-web             ← bun-compiled standalone binary (process.execPath)
 //   ├── package.json             ← for runtime version lookup
 //   ├── bundled-aioncore/<plat-arch>/aioncore[.exe]
 //   └── static/                  ← SPA assets
@@ -19,12 +19,16 @@ import { ensureAdminPassword } from './ensureAdminPassword.js';
 // path, NOT the real tarball location — we MUST use process.execPath to find
 // sibling files. In dev (tsx/node), process.execPath is the node/bun binary,
 // so fall back to import.meta.url there.
+// FORK-CUSTOM: web-cli 打包产物统一为 xaiwork-web（上游 aionui-web）。
+// 判名保留对旧名 aionui-web 的兼容，避免旧 tarball 运行时失效。
+const PACKAGED_EXE_NAMES = ['xaiwork-web', 'xaiwork-web.exe', 'aionui-web', 'aionui-web.exe'];
+
 function resolveCliRoot(): string {
-  // Heuristic: if the executable path ends in "aionui-web" or "aionui-web.exe",
+  // Heuristic: if the executable path matches a known packaged binary name,
   // treat it as the packaged single-file binary and return its directory.
   const exe = process.execPath;
   const exeName = path.basename(exe).toLowerCase();
-  if (exeName === 'aionui-web' || exeName === 'aionui-web.exe') {
+  if (PACKAGED_EXE_NAMES.includes(exeName)) {
     return path.dirname(exe);
   }
   // Dev mode (tsx/node/bun running from source): use import.meta.url
@@ -46,12 +50,13 @@ const cliRoot = resolveCliRoot();
 // binary itself can do about first-launch quarantine.
 const isPackaged = (() => {
   const exeName = path.basename(process.execPath).toLowerCase();
-  return exeName === 'aionui-web' || exeName === 'aionui-web.exe';
+  return PACKAGED_EXE_NAMES.includes(exeName);
 })();
 
 const BACKEND_BINARY = process.platform === 'win32' ? 'aioncore.exe' : 'aioncore';
 const DEFAULT_PORT = 25808;
-const RESET_COMMAND = isPackaged ? 'aionui-web resetpass' : 'bun run resetpass';
+// FORK-CUSTOM: 打包态提示命令用新品牌名 xaiwork-web。
+const RESET_COMMAND = isPackaged ? 'xaiwork-web resetpass' : 'bun run resetpass';
 
 let currentHandle: WebHostHandle | StaticServerHandle | null = null;
 
@@ -279,7 +284,7 @@ async function runStart(flags: Map<string, string | true>): Promise<void> {
 }
 
 /**
- * `aionui-web resetpass` — spin up the backend just long enough to POST
+ * `xaiwork-web resetpass` — spin up the backend just long enough to POST
  * /api/webui/reset-password, print the new plaintext password, then tear down.
  * Uses the same data-dir resolution as `start`, so the reset targets whichever
  * DB the user normally runs against.
@@ -381,7 +386,7 @@ async function main(): Promise<void> {
   }
 
   if (command === '--help' || command === 'help' || command === '-h') {
-    console.log(`Usage: aionui-web <command> [options]
+    console.log(`Usage: xaiwork-web <command> [options]
 
 Commands:
   start              Start the WebUI (default)
@@ -417,7 +422,7 @@ Environment variables:
 
   if (command !== 'start') {
     console.error(`Unknown command: ${command}`);
-    console.error('Usage: aionui-web [start|resetpass|version|help]');
+    console.error('Usage: xaiwork-web [start|resetpass|version|help]');
     process.exit(1);
   }
 

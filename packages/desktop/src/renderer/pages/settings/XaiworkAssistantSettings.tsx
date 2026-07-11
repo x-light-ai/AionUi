@@ -56,13 +56,13 @@ const XaiworkAssistantSettings: React.FC = () => {
   };
 
   return (
-    <SettingsPageWrapper className='!h-full !overflow-hidden' contentClassName='!h-full'>
+    <SettingsPageWrapper>
       <Tabs
         activeTab={activeTab}
         onChange={handleTabChange}
         type='line'
         animation={{ tabPane: false, inkBar: true }}
-        className={`${styles.tabs} flex flex-col flex-1 min-h-0 [&>.arco-tabs-content]:flex-1 [&>.arco-tabs-content]:min-h-0 [&>.arco-tabs-content]:pt-0 [&_.arco-tabs-content-inner]:h-full [&_.arco-tabs-pane]:h-full`}
+        className={`${styles.tabs} [&>.arco-tabs-content]:pt-0`}
       >
         <Tabs.TabPane key='mine' title={t('settings.assistantTab.mine', { defaultValue: '我的助手' })}>
           <XaiworkMyAssistants withWrapper={false} />

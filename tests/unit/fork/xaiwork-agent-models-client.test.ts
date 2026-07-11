@@ -49,7 +49,7 @@ describe('market/agentModelsClient', () => {
     const client = createAgentModelsClient('https://api.xaiwork.com', 'jwt-token');
     const [model] = await client.listModels('codex');
 
-    expect(Object.keys(model).sort()).toEqual(['modelId', 'name'].sort());
+    expect(Object.keys(model).toSorted()).toEqual(['modelId', 'name'].toSorted());
   });
 });
 

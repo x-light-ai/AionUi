@@ -1,7 +1,7 @@
 {
-  "name": "AionUi",
-  "short_name": "AionUi",
-  "description": "AionUi WebUI for mobile and desktop browsers.",
+  "name": "XAIWork",
+  "short_name": "XAIWork",
+  "description": "XAIWork WebUI for mobile and desktop browsers.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -10,12 +10,12 @@
   "theme_color": "#4E5969",
   "icons": [
     {
-      "src": "./pwa/icon-192.png",
+      "src": "./pwa/xaiwork-icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "./pwa/icon-512.png",
+      "src": "./pwa/xaiwork-icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }

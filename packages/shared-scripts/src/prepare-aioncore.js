@@ -18,7 +18,9 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const GITHUB_OWNER = 'iOfficeAI';
+// FORK-CUSTOM: aioncore 二进制下载源指向 fork 主发布仓库 x-light-ai/AionCore
+// （原上游/前 fork 值为 iOfficeAI；发布链已迁至 x-light-ai）
+const GITHUB_OWNER = 'x-light-ai';
 const GITHUB_REPO = 'AionCore';
 
 const ACTIONS_ARTIFACT_TARGETS = {

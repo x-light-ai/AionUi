@@ -592,6 +592,18 @@ export const fs = {
     }>,
     void
   >('/api/skills'),
+  listXaiworkSkillMetadata: httpGet<
+    Array<{
+      name: string;
+      description: string | null;
+      version: string | null;
+      tags: string[];
+      source: 'market' | 'assistant-bundle';
+      visibility: 'user' | 'dependency';
+      assistant_ids: string[];
+    }>,
+    void
+  >('/api/xaiwork/skills/metadata'),
   materializeSkillsForAgent: httpPost<
     { skills: Array<{ name: string; source_path: string }> },
     { conversation_id: string; skills: string[] }
@@ -895,22 +907,20 @@ export const acpConversation = {
   listXaiworkModels: httpPost<
     Array<{ modelId: string; name: string }>,
     { backend: string; xaiworkHost: string; xaiworkAuthToken: string }
-  >(
-    '/api/agents/xaiwork/models',
-    (p) => ({ backend: p.backend, xaiwork_host: p.xaiworkHost, xaiwork_auth_token: p.xaiworkAuthToken })
-  ),
+  >('/api/agents/xaiwork/models', (p) => ({
+    backend: p.backend,
+    xaiwork_host: p.xaiworkHost,
+    xaiwork_auth_token: p.xaiworkAuthToken,
+  })),
   applyXaiworkModel: httpPost<
     void,
     { backend: string; modelId: string; xaiworkHost: string; xaiworkAuthToken: string }
-  >(
-    '/api/agents/xaiwork/apply',
-    (p) => ({
-      backend: p.backend,
-      model_id: p.modelId,
-      xaiwork_host: p.xaiworkHost,
-      xaiwork_auth_token: p.xaiworkAuthToken,
-    })
-  ),
+  >('/api/agents/xaiwork/apply', (p) => ({
+    backend: p.backend,
+    model_id: p.modelId,
+    xaiwork_host: p.xaiworkHost,
+    xaiwork_auth_token: p.xaiworkAuthToken,
+  })),
   checkManagedAgentHealthById: httpPost<import('@/renderer/utils/model/agentTypes').ManagedAgent, { id: string }>(
     (p) => `/api/agents/${p.id}/health-check`,
     () => undefined

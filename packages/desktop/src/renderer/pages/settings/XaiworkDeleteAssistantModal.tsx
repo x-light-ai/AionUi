@@ -22,21 +22,21 @@ const XaiworkDeleteAssistantModal: React.FC<XaiworkDeleteAssistantModalProps> = 
 
   return (
     <Modal
-      title={t('fork.myAssistant.uninstallTitle', { defaultValue: 'Uninstall Assistant' })}
+      title={t('xaiwork.myAssistant.uninstallTitle', { defaultValue: 'Uninstall Assistant' })}
       visible={visible}
       onCancel={onCancel}
       onOk={onConfirm}
       okButtonProps={{ status: 'danger' }}
       wrapClassName='delete-assistant-modal'
       data-testid='modal-delete-assistant'
-      okText={t('fork.myAssistant.uninstallOkText', { defaultValue: 'Uninstall' })}
+      okText={t('xaiwork.myAssistant.uninstallOkText', { defaultValue: 'Uninstall' })}
       cancelText={t('common.cancel', { defaultValue: 'Cancel' })}
       className='w-[90vw] md:w-[400px]'
       wrapStyle={{ zIndex: 10000 }}
       maskStyle={{ zIndex: 9999 }}
     >
       <p>
-        {t('fork.myAssistant.uninstallConfirm', {
+        {t('xaiwork.myAssistant.uninstallConfirm', {
           defaultValue: 'Are you sure you want to uninstall this assistant?',
         })}
       </p>

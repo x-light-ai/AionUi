@@ -1,5 +1,5 @@
 /**
- * FORK-CUSTOM: shape guards for fork-only config constants (forkBrand, forkDefaults).
+ * FORK-CUSTOM: shape guards for xaiwork-only config constants (xaiworkBrand, xaiworkDefaults).
  * @vitest-environment node
  *
  * Shape guards for fork-only config constants. These files are new fork files
@@ -10,13 +10,14 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { FORK_BRAND } from '@/common/config/forkBrand';
-import { FORK_DEFAULTS } from '@/common/config/forkDefaults';
+import { XAIWORK_BRAND } from '@/common/config/xaiworkBrand';
+import { XAIWORK_DEFAULTS } from '@/common/config/xaiworkDefaults';
 
-describe('config/forkBrand', () => {
+describe('config/xaiworkBrand', () => {
   it('exposes every branding key consumers depend on', () => {
-    expect(Object.keys(FORK_BRAND).sort()).toEqual(
+    expect(Object.keys(XAIWORK_BRAND).toSorted()).toEqual(
       [
+        'apiHost',
         'appName',
         'changelogUrl',
         'contactUrl',
@@ -25,41 +26,48 @@ describe('config/forkBrand', () => {
         'repoUrl',
         'updateRepo',
         'wechatAppCode',
-      ].sort()
+      ].toSorted()
     );
   });
 
   it('keeps updateRepo as a bare owner/name slug (no scheme)', () => {
     // updateBridge builds a GitHub release feed URL from this slug.
-    expect(FORK_BRAND.updateRepo).toMatch(/^[\w.-]+\/[\w.-]+$/);
+    expect(XAIWORK_BRAND.updateRepo).toMatch(/^[\w.-]+\/[\w.-]+$/);
+  });
+
+  it('uses an absolute http(s) apiHost for server-to-server config fetch', () => {
+    // AionCore requests {apiHost}/openapi/agent/config server-side, so it must be absolute.
+    expect(XAIWORK_BRAND.apiHost).toMatch(/^https?:\/\//);
   });
 
   it('keeps a non-empty wechat appCode for login attribution', () => {
-    expect(FORK_BRAND.wechatAppCode.length).toBeGreaterThan(0);
+    expect(XAIWORK_BRAND.wechatAppCode.length).toBeGreaterThan(0);
   });
 
   it('uses absolute https URLs for outbound links', () => {
     for (const url of [
-      FORK_BRAND.repoUrl,
-      FORK_BRAND.helpDocsUrl,
-      FORK_BRAND.changelogUrl,
-      FORK_BRAND.officialWebsite,
-      FORK_BRAND.contactUrl,
+      XAIWORK_BRAND.repoUrl,
+      XAIWORK_BRAND.helpDocsUrl,
+      XAIWORK_BRAND.changelogUrl,
+      XAIWORK_BRAND.officialWebsite,
+      XAIWORK_BRAND.contactUrl,
     ]) {
       expect(url).toMatch(/^https:\/\//);
     }
   });
 });
 
-describe('config/forkDefaults', () => {
+describe('config/xaiworkDefaults', () => {
   it('exposes the default-assistant selection keys', () => {
-    expect(Object.keys(FORK_DEFAULTS).sort()).toEqual(['defaultAssistantBackend', 'defaultAssistantId'].sort());
+    expect(Object.keys(XAIWORK_DEFAULTS).toSorted()).toEqual(
+      ['defaultAssistantBackend', 'defaultAssistantId'].toSorted()
+    );
   });
 
   it('uses null or a non-empty string for each default (never empty string)', () => {
     // pickDefaultAssistantSelectionKey treats '' as "no match"; an empty string
     // would be a footgun, so the config must be null when unset.
-    for (const value of [FORK_DEFAULTS.defaultAssistantBackend, FORK_DEFAULTS.defaultAssistantId]) {
+    for (const value of [XAIWORK_DEFAULTS.defaultAssistantBackend, XAIWORK_DEFAULTS.defaultAssistantId]) {
       expect(value === null || (typeof value === 'string' && value.length > 0)).toBe(true);
     }
   });

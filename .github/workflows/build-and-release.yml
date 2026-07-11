@@ -6,11 +6,16 @@ permissions:
   pull-requests: read
   actions: write
 
+# FORK-CUSTOM: 去掉上游的 push/tag 自动触发，改为仅手动触发。
+# 日常 push 到 dev 或推送 tag 都不再自动构建/发布；
+# 按 tag 自动构建 Linux webui 版由 fork 新增的
+# xaiwork-release-web-linux.yml 负责。原上游触发块（保留备查）：
+#   push:
+#     branches: [dev]
+#     tags:
+#       - '*'
 on:
-  push:
-    branches: [dev]
-    tags:
-      - '*'
+  workflow_dispatch:
 
 env:
   BUN_INSTALL_REGISTRY: 'https://registry.npmjs.org/'

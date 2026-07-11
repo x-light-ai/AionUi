@@ -21,6 +21,8 @@ import { useGuidAssistantSelection } from './hooks/useGuidAssistantSelection';
 import { useGuidInput } from './hooks/useGuidInput';
 import { useGuidModelSelection } from './hooks/useGuidModelSelection';
 import { useGuidSend } from './hooks/useGuidSend';
+// FORK-CUSTOM: apply XAIWork-distributed model immediately on guid model switch.
+import { useXaiworkGuidModelApply } from './hooks/useXaiworkGuidModelApply';
 import { useTypewriterPlaceholder } from './hooks/useTypewriterPlaceholder';
 import { ensureBackendMcpCatalog } from '@/renderer/hooks/mcp/catalog';
 import { resolveGuidAssistantDefaults } from './utils/assistantDefaults';
@@ -28,6 +30,8 @@ import SpeechInputButton from '@/renderer/components/chat/SpeechInputButton';
 import { appendSpeechTranscript } from '@/renderer/hooks/system/useSpeechInput';
 import { useLiveTranscriptInsertion } from '@/renderer/hooks/system/useLiveTranscriptInsertion';
 import { useConfig } from '@/renderer/hooks/config/useConfig';
+// FORK-CUSTOM: 读取欢迎页快捷按钮可见性开关
+import { useXaiworkConfig } from '@/renderer/hooks/useXaiworkConfig';
 import { Button, ConfigProvider } from '@arco-design/web-react';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -41,6 +45,8 @@ const GuidPage: React.FC = () => {
   const location = useLocation();
   const guidContainerRef = useRef<HTMLDivElement>(null);
   const { activeBorderColor, inactiveBorderColor, activeShadow } = useInputFocusRing();
+  // FORK-CUSTOM: 欢迎页底部快捷按钮可见性开关
+  const { hideQuickActionButtons } = useXaiworkConfig();
 
   const localeKey = resolveLocaleKey(i18n.language);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
@@ -194,6 +200,14 @@ const GuidPage: React.FC = () => {
   });
 
   // --- Coordinated handlers (depend on multiple hooks) ---
+  // FORK-CUSTOM: immediate apply for XAIWork-distributed model switches on guid.
+  // FORK-CUSTOM: use the same XAIWork model ids that back the guid dropdown as
+  // the apply allowlist, avoiding a second model-list SWR snapshot disagreeing
+  // with the rendered dropdown while keeping ordinary ACP models untouched.
+  const applyXaiworkGuidModel = useXaiworkGuidModelApply(
+    agentSelection.selectedAssistantBackend,
+    agentSelection.xaiworkModelIds
+  );
   const handleInputChange = useCallback(
     (value: string) => {
       guidInput.setInput(value);
@@ -365,8 +379,15 @@ const GuidPage: React.FC = () => {
     (model: React.SetStateAction<string | null>) => {
       manualModelSelectionAssistantRef.current = selectedAssistantId;
       agentSelection.setSelectedAcpModel(model, { persistPreference: !hasSelectedAssistant });
+      // FORK-CUSTOM: user clicks in GuidModelSelector always pass a concrete id.
+      // When it is a XAIWork-distributed model, apply it immediately so the
+      // switch takes effect now (parity with history-conversation switching)
+      // instead of only at conversation-create time.
+      if (typeof model === 'string') {
+        applyXaiworkGuidModel(model);
+      }
     },
-    [agentSelection, hasSelectedAssistant, selectedAssistantId]
+    [agentSelection, hasSelectedAssistant, selectedAssistantId, applyXaiworkGuidModel]
   );
   const setGuidCurrentModel = useCallback(
     (model: TProviderWithModel) => {
@@ -545,12 +566,15 @@ const GuidPage: React.FC = () => {
           ) : null}
         </div>
 
-        <QuickActionButtons
-          onOpenLink={openLink}
-          onOpenBugReport={() => setShowFeedbackModal(true)}
-          inactiveBorderColor={inactiveBorderColor}
-          activeShadow={activeShadow}
-        />
+        {/* FORK-CUSTOM: 通过开关隐藏欢迎页底部快捷按钮，上游代码原样保留 */}
+        {!hideQuickActionButtons && (
+          <QuickActionButtons
+            onOpenLink={openLink}
+            onOpenBugReport={() => setShowFeedbackModal(true)}
+            inactiveBorderColor={inactiveBorderColor}
+            activeShadow={activeShadow}
+          />
+        )}
         <FeedbackReportModal visible={showFeedbackModal} onCancel={() => setShowFeedbackModal(false)} />
       </div>
     </ConfigProvider>

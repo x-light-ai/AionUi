@@ -3,16 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="application-name" content="AionUi" />
+    <!-- FORK-CUSTOM: 品牌名替换为 XAIWork（与 xaiworkBrand.ts appName 保持一致；静态 HTML 无法 import TS） -->
+    <meta name="application-name" content="XAIWork" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="AionUi" />
+    <!-- FORK-CUSTOM: 品牌名替换为 XAIWork -->
+    <meta name="apple-mobile-web-app-title" content="XAIWork" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="theme-color" content="#4E5969" />
-    <link rel="icon" type="image/png" href="./pwa/icon-192.png" />
+    <!-- FORK-CUSTOM: PWA 图标用 fork 品牌图（上游 pwa/icon-*.png 保持原样） -->
+    <link rel="icon" type="image/png" href="./pwa/xaiwork-icon-192.png" />
     <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="apple-touch-icon" href="./pwa/icon-180.png" />
-    <title>AionUi</title>
+    <link rel="apple-touch-icon" href="./pwa/xaiwork-icon-180.png" />
+    <!-- FORK-CUSTOM: 品牌名替换为 XAIWork -->
+    <title>XAIWork</title>
     <script>
       // Synchronously restore theme appearance from localStorage to prevent theme flash
       (function () {

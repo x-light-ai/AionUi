@@ -25,6 +25,7 @@
     "uninstallMenuItem": "卸载",
     "uninstallTitle": "卸载助手",
     "uninstallOkText": "卸载",
-    "uninstallConfirm": "确定要卸载此助手吗？此操作无法撤销。"
+    "uninstallConfirm": "确定要卸载此助手吗？此操作无法撤销。",
+    "skillCount": "{{count}} 个技能"
   }
 }

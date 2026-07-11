@@ -14,6 +14,8 @@ import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
 import { useNavigationHistory } from '@/renderer/hooks/context/NavigationHistoryContext';
 import { useFeedback } from '@/renderer/hooks/context/FeedbackContext';
 import { isElectronDesktop, isMacOS } from '@/renderer/utils/platform';
+// FORK-CUSTOM: 标题栏应用名取自 xaiworkBrand.ts
+import { XAIWORK_BRAND } from '@/common/config/xaiworkBrand';
 import './titlebar.css';
 
 interface TitlebarProps {
@@ -104,7 +106,8 @@ const SidebarIcon: React.FC<{ size?: number; strokeWidth?: number }> = ({ size =
 
 const Titlebar: React.FC<TitlebarProps> = ({ workspaceAvailable }) => {
   const { t } = useTranslation();
-  const appTitle = useMemo(() => 'AionUi', []);
+  // FORK-CUSTOM: 应用名取自 xaiworkBrand.ts（原上游硬编码 'AionUi'）
+  const appTitle = useMemo(() => XAIWORK_BRAND.appName, []);
   const [workspaceCollapsed, setWorkspaceCollapsed] = useState(true);
   const [mobileCenterTitle, setMobileCenterTitle] = useState(appTitle);
   const [mobileCenterOffset, setMobileCenterOffset] = useState(0);

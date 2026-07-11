@@ -22,8 +22,8 @@ import guid from './guid.json';
 import agent from './agent.json';
 import team from './team.json';
 import pet from './pet.json';
-// FORK-CUSTOM: fork-only translations
-import fork from './fork.json';
+// FORK-CUSTOM: fork-only translations（命名空间遵循 xaiwork 前缀约定）
+import xaiwork from './xaiwork.json';
 
 export default {
   common,
@@ -45,5 +45,5 @@ export default {
   agent,
   team,
   pet,
-  fork,
+  xaiwork,
 };

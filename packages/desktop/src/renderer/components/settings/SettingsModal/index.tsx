@@ -11,13 +11,14 @@ import { isElectronDesktop, resolveExtensionAssetUrl } from '@/renderer/utils/pl
 import { type IExtensionSettingsTab } from '@/common/adapter/ipcBridge';
 import { useExtI18n } from '@/renderer/hooks/system/useExtI18n';
 import { useExtensionSettingsTabs } from '@/renderer/hooks/system/useExtensionSettingsTabs';
-import { useForkConfig } from '@/renderer/hooks/useForkConfig';
+import { useXaiworkConfig } from '@/renderer/hooks/useXaiworkConfig';
 import { Tabs } from '@arco-design/web-react';
 import { Computer, Earth, Info, LinkCloud, Puzzle, Toolkit } from '@icon-park/react';
 import classNames from 'classnames';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import AboutModalContent from './contents/AboutModalContent';
+// FORK-CUSTOM: 关于页渲染入口指向 fork 组件（上游 AboutModalContent.tsx 保持原样）
+import AboutModalContent from './contents/XaiworkAboutModalContent';
 import AgentModalContent from './contents/AgentModalContent';
 import ExtensionSettingsTabContent from './contents/ExtensionSettingsTabContent';
 import ModelModalContent from './contents/ModelModalContent';
@@ -135,7 +136,7 @@ export const SubModal: React.FC<SubModalProps> = ({ visible, onCancel, title, ch
  */
 const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onCancel, defaultTab = 'model' }) => {
   const { t } = useTranslation();
-  const { hideModelSettingsMenu } = useForkConfig();
+  const { hideModelSettingsMenu } = useXaiworkConfig();
   const [activeTab, setActiveTab] = useState<SettingTab>(() =>
     hideModelSettingsMenu && defaultTab === 'model' ? 'tools' : defaultTab
   );
