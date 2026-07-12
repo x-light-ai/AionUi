@@ -3,6 +3,7 @@ import React, { Suspense } from 'react';
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import AppLoader from '@renderer/components/layout/AppLoader';
 import { useAuth } from '@renderer/hooks/context/AuthContext';
+import { useXaiworkI18nOverrides } from '@renderer/hooks/useXaiworkI18nOverrides';
 import { useXaiworkConfig } from '@renderer/hooks/useXaiworkConfig';
 import { TEAM_MODE_ENABLED } from '@/common/config/constants';
 const Conversation = React.lazy(() => import('@renderer/pages/conversation'));
@@ -69,6 +70,9 @@ const LoginRoute: React.FC = () => {
 const PanelRoute: React.FC<{ layout: React.ReactElement }> = ({ layout }) => {
   const { status } = useAuth();
   const { hideModelSettingsMenu, hideAgentSettingsMenu } = useXaiworkConfig();
+  const i18nOverridesReady = useXaiworkI18nOverrides();
+
+  if (!i18nOverridesReady) return <AppLoader />;
 
   return (
     <HashRouter>
