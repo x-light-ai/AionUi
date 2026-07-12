@@ -2,6 +2,9 @@
   "common": {
     "all": "全部"
   },
+  "cron": {
+    "description": "按计划自动运行任务。你也可以在任意对话中直接让 XAIWork 帮你创建一个定时任务。"
+  },
   "wechat": {
     "title": "微信扫码登录",
     "generating": "正在生成二维码",

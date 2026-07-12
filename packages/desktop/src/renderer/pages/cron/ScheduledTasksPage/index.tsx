@@ -121,7 +121,8 @@ const ScheduledTasksPage: React.FC = () => {
               isMobile ? 'text-13px leading-20px' : 'text-14px leading-22px'
             )}
           >
-            {t('cron.page.description')}
+            {/* FORK-CUSTOM: keep XAIWork branding in the isolated locale namespace. */}
+            {t('xaiwork.cron.description')}
           </p>
         </div>
 

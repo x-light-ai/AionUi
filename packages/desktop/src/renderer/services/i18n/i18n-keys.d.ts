@@ -2503,6 +2503,7 @@ export type I18nKey =
   | 'xaiwork.assistantTab.market'
   | 'xaiwork.assistantTab.mine'
   | 'xaiwork.common.all'
+  | 'xaiwork.cron.description'
   | 'xaiwork.myAssistant.skillCount'
   | 'xaiwork.myAssistant.uninstallConfirm'
   | 'xaiwork.myAssistant.uninstallMenuItem'

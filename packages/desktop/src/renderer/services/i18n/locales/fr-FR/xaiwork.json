@@ -1,1 +1,5 @@
-{}
+{
+  "cron": {
+    "description": "Exécuter des tâches selon un calendrier. Vous pouvez aussi demander à XAIWork dans n'importe quelle conversation d'en créer une."
+  }
+}

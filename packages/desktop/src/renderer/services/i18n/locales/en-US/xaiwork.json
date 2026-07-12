@@ -2,6 +2,9 @@
   "common": {
     "all": "All"
   },
+  "cron": {
+    "description": "Run tasks on a schedule. You can also ask XAIWork in any conversation to create one for you."
+  },
   "wechat": {
     "title": "WeChat QR Login",
     "generating": "Generating QR code",
