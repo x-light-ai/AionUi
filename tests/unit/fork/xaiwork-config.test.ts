@@ -72,4 +72,8 @@ describe('config/xaiworkDefaults', () => {
       expect(value === null || (typeof value === 'string' && value.length > 0)).toBe(true);
     }
   });
+
+  it('defaults new assistant selections to Codex', () => {
+    expect(XAIWORK_DEFAULTS.defaultAssistantBackend).toBe('codex');
+  });
 });

@@ -158,6 +158,7 @@ describe('useGuidAssistantSelection', () => {
     mockAssistants = [
       assistantFixture({ id: 'bare-aionrs', runtimeKey: 'aionrs', source: 'generated', sortOrder: 1 }),
       assistantFixture({ id: 'assistant-claude', runtimeKey: 'claude', source: 'builtin', sortOrder: 2 }),
+      assistantFixture({ id: 'assistant-codex', runtimeKey: 'codex', source: 'builtin', sortOrder: 3 }),
     ];
 
     const { result } = renderHook(() =>
@@ -167,8 +168,8 @@ describe('useGuidAssistantSelection', () => {
     );
 
     await waitFor(() => {
-      // FORK-CUSTOM: default resolves to the claude backend (XAIWORK_DEFAULTS.defaultAssistantBackend)
-      expect(result.current.selectedAssistantId).toBe('assistant-claude');
+      // FORK-CUSTOM: default resolves to the codex backend (XAIWORK_DEFAULTS.defaultAssistantBackend)
+      expect(result.current.selectedAssistantId).toBe('assistant-codex');
     });
 
     act(() => {
@@ -182,6 +183,7 @@ describe('useGuidAssistantSelection', () => {
     mockAssistants = [
       assistantFixture({ id: 'bare-aionrs', runtimeKey: 'aionrs', source: 'generated', sortOrder: 1 }),
       assistantFixture({ id: 'assistant-claude', runtimeKey: 'claude', source: 'builtin', sortOrder: 2 }),
+      assistantFixture({ id: 'assistant-codex', runtimeKey: 'codex', source: 'builtin', sortOrder: 3 }),
     ];
     configGetMock.mockImplementation((key: string) =>
       key === 'guid.lastAssistantId' ? 'removed-assistant' : undefined
@@ -194,8 +196,8 @@ describe('useGuidAssistantSelection', () => {
     );
 
     await waitFor(() => {
-      // FORK-CUSTOM: fallback resolves to the claude backend (XAIWORK_DEFAULTS.defaultAssistantBackend)
-      expect(result.current.selectedAssistantId).toBe('assistant-claude');
+      // FORK-CUSTOM: fallback resolves to the codex backend (XAIWORK_DEFAULTS.defaultAssistantBackend)
+      expect(result.current.selectedAssistantId).toBe('assistant-codex');
     });
   });
 

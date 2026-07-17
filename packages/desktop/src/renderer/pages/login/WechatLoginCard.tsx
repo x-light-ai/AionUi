@@ -95,23 +95,16 @@ const WechatLoginCard: React.FC = () => {
         </div>
 
         <p className='login-page__wechat-title'>{title}</p>
-        {hint && !showOverlay && (
+        {hint && !showOverlay && status !== 'waiting' && (
           <p className='login-page__wechat-hint' role='status' aria-live='polite'>
             {hint}
           </p>
         )}
-        <div className='login-page__wechat-dots' aria-hidden='true'>
-          <span />
-          <span />
-          <span />
-        </div>
+        <p className='login-page__agreement'>
+          {t('xaiwork.wechat.agreementPrefix')}
+          <span>{t('xaiwork.wechat.agreementName')}</span>
+        </p>
       </div>
-
-      <p className='login-page__wechat-tip'>{t('xaiwork.wechat.tip')}</p>
-      <p className='login-page__agreement'>
-        {t('xaiwork.wechat.agreementPrefix')}
-        <span>{t('xaiwork.wechat.agreementName')}</span>
-      </p>
     </div>
   );
 };

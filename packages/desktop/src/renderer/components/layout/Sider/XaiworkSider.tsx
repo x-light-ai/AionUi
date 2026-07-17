@@ -67,7 +67,8 @@ const Sider: React.FC<SiderProps> = ({ onSessionClick, collapsed = false }) => {
         console.error('Navigation failed:', error);
       });
     } else {
-      Promise.resolve(navigate('/settings/agent')).catch((error) => {
+      // FORK-CUSTOM: enter through the settings index so visibility rules choose the first available page.
+      Promise.resolve(navigate('/settings')).catch((error) => {
         console.error('Navigation failed:', error);
       });
     }

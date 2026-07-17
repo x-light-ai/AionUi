@@ -21,7 +21,7 @@ export type AgentBadgeProps = {
   agentLogoIsEmoji?: boolean;
   /** Whether the explicit assistant logo is intentionally empty. */
   agentLogoIsFallback?: boolean;
-  /** Assistant ID — when provided, clicking the badge navigates to AssistantSettings */
+  /** Assistant ID - when provided, clicking the badge opens it in the assistant hub. */
   assistantId?: string;
 };
 
@@ -57,7 +57,7 @@ export const AgentLogoIcon: React.FC<
 /**
  * AgentBadge - Agent identity badge (logo + name)
  *
- * When `assistantId` is provided, clicking navigates to AssistantSettings editor.
+ * When `assistantId` is provided, clicking opens the assistant in the assistant hub.
  * Otherwise renders as a static display badge.
  */
 const AgentBadge: React.FC<AgentBadgeProps> = ({
@@ -71,7 +71,8 @@ const AgentBadge: React.FC<AgentBadgeProps> = ({
   const navigate = useNavigate();
   const handleClick = useCallback(() => {
     if (!assistantId) return;
-    navigate(`/settings/assistants?highlight=${encodeURIComponent(assistantId)}`);
+    // FORK-CUSTOM: assistants are a top-level XAIWork destination; preserve the highlight query without a redirect.
+    navigate(`/assistants?highlight=${encodeURIComponent(assistantId)}`);
   }, [assistantId, navigate]);
 
   return (

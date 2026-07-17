@@ -66,7 +66,7 @@ const AgentRepairPage: React.FC = () => {
   }, [agent, refreshCatalog, t]);
 
   // Open the target assistant's detail/editor by handing the intent to the
-  // assistant settings page (which mounts its split-view editor on this key),
+  // assistant hub (which mounts its split-view editor on this key),
   // mirroring how other surfaces jump into a specific assistant.
   const handleOpenAssistant = useCallback(
     (assistantId: string) => {
@@ -78,7 +78,8 @@ const AgentRepairPage: React.FC = () => {
       } catch (error) {
         console.error('[AgentRepair] Failed to persist assistant open intent:', error);
       }
-      navigate('/settings/assistants', { state: { openAssistantEditor: true, openAssistantId: assistantId } });
+      // FORK-CUSTOM: assistants are a top-level XAIWork destination; keep the editor intent on the direct navigation.
+      navigate('/assistants', { state: { openAssistantEditor: true, openAssistantId: assistantId } });
     },
     [navigate]
   );

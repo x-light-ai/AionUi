@@ -14,6 +14,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   listAvailableSkills: vi.fn(),
   getSkillPaths: vi.fn(),
+  // FORK-CUSTOM: XAIWork skills page metadata request.
+  listXaiworkSkillMetadata: vi.fn(),
   getSkillImportLimits: vi.fn(),
   listSkillImportHistory: vi.fn(),
   importSkills: vi.fn(),
@@ -41,6 +43,15 @@ vi.mock('@/common', () => ({
     },
     dialog: {
       showOpen: { invoke: mocks.showOpen },
+    },
+  },
+}));
+
+// FORK-CUSTOM: isolate the XAIWork metadata adapter used by the fork skills page.
+vi.mock('@/common/adapter/xaiworkBridge', () => ({
+  xaiworkBridge: {
+    skills: {
+      listMetadata: { invoke: mocks.listXaiworkSkillMetadata },
     },
   },
 }));
@@ -82,6 +93,8 @@ vi.mock('react-i18next', () => ({
 }));
 
 import SkillsHubSettings from '@/renderer/pages/settings/SkillsHubSettings';
+// FORK-CUSTOM: direct coverage for the fork replacement skills page.
+import XaiworkSkillsSettings from '@/renderer/pages/settings/XaiworkSkillsSettings';
 
 describe('SkillsHubSettings', () => {
   // The import action is now a TalkToButlerButton: open the menu, then click
@@ -101,6 +114,7 @@ describe('SkillsHubSettings', () => {
       user_skills_dir: '/tmp/user-skills',
       builtin_skills_dir: '/tmp/builtin-skills',
     });
+    mocks.listXaiworkSkillMetadata.mockResolvedValue([]);
     mocks.getSkillImportLimits.mockResolvedValue({
       max_file_bytes: 12 * 1024 * 1024,
       max_total_bytes: 64 * 1024 * 1024,
@@ -401,6 +415,15 @@ describe('SkillsHubSettings', () => {
 
     await waitFor(() => expect(mocks.listAvailableSkills).toHaveBeenCalled());
     expect(screen.queryByText('/tmp/user-skills')).not.toBeInTheDocument();
+  });
+
+  // FORK-CUSTOM: local filesystem paths are internal details on the XAIWork skills page.
+  it('does not expose the local skills directory path on the XAIWork skills page', async () => {
+    render(<XaiworkSkillsSettings withWrapper={false} />);
+
+    await waitFor(() => expect(mocks.listAvailableSkills).toHaveBeenCalled());
+    expect(screen.queryByText('/tmp/user-skills')).not.toBeInTheDocument();
+    expect(mocks.getSkillPaths).not.toHaveBeenCalled();
   });
 
   it('surfaces server-provided size limits in the page description', async () => {

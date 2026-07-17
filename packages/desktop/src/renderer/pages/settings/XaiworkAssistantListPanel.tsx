@@ -23,6 +23,7 @@ type XaiworkAssistantListPanelProps = {
   onDelete: (assistant: AssistantListItem) => void;
   onCreate: () => void;
   onToggleEnabled: (assistant: AssistantListItem, checked: boolean) => void;
+  onStartChat: (assistant: AssistantListItem) => void;
   onReorder: (activeId: string, overId: string) => void | Promise<void>;
   setActiveAssistantId: (id: string) => void;
   highlightId?: string | null;
@@ -37,6 +38,7 @@ type SortableAssistantCardProps = {
   onDuplicate: (assistant: AssistantListItem) => void;
   onDelete: (assistant: AssistantListItem) => void;
   onToggleEnabled: (assistant: AssistantListItem, checked: boolean) => void;
+  onStartChat: (assistant: AssistantListItem) => void;
   setActiveAssistantId: (id: string) => void;
   renderSourceTag: (assistant: AssistantListItem) => React.ReactNode;
   cardRefSetter: (id: string) => (el: HTMLDivElement | null) => void;
@@ -51,6 +53,7 @@ const SortableAssistantCard: React.FC<SortableAssistantCardProps> = ({
   onDuplicate,
   onDelete,
   onToggleEnabled,
+  onStartChat,
   setActiveAssistantId,
   renderSourceTag,
   cardRefSetter,
@@ -172,6 +175,17 @@ const SortableAssistantCard: React.FC<SortableAssistantCardProps> = ({
         className='ml-12px flex flex-shrink-0 items-center gap-8px text-t-secondary'
         onClick={(e) => e.stopPropagation()}
       >
+        {assistant.enabled !== false ? (
+          <Button
+            type='text'
+            size='small'
+            data-testid={`btn-chat-${assistant.id}`}
+            className='!h-30px !rounded-8px !bg-fill-2 !px-10px !text-t-secondary hover:!bg-primary-6 hover:!text-white'
+            onClick={() => onStartChat(assistant)}
+          >
+            {t('settings.assistantGoChat', { defaultValue: 'Chat' })}
+          </Button>
+        ) : null}
         <Switch
           size='small'
           data-testid={`switch-enabled-${assistant.id}`}
@@ -205,6 +219,7 @@ const XaiworkAssistantListPanel: React.FC<XaiworkAssistantListPanelProps> = ({
   onDelete,
   onCreate,
   onToggleEnabled,
+  onStartChat,
   onReorder,
   setActiveAssistantId,
   highlightId,
@@ -306,6 +321,7 @@ const XaiworkAssistantListPanel: React.FC<XaiworkAssistantListPanelProps> = ({
                 onDuplicate={onDuplicate}
                 onDelete={onDelete}
                 onToggleEnabled={onToggleEnabled}
+                onStartChat={onStartChat}
                 setActiveAssistantId={setActiveAssistantId}
                 renderSourceTag={renderSourceTag}
                 cardRefSetter={cardRefSetter}

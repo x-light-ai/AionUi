@@ -12,10 +12,10 @@ import XaiworkAssistantListPanel from './XaiworkAssistantListPanel';
 import XaiworkAssistantEditorPage from './XaiworkAssistantEditor/XaiworkAssistantEditorPage';
 import XaiworkDeleteAssistantModal from './XaiworkDeleteAssistantModal';
 import SkillConfirmModals from './AssistantSettings/SkillConfirmModals';
-import type { AssistantEditorViewModel } from './AssistantSettings/types';
+import type { AssistantEditorViewModel, AssistantListItem } from './AssistantSettings/types';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import styles from './XaiworkMyAssistants.module.css';
 
 type AssistantNavigationState = {
@@ -34,12 +34,19 @@ const XaiworkMyAssistants: React.FC<XaiworkMyAssistantsProps> = ({ withWrapper =
   const [loading, setLoading] = useState(false);
   const { t } = useTranslation();
   const location = useLocation();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigationState = (location.state as AssistantNavigationState | null) ?? null;
   const highlightId = searchParams.get('highlight');
   const handleHighlightConsumed = useCallback(() => {
     setSearchParams({}, { replace: true });
   }, [setSearchParams]);
+  const handleStartChat = useCallback(
+    (assistant: AssistantListItem) => {
+      navigate('/guid', { state: { selectedAssistantId: assistant.id } });
+    },
+    [navigate]
+  );
 
   // Compose hooks
   const {
@@ -254,6 +261,7 @@ const XaiworkMyAssistants: React.FC<XaiworkMyAssistantsProps> = ({ withWrapper =
               onDelete={(assistant) => editor.handleDeleteRequest(assistant)}
               onCreate={() => void editor.handleCreate()}
               onToggleEnabled={(assistant, checked) => void editor.handleToggleEnabled(assistant, checked)}
+              onStartChat={handleStartChat}
               onReorder={(activeId, overId) => void reorderAssistants(activeId, overId)}
               setActiveAssistantId={setActiveAssistantId}
               highlightId={highlightId}

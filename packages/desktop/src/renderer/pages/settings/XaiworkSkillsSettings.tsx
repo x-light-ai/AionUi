@@ -50,7 +50,6 @@ const XaiworkSkillsSettings: React.FC<XaiworkSkillsSettingsProps> = ({ withWrapp
   const skillRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [loading, setLoading] = useState(false);
   const [availableSkills, setAvailableSkills] = useState<SkillInfo[]>([]);
-  const [skillPaths, setSkillPaths] = useState<{ user_skills_dir: string; builtin_skills_dir: string } | null>(null);
   const [search_query, setSearchQuery] = useState('');
 
   const mySkills = useMemo(() => availableSkills.filter((s) => s.source !== 'extension'), [availableSkills]);
@@ -74,13 +73,8 @@ const XaiworkSkillsSettings: React.FC<XaiworkSkillsSettingsProps> = ({ withWrapp
           console.warn('Failed to fetch XAIWork skill metadata; using the standard skill list:', error);
           return [];
         });
-      const [skills, metadata, paths] = await Promise.all([
-        ipcBridge.fs.listAvailableSkills.invoke(),
-        metadataRequest,
-        ipcBridge.fs.getSkillPaths.invoke(),
-      ]);
+      const [skills, metadata] = await Promise.all([ipcBridge.fs.listAvailableSkills.invoke(), metadataRequest]);
       setAvailableSkills(mergeXaiworkSkillMetadata(skills, metadata));
-      setSkillPaths(paths);
     } catch (error) {
       console.error('Failed to fetch skills:', error);
       Message.error(t('settings.skillsHub.fetchError', { defaultValue: 'Failed to fetch skills' }));
@@ -237,16 +231,6 @@ const XaiworkSkillsSettings: React.FC<XaiworkSkillsSettingsProps> = ({ withWrapp
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-
-          {/* Path Display */}
-          {skillPaths && (
-            <div className='flex items-center gap-8px text-12px text-t-tertiary font-mono bg-transparent py-4px mb-16px relative z-10 pt-4px border-t border-t-transparent'>
-              <FolderOpen size={16} className='shrink-0' />
-              <span className='truncate' title={skillPaths.user_skills_dir}>
-                {skillPaths.user_skills_dir}
-              </span>
-            </div>
-          )}
 
           {mySkills.length > 0 ? (
             <div className={SKILL_GRID_CLASS}>

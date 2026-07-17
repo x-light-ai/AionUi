@@ -6,10 +6,14 @@
 
 import React from 'react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { ConfigProvider } from '@arco-design/web-react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import AssistantSettings from '@/renderer/pages/settings/AssistantSettings';
+// FORK-CUSTOM: verify the XAIWork assistant hub's top-level chat and detail navigation.
+import XaiworkAssistantListPanel from '@/renderer/pages/settings/XaiworkAssistantListPanel';
+import AgentBadge from '@/renderer/components/agent/AgentBadge';
+import type { Assistant } from '@/common/types/agent/assistantTypes';
 
 const useAssistantListMock = vi.fn();
 const useAssistantEditorMock = vi.fn();
@@ -33,6 +37,10 @@ vi.mock('@arco-design/web-react', async () => {
 vi.mock('@/renderer/hooks/assistant', () => ({
   useAssistantList: () => useAssistantListMock(),
   useAssistantEditor: (params: unknown) => useAssistantEditorMock(params),
+}));
+
+vi.mock('@/renderer/hooks/context/LayoutContext', () => ({
+  useLayoutContext: () => ({ isMobile: false }),
 }));
 
 vi.mock('@/renderer/pages/settings/components/SettingsPageWrapper', () => ({
@@ -149,5 +157,101 @@ describe('AssistantSettings', () => {
 
     expect(screen.getByTestId('assistant-editor-page')).toBeInTheDocument();
     expect(screen.queryByTestId('assistant-list-panel')).not.toBeInTheDocument();
+  });
+});
+
+const createAssistant = (overrides: Partial<Assistant> = {}): Assistant => ({
+  id: 'writer',
+  source: 'user',
+  name: 'Writer',
+  name_i18n: {},
+  description_i18n: {},
+  enabled: true,
+  sort_order: 0,
+  agent_id: 'claude',
+  enabled_skills: [],
+  custom_skill_names: [],
+  disabled_builtin_skills: [],
+  context_i18n: {},
+  prompts: [],
+  prompts_i18n: {},
+  models: [],
+  agent_status: 'online',
+  team_selectable: true,
+  deletable: true,
+  ...overrides,
+});
+
+const renderXaiworkAssistantList = (assistant: Assistant, onStartChat = vi.fn()) => {
+  const onEdit = vi.fn();
+  render(
+    <ConfigProvider>
+      <MemoryRouter>
+        <XaiworkAssistantListPanel
+          assistants={[assistant]}
+          localeKey='en-US'
+          onEdit={onEdit}
+          onDuplicate={vi.fn()}
+          onDelete={vi.fn()}
+          onCreate={vi.fn()}
+          onToggleEnabled={vi.fn()}
+          onStartChat={onStartChat}
+          onReorder={vi.fn()}
+          setActiveAssistantId={vi.fn()}
+        />
+      </MemoryRouter>
+    </ConfigProvider>
+  );
+  return { onEdit, onStartChat };
+};
+
+describe('XAIWork assistant chat entry', () => {
+  it('starts a chat without opening the assistant editor', () => {
+    const assistant = createAssistant();
+    const { onEdit, onStartChat } = renderXaiworkAssistantList(assistant);
+
+    fireEvent.click(screen.getByTestId('btn-chat-writer'));
+
+    expect(onStartChat).toHaveBeenCalledWith(assistant);
+    expect(onEdit).not.toHaveBeenCalled();
+  });
+
+  it('does not offer chat for a disabled assistant', () => {
+    renderXaiworkAssistantList(createAssistant({ enabled: false }));
+
+    expect(screen.queryByTestId('btn-chat-writer')).not.toBeInTheDocument();
+  });
+});
+
+const CurrentLocation = () => {
+  const location = useLocation();
+  return <div data-testid='current-location'>{`${location.pathname}${location.search}`}</div>;
+};
+
+describe('XAIWork assistant deep links', () => {
+  it('opens the top-level assistant page and preserves the highlighted assistant id', () => {
+    render(
+      <MemoryRouter initialEntries={['/conversation/current']}>
+        <AgentBadge assistantId='writer/special' agent_name='Writer' agentLogoIsFallback />
+        <CurrentLocation />
+      </MemoryRouter>
+    );
+
+    fireEvent.click(screen.getByTestId('agent-badge'));
+
+    expect(screen.getByTestId('current-location')).toHaveTextContent('/assistants?highlight=writer%2Fspecial');
+  });
+
+  it('keeps an agent badge without an assistant id on the current page', () => {
+    render(
+      <MemoryRouter initialEntries={['/conversation/current']}>
+        <AgentBadge agent_name='Writer' agentLogoIsFallback />
+        <CurrentLocation />
+      </MemoryRouter>
+    );
+
+    fireEvent.click(screen.getByTestId('agent-badge'));
+
+    expect(screen.getByTestId('current-location')).toHaveTextContent('/conversation/current');
   });
 });

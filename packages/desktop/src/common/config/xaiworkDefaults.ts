@@ -18,7 +18,7 @@ export const XAIWORK_DEFAULTS = {
    * - 'gemini'
    * 匹配时遍历 enabled 助手，优先在 builtin/user 中找，找不到再去 generated 找。
    */
-  defaultAssistantBackend: 'claude' as string | null,
+  defaultAssistantBackend: 'codex' as string | null,
 
   /**
    * 备用方式：按 assistant.id 精确指定（机器特定，不可移植）。

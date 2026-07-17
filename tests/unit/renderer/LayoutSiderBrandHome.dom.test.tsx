@@ -49,11 +49,51 @@ vi.mock('@renderer/hooks/system/notification/useBrowserNotification', () => ({ u
 vi.mock('@renderer/hooks/file/useDirectorySelection', () => ({
   useDirectorySelection: () => ({ contextHolder: null }),
 }));
-vi.mock('@renderer/utils/ui/siderTooltip', () => ({ cleanupSiderTooltips: () => {} }));
+vi.mock('@renderer/utils/ui/siderTooltip', () => ({
+  cleanupSiderTooltips: () => {},
+  getSiderTooltipProps: () => ({}),
+}));
 vi.mock('@renderer/hooks/ui/useConversationShortcuts', () => ({ useConversationShortcuts: () => {} }));
 vi.mock('@renderer/utils/platform', () => ({ isElectronDesktop: platformMocks.isElectronDesktopMock }));
 
+// FORK-CUSTOM: isolate the XAIWork sider entry while exercising its real navigation handler.
+vi.mock('@renderer/pages/conversation/Preview/context/PreviewContext', () => ({
+  usePreviewContext: () => ({ closePreview: vi.fn() }),
+}));
+vi.mock('@renderer/hooks/context/AuthContext', () => ({
+  useAuth: () => ({ logout: vi.fn(), status: 'authenticated' }),
+}));
+vi.mock('@renderer/hooks/context/LayoutContext', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@renderer/hooks/context/LayoutContext')>();
+  return {
+    ...actual,
+    useLayoutContext: () => ({ isMobile: false }),
+  };
+});
+vi.mock('@renderer/hooks/context/ThemeContext', () => ({
+  useThemeContext: () => ({ theme: 'light', setTheme: vi.fn() }),
+}));
+vi.mock('@renderer/hooks/useXaiworkConfig', () => ({
+  useXaiworkConfig: () => ({ hideTeamSection: true }),
+}));
+vi.mock('@renderer/utils/ui/focus', () => ({ blurActiveElement: vi.fn() }));
+vi.mock('@renderer/pages/conversation/GroupedHistory', () => ({ default: () => null }));
+vi.mock('@renderer/pages/settings/components/XaiworkSettingsSider', () => ({ default: () => null }));
+vi.mock('@renderer/components/layout/Sider/SiderNav', () => ({
+  SiderAssistantEntry: () => null,
+  SiderScheduledEntry: () => null,
+  SiderSearchEntry: () => null,
+  SiderToolbar: () => null,
+}));
+vi.mock('@renderer/components/layout/Sider/TeamSiderSection', () => ({ default: () => null }));
+vi.mock('@renderer/components/layout/Sider/SiderFooter', () => ({
+  default: ({ onSettingsClick }: { onSettingsClick: () => void }) => (
+    <button aria-label='settings' onClick={onSettingsClick} />
+  ),
+}));
+
 import Layout from '@renderer/components/layout/Layout';
+import XaiworkSider from '@renderer/components/layout/Sider/XaiworkSider';
 
 const renderLayout = () => render(<Layout sider={<div>sider</div>} />);
 
@@ -186,5 +226,30 @@ describe('Layout sider brand Home button', () => {
     } finally {
       window.removeEventListener('aionui-open-update-modal', openListener);
     }
+  });
+});
+
+// FORK-CUSTOM: guard the XAIWork settings entry against bypassing visibility-aware routing.
+describe('XAIWork sider settings entry', () => {
+  beforeEach(() => {
+    navigate.mockClear();
+    currentPathname = '/guid';
+  });
+
+  it('enters the settings index so the router can choose the first visible page', () => {
+    render(<XaiworkSider />);
+
+    fireEvent.click(screen.getByLabelText('settings'));
+
+    expect(navigate).toHaveBeenCalledWith('/settings');
+  });
+
+  it('returns to the fallback page when already in settings', () => {
+    currentPathname = '/settings/system';
+    render(<XaiworkSider />);
+
+    fireEvent.click(screen.getByLabelText('settings'));
+
+    expect(navigate).toHaveBeenCalledWith('/guid');
   });
 });
