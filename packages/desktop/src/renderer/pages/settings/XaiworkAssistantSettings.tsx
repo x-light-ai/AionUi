@@ -9,7 +9,7 @@
  * FORK-CUSTOM: XAIWork 定制版助手设置容器页（替代上游 AssistantSettings 入口）。
  *
  * 上游 AssistantSettings/index.tsx 保持原样不动（成为不被路由引用的孤岛），本文件承载所有
- * fork 改动：新增两个 tab —— "我的助手"（XaiworkMyAssistants，过滤掉 generated 助手）与
+ * fork 改动：新增两个 tab —— "我的助手"（XaiworkMyAssistants，按通用/专有分组）与
  * "助手市场"（AssistantMarketSettings）。路由在 Router.tsx 中指向本组件，避免直接重写上游
  * 文件造成 rebase 冲突。结构与 XaiworkCapabilitiesSettings 一致。
  */

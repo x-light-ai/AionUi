@@ -24,6 +24,8 @@ import QuickActionButtons from './components/QuickActionButtons';
 import FeedbackReportModal from '@/renderer/components/settings/SettingsModal/contents/FeedbackReportModal';
 // FORK-CUSTOM: use the isolated assistant/model selection policy.
 import { useXaiworkGuidAssistantSelection } from './xaiwork/useXaiworkGuidAssistantSelection';
+// FORK-CUSTOM: adapt assistant labels at the existing XAIWork composition boundary.
+import { presentXaiworkAssistants } from '@/renderer/utils/model/xaiworkAssistantPresentation';
 import { useGuidInput } from './hooks/useGuidInput';
 import { useGuidModelSelection } from './hooks/useGuidModelSelection';
 import { useGuidSend } from './hooks/useGuidSend';
@@ -127,6 +129,10 @@ const GuidPage: React.FC = () => {
     preselectAssistantId,
     locationKey: location.key,
   });
+  const assistantSelectionItems = useMemo(
+    () => presentXaiworkAssistants(agentSelection.assistants),
+    [agentSelection.assistants]
+  );
 
   const guidInput = useGuidInput({
     locationState: location.state as { workspace?: string } | null,
@@ -666,7 +672,7 @@ const GuidPage: React.FC = () => {
 
           <AssistantSelectionArea
             selectedAssistantId={agentSelection.selectedAssistantId}
-            assistants={agentSelection.assistants}
+            assistants={assistantSelectionItems}
             localeKey={localeKey}
             onSelectAssistant={handleSelectAssistant}
           />

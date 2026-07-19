@@ -47,6 +47,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 // FORK-CUSTOM: bottom-toolbar skill selector mirrored from the new-conversation page.
 import ConversationSkillSelector from '@/renderer/pages/conversation/components/ConversationSkillSelector';
+// FORK-CUSTOM: map generated Codex runtime names to the XAIWork product name in the sendbox only.
+import { resolveXaiworkSendBoxTargetName } from '@/renderer/utils/model/xaiworkAssistantPresentation';
 import { buildSendFailureError } from './buildSendFailureError';
 import { useAcpInitialMessage } from './useAcpInitialMessage';
 import type { UseAcpMessageReturn } from './useAcpMessage';
@@ -680,7 +682,7 @@ Please check your local CLI tool authentication status`,
         loading={teamRuntime?.loading ?? isBusy}
         disabled={false}
         placeholder={t('acp.sendbox.placeholder', {
-          backend: agent_name || backend,
+          backend: resolveXaiworkSendBoxTargetName(agent_name, backend, conversationContext?.assistantId),
           defaultValue: `Send message to {{backend}}...`,
         })}
         onStop={effectiveHandleStop}

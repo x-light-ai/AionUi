@@ -11,9 +11,8 @@
 // and selecting one applies the model's config (base url / key / model / config_json)
 // via AionCore so the next spawned process uses the relay and the model's settings.
 //
-// When XAIWork has no models for the backend (host unset, not logged in, or
-// empty list), this transparently falls back to the upstream useAcpModelInfo
-// behaviour.
+// When XAIWork has no models for the backend, expose no model instead of
+// falling back to the CLI handshake catalog.
 import type { AcpModelInfo } from '@/common/types/platform/acpTypes';
 import { XAIWORK_BRAND } from '@/common/config/xaiworkBrand';
 import { useCallback, useMemo, useState } from 'react';
@@ -80,8 +79,17 @@ export const useAcpModelInfoXaiwork = (params: UseAcpModelInfoParams): UseAcpMod
     [enabled, backend, byModelId, host, setSelectedModelId, onSelectModelSuccess, onSelectModelFailed]
   );
 
-  if (!hasModels || !xaiworkModelInfo) {
+  if (!enabled || !backend) {
     return base;
+  }
+
+  if (!hasModels || !xaiworkModelInfo) {
+    return {
+      ...base,
+      model_info: null,
+      canSwitch: false,
+      selectModel: selectModelXaiwork,
+    };
   }
 
   return {

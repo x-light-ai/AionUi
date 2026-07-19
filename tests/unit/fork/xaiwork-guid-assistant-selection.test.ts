@@ -6,6 +6,12 @@ import {
   pickDefaultAssistantSelectionKey,
   resolveAssistantSelectionKey,
 } from '@/renderer/pages/guid/xaiwork/useXaiworkGuidAssistantSelection';
+import {
+  isXaiworkHiddenAssistant,
+  presentXaiworkAssistants,
+  resolveXaiworkAssistantDisplayName,
+  resolveXaiworkSendBoxTargetName,
+} from '@/renderer/utils/model/xaiworkAssistantPresentation';
 
 describe('guid assistant selection helpers', () => {
   const assistants: Assistant[] = [
@@ -23,21 +29,57 @@ describe('guid assistant selection helpers', () => {
     expect(resolveAssistantSelectionKey('aionrs', assistants)).toBeUndefined();
   });
 
-  // FORK-CUSTOM: generated assistants are hidden, so default should pick builtin/user first
-  it('defaults to a builtin/user assistant when generated assistants are filtered out', () => {
-    const visibleAssistants = assistants.filter((a) => a.source !== 'generated');
-    expect(pickDefaultAssistantSelectionKey(visibleAssistants)).toBe('builtin-writer');
+  it('selects the first enabled visible assistant', () => {
+    expect(pickDefaultAssistantSelectionKey(assistants.filter((a) => a.source !== 'generated'))).toBe('builtin-writer');
   });
 
-  // FORK-CUSTOM: fallback to generated assistants when no visible assistants exist
-  it('falls back to generated aionrs assistant when no visible assistants exist', () => {
-    const generatedOnly = assistants.filter((a) => a.source === 'generated');
-    expect(pickDefaultAssistantSelectionKey([], generatedOnly)).toBe('bare-aionrs');
+  it('skips disabled assistants without using a hidden fallback catalog', () => {
+    expect(
+      pickDefaultAssistantSelectionKey([
+        { ...assistants[0], enabled: false },
+        { ...assistants[2], enabled: true },
+      ])
+    ).toBe('user-research');
   });
 
   it('returns null when no assistants are available', () => {
     expect(pickDefaultAssistantSelectionKey([])).toBeNull();
-    expect(pickDefaultAssistantSelectionKey([], [])).toBeNull();
+  });
+
+  it('hides only the generated Aion CLI assistant', () => {
+    expect(isXaiworkHiddenAssistant(assistants[1])).toBe(true);
+    expect(isXaiworkHiddenAssistant(assistants[0])).toBe(false);
+  });
+
+  it('presents generated Codex as OpenAI without changing its runtime identity', () => {
+    const generatedCodex = assistant({
+      id: 'bare-codex',
+      source: 'generated',
+      runtimeKey: 'codex',
+    });
+    const authoredCodexName = assistant({
+      id: 'user-codex-name',
+      source: 'user',
+      runtimeKey: 'claude',
+      name: 'Codex CLI',
+    });
+    const [presentedCodex, presentedAuthored] = presentXaiworkAssistants([generatedCodex, authoredCodexName]);
+
+    expect(resolveXaiworkAssistantDisplayName(generatedCodex, 'en-US')).toBe('OpenAI');
+    expect(presentedCodex).toMatchObject({ id: 'bare-codex', name: 'OpenAI' });
+    expect(presentedCodex.agent?.acp_backend).toBe('codex');
+    expect(presentedAuthored.name).toBe('Codex CLI');
+  });
+});
+
+describe('XAIWork conversation assistant presentation', () => {
+  it('presents generated and legacy Codex runtimes as OpenAI', () => {
+    expect(resolveXaiworkSendBoxTargetName('Codex CLI', 'codex', 'bare:agent-codex')).toBe('OpenAI');
+    expect(resolveXaiworkSendBoxTargetName('Codex CLI', 'codex')).toBe('OpenAI');
+  });
+
+  it('keeps an authored Codex CLI assistant name unchanged', () => {
+    expect(resolveXaiworkSendBoxTargetName('Codex CLI', 'codex', 'user-codex-name')).toBe('Codex CLI');
   });
 });
 

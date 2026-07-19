@@ -2504,6 +2504,8 @@ export type I18nKey =
   | 'xaiwork.assistantTab.mine'
   | 'xaiwork.common.all'
   | 'xaiwork.cron.description'
+  | 'xaiwork.myAssistant.groupDedicated'
+  | 'xaiwork.myAssistant.groupGeneral'
   | 'xaiwork.myAssistant.skillCount'
   | 'xaiwork.myAssistant.uninstallConfirm'
   | 'xaiwork.myAssistant.uninstallMenuItem'

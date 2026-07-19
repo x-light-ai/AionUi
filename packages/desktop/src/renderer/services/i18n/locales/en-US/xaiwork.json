@@ -66,6 +66,8 @@
     "uninstallError": "Error uninstalling skill"
   },
   "myAssistant": {
+    "groupGeneral": "General Assistants",
+    "groupDedicated": "Dedicated Assistants",
     "uninstallMenuItem": "Uninstall",
     "uninstallTitle": "Uninstall Assistant",
     "uninstallOkText": "Uninstall",

@@ -1,5 +1,9 @@
 {
   "cron": {
     "description": "작업을 일정에 따라 자동 실행할 수 있습니다. 어떤 대화에서든 XAIWork에게 예약 작업 생성을 요청할 수도 있습니다."
+  },
+  "myAssistant": {
+    "groupGeneral": "범용 어시스턴트",
+    "groupDedicated": "전용 어시스턴트"
   }
 }

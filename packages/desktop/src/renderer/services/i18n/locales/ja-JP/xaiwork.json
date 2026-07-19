@@ -1,5 +1,9 @@
 {
   "cron": {
     "description": "タスクをスケジュールで自動実行できます。どの会話でも XAIWork に依頼して定期タスクを作成することもできます。"
+  },
+  "myAssistant": {
+    "groupGeneral": "汎用アシスタント",
+    "groupDedicated": "専用アシスタント"
   }
 }

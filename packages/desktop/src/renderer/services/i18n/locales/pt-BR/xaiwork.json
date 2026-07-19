@@ -1,5 +1,9 @@
 {
   "cron": {
     "description": "Execute tarefas agendadas. Você também pode pedir ao XAIWork em qualquer conversa para criar uma para você."
+  },
+  "myAssistant": {
+    "groupGeneral": "Assistentes gerais",
+    "groupDedicated": "Assistentes especializados"
   }
 }

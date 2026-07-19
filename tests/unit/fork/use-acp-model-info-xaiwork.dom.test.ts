@@ -3,9 +3,8 @@
  * FORK-CUSTOM: tests for the XAIWork ACP model-info override hook.
  * @vitest-environment jsdom
  *
- * useAcpModelInfoXaiwork wraps the upstream ACP model info: it surfaces only
- * XAIWork-distributed models when present, and transparently falls back to the
- * upstream handshake list otherwise.
+ * useAcpModelInfoXaiwork surfaces only XAIWork-distributed models and never
+ * falls back to the upstream handshake list.
  */
 
 import { renderHook } from '@testing-library/react';
@@ -65,13 +64,14 @@ describe('renderer/useAcpModelInfoXaiwork', () => {
     useConfigMock.mockReturnValue(['https://api.xaiwork.com', vi.fn()]);
   });
 
-  it('falls back to the upstream result when XAIWork has no models', () => {
+  it('exposes no model when XAIWork has no models', () => {
     useXaiworkAgentModelsMock.mockReturnValue(xaiwork([]));
 
     const { result } = renderHook(() => useAcpModelInfoXaiwork(params));
 
-    expect(result.current).toBe(baseInfo);
+    expect(result.current.model_info).toBeNull();
     expect(result.current.canSwitch).toBe(false);
+    expect(result.current.selectModel).not.toBe(baseInfo.selectModel);
   });
 
   it('replaces available_models with the distributed list and enables switching', () => {
@@ -104,6 +104,23 @@ describe('renderer/useAcpModelInfoXaiwork', () => {
     const { result } = renderHook(() => useAcpModelInfoXaiwork(params));
 
     expect(result.current.model_info?.current_model_id).toBe('up-1');
+  });
+
+  it('uses the distributed model catalog for Codex', () => {
+    useXaiworkAgentModelsMock.mockReturnValue(
+      xaiwork([
+        { modelId: 'codex-x-1', name: 'Codex X One' },
+        { modelId: 'codex-x-2', name: 'Codex X Two' },
+      ])
+    );
+
+    const { result } = renderHook(() =>
+      useAcpModelInfoXaiwork({ conversation_id: 'codex-c1', backend: 'codex', enabled: true })
+    );
+
+    expect(useXaiworkAgentModelsMock).toHaveBeenCalledWith('codex');
+    expect(result.current.model_info?.available_models.map((model) => model.id)).toEqual(['codex-x-1', 'codex-x-2']);
+    expect(result.current.canSwitch).toBe(true);
   });
 
   it('does not query XAIWork models when disabled', () => {

@@ -13,11 +13,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { XAIWORK_BRAND } from '@/common/config/xaiworkBrand';
 
 const { readRemoteAuthMock, listModelsMock, createClientMock } = vi.hoisted(() => {
-  const listModelsMock = vi.fn();
+  const listModels = vi.fn();
   return {
     readRemoteAuthMock: vi.fn(),
-    listModelsMock,
-    createClientMock: vi.fn(() => ({ listModels: listModelsMock })),
+    listModelsMock: listModels,
+    createClientMock: vi.fn(() => ({ listModels })),
   };
 });
 
@@ -51,6 +51,16 @@ describe('renderer/useXaiworkAgentModels', () => {
     expect(result.current.byModelId.get('x-1')).toEqual({ modelId: 'x-1', name: 'X One' });
     // Host is the fixed XAIWORK_BRAND.apiHost, not a runtime config value.
     expect(createClientMock).toHaveBeenCalledWith(XAIWORK_BRAND.apiHost, 'jwt-token-1234567890abcdef');
+  });
+
+  it('fetches Codex models through the XAIWork broker', async () => {
+    listModelsMock.mockResolvedValue([{ modelId: 'codex-x-1', name: 'Codex X One' }]);
+
+    const { result } = renderHook(() => useXaiworkAgentModels('codex'));
+
+    await waitFor(() => expect(result.current.hasModels).toBe(true));
+    expect(listModelsMock).toHaveBeenCalledWith('codex');
+    expect(result.current.models).toEqual([{ modelId: 'codex-x-1', name: 'Codex X One' }]);
   });
 
   it('does not fetch when backend is missing', () => {

@@ -5,8 +5,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { assistantRuntimeKey, isAionrsAssistant, type Assistant } from '@/common/types/agent/assistantTypes';
-import { XAIWORK_DEFAULTS } from '@/common/config/xaiworkDefaults';
+import { assistantRuntimeKey, type Assistant } from '@/common/types/agent/assistantTypes';
 import { configService } from '@/common/config/configService';
 import type { AcpModelInfo } from '../types';
 import type { AgentModeOption } from '@/renderer/utils/model/agentTypes';
@@ -21,6 +20,7 @@ import {
 import type { SlashCommandItem } from '@/common/chat/slash/types';
 import { useManagedAgentRuntimeCatalog } from '@/renderer/hooks/agent/useManagedAgents';
 import { buildXaiworkModelInfo, useXaiworkAgentModels } from '@/renderer/hooks/agent/useXaiworkAgentModels';
+import { isXaiworkHiddenAssistant } from '@/renderer/utils/model/xaiworkAssistantPresentation';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useCustomAgentsLoader } from '../hooks/useCustomAgentsLoader';
 
@@ -55,26 +55,6 @@ export type GuidAssistantSelectionResult = {
   ) => void;
 };
 
-export function resolveInitialAssistantModel(models: string[]): string | null {
-  if (models.length > 0) {
-    return models[0];
-  }
-
-  return null;
-}
-
-export function buildAssistantModelInfo(models: string[]): AcpModelInfo | null {
-  if (models.length > 0) {
-    return {
-      current_model_id: models[0],
-      current_model_label: models[0],
-      available_models: models.map((model) => ({ id: model, label: model })),
-    } satisfies AcpModelInfo;
-  }
-
-  return null;
-}
-
 export function resolveAssistantSelectionKey(
   savedKey: string | undefined,
   assistants: Assistant[]
@@ -105,25 +85,8 @@ function persistGuidAssistantSelectionKey(assistantId: string): void {
   });
 }
 
-export function pickDefaultAssistantSelectionKey(assistants: Assistant[], allAssistants = assistants): string | null {
-  const enabledAssistants = assistants.filter((assistant) => assistant.enabled !== false);
-  const enabledAll = allAssistants.filter((assistant) => assistant.enabled !== false);
-  const configuredBackend = XAIWORK_DEFAULTS.defaultAssistantBackend;
-  const configuredId = XAIWORK_DEFAULTS.defaultAssistantId;
-  const preferred =
-    (configuredBackend
-      ? (enabledAssistants.find((assistant) => assistantRuntimeKey(assistant) === configuredBackend) ??
-        enabledAll.find((assistant) => assistantRuntimeKey(assistant) === configuredBackend))
-      : undefined) ??
-    (configuredId
-      ? (enabledAssistants.find((assistant) => assistant.id === configuredId) ??
-        enabledAll.find((assistant) => assistant.id === configuredId))
-      : undefined) ??
-    enabledAssistants.find((assistant) => isAionrsAssistant(assistant)) ??
-    enabledAssistants[0] ??
-    enabledAll.find((assistant) => assistant.source === 'generated' && isAionrsAssistant(assistant)) ??
-    enabledAll[0];
-  return preferred?.id ?? null;
+export function pickDefaultAssistantSelectionKey(assistants: Assistant[]): string | null {
+  return assistants.find((assistant) => assistant.enabled !== false)?.id ?? null;
 }
 
 type UseGuidAssistantSelectionOptions = {
@@ -141,7 +104,11 @@ export const useXaiworkGuidAssistantSelection = ({
   const [selectedMode, _setSelectedMode] = useState<string>('default');
   const [selectedAcpModel, _setSelectedAcpModel] = useState<string | null>(null);
   const [selectedThoughtLevelValue, _setSelectedThoughtLevelValue] = useState<string>('');
-  const { assistants, allAssistants } = useCustomAgentsLoader();
+  const { assistants: loadedAssistants } = useCustomAgentsLoader();
+  const assistants = useMemo(
+    () => loadedAssistants.filter((assistant) => !isXaiworkHiddenAssistant(assistant)),
+    [loadedAssistants]
+  );
   const managedAgentRuntimeCatalog = useManagedAgentRuntimeCatalog();
 
   const setSelectedMode = useCallback(
@@ -149,16 +116,6 @@ export const useXaiworkGuidAssistantSelection = ({
       _setSelectedMode((prev) => {
         const nextMode = typeof mode === 'function' ? mode(prev) : mode;
         return nextMode;
-      });
-    },
-    []
-  );
-
-  const setSelectedAcpModel = useCallback(
-    (modelId: React.SetStateAction<string | null>, _options?: { persistPreference?: boolean }) => {
-      _setSelectedAcpModel((prev) => {
-        const nextModelId = typeof modelId === 'function' ? modelId(prev) : modelId;
-        return nextModelId;
       });
     },
     []
@@ -176,7 +133,8 @@ export const useXaiworkGuidAssistantSelection = ({
 
   const setSelectedAssistantId = useCallback(
     (assistantId: string) => {
-      const normalizedId = resolveAssistantSelectionKey(assistantId, assistants) ?? assistantId;
+      const normalizedId = resolveAssistantSelectionKey(assistantId, assistants);
+      if (!normalizedId) return;
       _setSelectedAssistantId(normalizedId);
       persistGuidAssistantSelectionKey(normalizedId);
     },
@@ -191,13 +149,11 @@ export const useXaiworkGuidAssistantSelection = ({
   }
 
   useLayoutEffect(() => {
-    if (allAssistants.length === 0) return;
+    if (assistants.length === 0) return;
     if (resetHandledRef.current) return;
 
     if (preselectAssistantId) {
-      const resolvedPreselect =
-        resolveAssistantSelectionKey(preselectAssistantId, assistants) ??
-        resolveAssistantSelectionKey(preselectAssistantId, allAssistants);
+      const resolvedPreselect = resolveAssistantSelectionKey(preselectAssistantId, assistants);
       if (resolvedPreselect) {
         resetHandledRef.current = true;
         _setSelectedAssistantId(resolvedPreselect);
@@ -208,48 +164,47 @@ export const useXaiworkGuidAssistantSelection = ({
     if (resetAssistant) {
       resetHandledRef.current = true;
       const fallbackId =
-        readPersistedGuidAssistantSelectionKey(assistants) ??
-        pickDefaultAssistantSelectionKey(assistants, allAssistants);
+        readPersistedGuidAssistantSelectionKey(assistants) ?? pickDefaultAssistantSelectionKey(assistants);
       _setSelectedAssistantId(fallbackId);
     }
-  }, [assistants, allAssistants, preselectAssistantId, resetAssistant]);
+  }, [assistants, preselectAssistantId, resetAssistant]);
 
   useEffect(() => {
-    if (allAssistants.length === 0) return;
+    if (assistants.length === 0) return;
     if (resetAssistant) return;
     if (preselectAssistantId && resolveAssistantSelectionKey(preselectAssistantId, assistants)) return;
-    if (!selectedAssistantIdState || !allAssistants.some((assistant) => assistant.id === selectedAssistantIdState)) {
+    if (!selectedAssistantIdState || !assistants.some((assistant) => assistant.id === selectedAssistantIdState)) {
       _setSelectedAssistantId(
-        readPersistedGuidAssistantSelectionKey(assistants) ??
-          pickDefaultAssistantSelectionKey(assistants, allAssistants)
+        readPersistedGuidAssistantSelectionKey(assistants) ?? pickDefaultAssistantSelectionKey(assistants)
       );
     }
-  }, [assistants, allAssistants, preselectAssistantId, resetAssistant, selectedAssistantIdState]);
+  }, [assistants, preselectAssistantId, resetAssistant, selectedAssistantIdState]);
 
   const selectedAssistant = useMemo(
     () =>
-      selectedAssistantIdState
-        ? allAssistants.find((assistant) => assistant.id === selectedAssistantIdState)
-        : undefined,
-    [allAssistants, selectedAssistantIdState]
+      selectedAssistantIdState ? assistants.find((assistant) => assistant.id === selectedAssistantIdState) : undefined,
+    [assistants, selectedAssistantIdState]
   );
   const selectedAssistantId = selectedAssistant?.id ?? null;
   const selectedAssistantBackend = assistantRuntimeKey(selectedAssistant);
-  const selectedAssistantModels = selectedAssistant?.models ?? [];
-  const { models: xaiworkModels, hasModels: xaiworkHasModels } = useXaiworkAgentModels(
-    selectedAssistantBackend || undefined
-  );
+  const { models: xaiworkModels } = useXaiworkAgentModels(selectedAssistantBackend || undefined);
   const xaiworkModelIds = useMemo(() => xaiworkModels.map((model) => model.modelId), [xaiworkModels]);
+  const xaiworkModelIdSet = useMemo(() => new Set(xaiworkModelIds), [xaiworkModelIds]);
+  const setSelectedAcpModel = useCallback(
+    (modelId: React.SetStateAction<string | null>, _options?: { persistPreference?: boolean }) => {
+      _setSelectedAcpModel((prev) => {
+        const nextModelId = typeof modelId === 'function' ? modelId(prev) : modelId;
+        return nextModelId === null || xaiworkModelIdSet.has(nextModelId) ? nextModelId : prev;
+      });
+    },
+    [xaiworkModelIdSet]
+  );
   const selectedManagedAgentRuntimeCatalog = useMemo(
     () =>
       selectedAssistant?.agent_id
         ? managedAgentRuntimeCatalog.find((agent) => agent.id === selectedAssistant.agent_id)
         : undefined,
     [managedAgentRuntimeCatalog, selectedAssistant?.agent_id]
-  );
-  const selectedAgentRuntimeModelInfo = useMemo(
-    () => buildAgentRuntimeModelInfo(selectedManagedAgentRuntimeCatalog),
-    [selectedManagedAgentRuntimeCatalog]
   );
   const currentAgentAvailableCommands = useMemo(
     () => buildAgentRuntimeSlashCommands(selectedManagedAgentRuntimeCatalog),
@@ -278,42 +233,18 @@ export const useXaiworkGuidAssistantSelection = ({
 
   const modelSelectionScopeRef = useRef<string | null>(null);
   useEffect(() => {
-    if (xaiworkHasModels && xaiworkModels.length > 0) {
-      const availableModelIds = new Set(xaiworkModels.map((model) => model.modelId));
-      const selectionScope = selectedAssistantId ?? '';
-      _setSelectedAcpModel((previousModelId) => {
-        const scopeChanged = modelSelectionScopeRef.current !== selectionScope;
-        modelSelectionScopeRef.current = selectionScope;
-        if (!scopeChanged && previousModelId && availableModelIds.has(previousModelId)) return previousModelId;
-        return xaiworkModels[0].modelId;
-      });
-      return;
-    }
-    const runtimeModelId =
-      selectedAgentRuntimeModelInfo?.current_model_id || selectedAgentRuntimeModelInfo?.available_models[0]?.id;
-    const fallbackModelId =
-      runtimeModelId ||
-      (selectedAssistantModels.length > 0 ? resolveInitialAssistantModel(selectedAssistantModels) : null);
-    const availableModelIds = new Set(
-      selectedAgentRuntimeModelInfo?.available_models.map((model) => model.id) ?? selectedAssistantModels
-    );
+    const availableModelIds = new Set(xaiworkModels.map((model) => model.modelId));
     const selectionScope = selectedAssistantId ?? '';
 
     _setSelectedAcpModel((previousModelId) => {
       const scopeChanged = modelSelectionScopeRef.current !== selectionScope;
       modelSelectionScopeRef.current = selectionScope;
-
-      if (
-        !scopeChanged &&
-        previousModelId &&
-        (availableModelIds.size === 0 || availableModelIds.has(previousModelId))
-      ) {
+      if (!scopeChanged && previousModelId && availableModelIds.has(previousModelId)) {
         return previousModelId;
       }
-
-      return fallbackModelId;
+      return xaiworkModels[0]?.modelId ?? null;
     });
-  }, [selectedAssistantId, selectedAssistantModels, selectedAgentRuntimeModelInfo, xaiworkHasModels, xaiworkModels]);
+  }, [selectedAssistantId, xaiworkModels]);
 
   useEffect(() => {
     const fallbackMode =
@@ -346,20 +277,12 @@ export const useXaiworkGuidAssistantSelection = ({
     });
   }, [selectedAgentRuntimeThoughtLevelOption, selectedAssistantId]);
 
-  const currentAcpCachedModelInfo = useMemo(() => {
-    const xaiworkInfo = buildXaiworkModelInfo(xaiworkModels, [selectedAcpModel]);
-    if (xaiworkInfo) return xaiworkInfo;
-    if (selectedAgentRuntimeModelInfo) {
-      return selectedAgentRuntimeModelInfo;
-    }
-
-    return buildAssistantModelInfo(selectedAssistantModels);
-  }, [selectedAssistantModels, selectedAgentRuntimeModelInfo, selectedAcpModel, xaiworkModels]);
-
-  const defaultAssistantId = useMemo(
-    () => pickDefaultAssistantSelectionKey(assistants, allAssistants),
-    [assistants, allAssistants]
+  const currentAcpCachedModelInfo = useMemo(
+    () => buildXaiworkModelInfo(xaiworkModels, [selectedAcpModel]),
+    [selectedAcpModel, xaiworkModels]
   );
+
+  const defaultAssistantId = useMemo(() => pickDefaultAssistantSelectionKey(assistants), [assistants]);
 
   return {
     selectedAssistantId,

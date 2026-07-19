@@ -1,11 +1,12 @@
 // FORK-CUSTOM: XAIWork 定制版"我的助手"页面（替代上游 AssistantSettings 的内容部分）。
 // 上游 AssistantSettings/index.tsx 保持原样不动，本文件承载所有 fork 改动，避免 rebase 冲突。
-// 与上游差异：1) 列表过滤掉 source==='generated'（AionCore CLI 自动生成的助手不展示）；
+// 与上游差异：1) 隐藏 Aion CLI，其余列表按 XAIWork 的“通用助手 / 专有助手”语义分组；
 // 2) 支持 withWrapper prop，由 fork 容器 XaiworkAssistantSettings 的 tab 内嵌（不重复包 SettingsPageWrapper）。
 import { Message } from '@arco-design/web-react';
 import { Refresh } from '@icon-park/react';
 import { useAssistantEditor, useAssistantList } from '@/renderer/hooks/assistant';
 import { useManagedAgentRuntimeCatalog } from '@/renderer/hooks/agent/useManagedAgents';
+import { isXaiworkHiddenAssistant } from '@/renderer/utils/model/xaiworkAssistantPresentation';
 import SettingsPageWrapper from './components/SettingsPageWrapper';
 import { buildAssistantEditorBackends, resolveAvatarImageSrc } from './AssistantSettings/assistantUtils';
 import XaiworkAssistantListPanel from './XaiworkAssistantListPanel';
@@ -59,11 +60,11 @@ const XaiworkMyAssistants: React.FC<XaiworkMyAssistantsProps> = ({ withWrapper =
     localeKey,
   } = useAssistantList();
   const managedAgentRuntimeCatalog = useManagedAgentRuntimeCatalog();
-
-  // FORK-CUSTOM: hide AionCore CLI auto-generated assistants from the list.
-  // The full `assistants` array is still used for editor backends / avatar
-  // options / navigation intent, since generated assistants back the CLI agents.
-  const visibleAssistants = useMemo(() => assistants.filter((a) => a.source !== 'generated'), [assistants]);
+  // FORK-CUSTOM: keep generated CLI assistants visible except the product-internal Aion CLI runtime.
+  const visibleAssistants = useMemo(
+    () => assistants.filter((assistant) => !isXaiworkHiddenAssistant(assistant)),
+    [assistants]
+  );
 
   const builtinAvatarOptions = useMemo(
     () =>
@@ -197,7 +198,7 @@ const XaiworkMyAssistants: React.FC<XaiworkMyAssistantsProps> = ({ withWrapper =
     if (!targetAssistantId) return;
     if (assistants.length === 0) return;
 
-    const targetAssistant = assistants.find((assistant) => assistant.id === targetAssistantId);
+    const targetAssistant = visibleAssistants.find((assistant) => assistant.id === targetAssistantId);
     if (!targetAssistant) return;
 
     hasConsumedNavigationIntentRef.current = true;
@@ -207,7 +208,7 @@ const XaiworkMyAssistants: React.FC<XaiworkMyAssistantsProps> = ({ withWrapper =
       console.error('[AssistantManagement] Failed to clear assistant open intent:', error);
     }
     void editor.handleEdit(targetAssistant);
-  }, [assistants, editor, navigationState]);
+  }, [editor, navigationState, visibleAssistants]);
 
   const mainContent = (
     <div className={showEditor ? 'flex flex-col w-full' : 'flex flex-col h-full w-full'}>

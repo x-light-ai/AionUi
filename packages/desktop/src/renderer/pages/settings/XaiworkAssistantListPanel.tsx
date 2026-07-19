@@ -1,9 +1,12 @@
 // FORK-CUSTOM: 替代上游 AssistantListPanel，改动点：
 // 1. 菜单"删除"→"卸载"（xaiwork.myAssistant.uninstallMenuItem）
 // 2. user source 的标签改为显示版本号
+// 3. generated Agent 助手与其他助手分为“通用助手 / 专有助手”
+// 4. generated Codex 助手在 UI 显示为 OpenAI，稳定 backend key 保持 codex
 import type { DragEndEvent } from '@dnd-kit/core';
 import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
 import TalkToButlerButton from '@/renderer/components/base/TalkToButlerButton';
+import { resolveXaiworkAssistantDisplayName } from '@/renderer/utils/model/xaiworkAssistantPresentation';
 import type { AssistantListItem } from './AssistantSettings/types';
 import { resolveAssistantSourceTag } from './AssistantSettings/assistantUtils';
 import AssistantAvatar from './AssistantSettings/AssistantAvatar';
@@ -62,6 +65,8 @@ const SortableAssistantCard: React.FC<SortableAssistantCardProps> = ({
   const { t } = useTranslation();
   const canDelete = assistant.source === 'user';
   const canDuplicate = assistant.source !== 'user';
+  // FORK-CUSTOM: expose the provider brand for the generated Codex runtime without changing its stable backend key.
+  const displayName = resolveXaiworkAssistantDisplayName(assistant, localeKey);
   const actionMenu = (
     <Menu
       onClickMenuItem={(key) => {
@@ -145,7 +150,7 @@ const SortableAssistantCard: React.FC<SortableAssistantCardProps> = ({
         <AssistantAvatar assistant={assistant} size={28} />
         <div className='min-w-0 flex-1'>
           <div className='flex min-w-0 items-center gap-8px font-medium text-t-primary'>
-            <span className='truncate'>{assistant.name_i18n?.[localeKey] || assistant.name}</span>
+            <span className='truncate'>{displayName}</span>
             {assistant.agent_status !== 'online' && (
               <Tooltip
                 content={
@@ -253,7 +258,14 @@ const XaiworkAssistantListPanel: React.FC<XaiworkAssistantListPanelProps> = ({
     return () => clearTimeout(timer);
   }, [highlightId, assistants, onHighlightConsumed]);
 
-  const listAssistants = useMemo(() => assistants, [assistants]);
+  // FORK-CUSTOM: generated Agent discoveries are general-purpose assistants; installed and authored assistants are dedicated.
+  const { generalAssistants, dedicatedAssistants } = useMemo(
+    () => ({
+      generalAssistants: assistants.filter((assistant) => assistant.source === 'generated'),
+      dedicatedAssistants: assistants.filter((assistant) => assistant.source !== 'generated'),
+    }),
+    [assistants]
+  );
   const sortingEnabled = true;
 
   // FORK-CUSTOM: user source 显示版本号，无版本时不显示标签（替代上游"自定义"标签）
@@ -334,6 +346,27 @@ const XaiworkAssistantListPanel: React.FC<XaiworkAssistantListPanelProps> = ({
     </div>
   );
 
+  const renderSection = (
+    title: string,
+    sectionAssistants: AssistantListItem[],
+    testId: string,
+    accentClass: string
+  ) => {
+    if (sectionAssistants.length === 0) return null;
+    return (
+      <section data-testid={testId}>
+        <div className='mb-10px flex items-center gap-8px px-2px'>
+          <span className={`h-13px w-3px rounded-2px ${accentClass}`} />
+          <h3 className='m-0 text-12px font-600 text-t-secondary'>{title}</h3>
+          <span className='rounded-999px bg-fill-2 px-6px py-1px text-10px font-500 text-t-quaternary'>
+            {sectionAssistants.length}
+          </span>
+        </div>
+        {renderList(sectionAssistants)}
+      </section>
+    );
+  };
+
   return (
     <div data-testid='assistant-list-shell' className='flex h-full min-h-0 flex-col overflow-hidden bg-transparent'>
       <div
@@ -373,8 +406,21 @@ const XaiworkAssistantListPanel: React.FC<XaiworkAssistantListPanelProps> = ({
         className={`min-h-0 flex-1 overflow-auto ${isMobile ? 'px-8px pt-0 pb-12px' : 'px-18px pt-0 pb-24px'}`}
       >
         <div className='mx-auto w-full max-w-760px'>
-          {listAssistants.length > 0 ? (
-            renderList(listAssistants)
+          {assistants.length > 0 ? (
+            <div className='space-y-20px'>
+              {renderSection(
+                t('xaiwork.myAssistant.groupGeneral', { defaultValue: 'General Assistants' }),
+                generalAssistants,
+                'assistant-group-general',
+                'bg-warning-5'
+              )}
+              {renderSection(
+                t('xaiwork.myAssistant.groupDedicated', { defaultValue: 'Dedicated Assistants' }),
+                dedicatedAssistants,
+                'assistant-group-dedicated',
+                'bg-primary-5'
+              )}
+            </div>
           ) : (
             <div className='py-12px text-center text-t-secondary'>
               {t('settings.assistantNoMatch', { defaultValue: 'No assistants match the current filters.' })}

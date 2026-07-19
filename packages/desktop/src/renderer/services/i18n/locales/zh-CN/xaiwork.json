@@ -66,6 +66,8 @@
     "uninstallError": "卸载技能出错"
   },
   "myAssistant": {
+    "groupGeneral": "通用助手",
+    "groupDedicated": "专有助手",
     "uninstallMenuItem": "卸载",
     "uninstallTitle": "卸载助手",
     "uninstallOkText": "卸载",

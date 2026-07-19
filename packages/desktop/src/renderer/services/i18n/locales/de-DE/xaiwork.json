@@ -1,5 +1,9 @@
 {
   "cron": {
     "description": "Aufgaben nach Zeitplan ausführen. Du kannst XAIWork auch in jedem Gespräch bitten, eine zu erstellen."
+  },
+  "myAssistant": {
+    "groupGeneral": "Allgemeine Assistenten",
+    "groupDedicated": "Spezialisierte Assistenten"
   }
 }

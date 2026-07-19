@@ -10,19 +10,22 @@ export function useXaiworkCreateGuard(backend: string) {
 
   return useCallback(
     async (selectedModelId: string | null, cachedModelId?: string): Promise<void> => {
-      if (!hasModels) return;
+      if (!hasModels) {
+        throw new Error(`No XAIWork models available for backend '${backend}'`);
+      }
 
       const modelId = selectedModelId || cachedModelId;
       const relayModel = modelId ? byModelId.get(modelId) : undefined;
+      if (!modelId || !relayModel) {
+        throw new Error(`Model '${modelId ?? ''}' is not available from XAIWork for backend '${backend}'`);
+      }
       const host = XAIWORK_BRAND.apiHost.trim();
       const authToken = readXaiworkRemoteAuth()?.accessToken ?? '';
-      if (!relayModel || !backend || !host || !authToken) return;
-
-      try {
-        await applyXaiworkModelConfig(backend, relayModel.modelId, host, authToken);
-      } catch (error) {
-        console.error('Failed to apply XAIWork model config before conversation create:', error);
+      if (!backend || !host || !authToken) {
+        throw new Error('XAIWork host/token not configured');
       }
+
+      await applyXaiworkModelConfig(backend, relayModel.modelId, host, authToken);
     },
     [backend, byModelId, hasModels]
   );

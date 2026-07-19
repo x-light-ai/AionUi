@@ -1,5 +1,9 @@
 {
   "cron": {
     "description": "Görevleri bir zamanlamayla çalıştırın. Ayrıca herhangi bir konuşmada XAIWork'ten sizin için bir görev oluşturmasını isteyebilirsiniz."
+  },
+  "myAssistant": {
+    "groupGeneral": "Genel Asistanlar",
+    "groupDedicated": "Özel Asistanlar"
   }
 }

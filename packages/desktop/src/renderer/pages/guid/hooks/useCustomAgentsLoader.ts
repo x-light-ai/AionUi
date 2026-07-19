@@ -16,8 +16,6 @@ type UseCustomAgentsLoaderResult = {
    * Settings list render.
    */
   assistants: Assistant[];
-  // FORK-CUSTOM: expose all assistants (including generated) for fallback selection
-  allAssistants: Assistant[];
 };
 
 /**
@@ -36,10 +34,7 @@ export const useCustomAgentsLoader = (): UseCustomAgentsLoaderResult => {
       return [] as Assistant[];
     }
   });
-  const allAssistants = assistantList ?? [];
-
-  // FORK-CUSTOM: filter out generated assistants from UI display
-  const assistants = allAssistants.filter((assistant) => assistant.source !== 'generated');
+  const assistants = assistantList ?? [];
 
   useEffect(() => {
     void swrMutate('assistants.list');
@@ -47,6 +42,5 @@ export const useCustomAgentsLoader = (): UseCustomAgentsLoaderResult => {
 
   return {
     assistants,
-    allAssistants, // FORK-CUSTOM: include generated for fallback
   };
 };

@@ -12,8 +12,6 @@ import type { ManagedAgent } from '@/renderer/utils/model/agentTypes';
 import {
   buildAgentRuntimeModeState,
   buildAgentRuntimeModelInfo,
-  buildAssistantModelInfo,
-  resolveInitialAssistantModel,
   useXaiworkGuidAssistantSelection as useGuidAssistantSelection,
 } from '@/renderer/pages/guid/xaiwork/useXaiworkGuidAssistantSelection';
 
@@ -37,9 +35,7 @@ vi.mock('@/common/config/configService', () => ({
 
 vi.mock('@/renderer/pages/guid/hooks/useCustomAgentsLoader', () => ({
   useCustomAgentsLoader: () => ({
-    // FORK-CUSTOM: filter generated assistants for UI display, expose all for fallback
-    assistants: mockAssistants.filter((a) => a.source !== 'generated'),
-    allAssistants: mockAssistants,
+    assistants: mockAssistants,
   }),
 }));
 
@@ -90,7 +86,7 @@ describe('useGuidAssistantSelection', () => {
     ];
   });
 
-  it('derives availability and model info from assistant catalog data', async () => {
+  it('does not fall back to assistant catalog models when XAIWork has no models', async () => {
     const { result } = renderHook(() =>
       useGuidAssistantSelection({
         resetAssistant: false,
@@ -102,18 +98,11 @@ describe('useGuidAssistantSelection', () => {
     });
 
     expect(result.current.selectedAssistantAvailable).toBe(true);
-    expect(result.current.selectedAcpModel).toBe('claude-opus');
-    expect(result.current.currentAcpCachedModelInfo).toEqual({
-      current_model_id: 'claude-opus',
-      current_model_label: 'claude-opus',
-      available_models: [
-        { id: 'claude-opus', label: 'claude-opus' },
-        { id: 'claude-sonnet', label: 'claude-sonnet' },
-      ],
-    });
+    expect(result.current.selectedAcpModel).toBeNull();
+    expect(result.current.currentAcpCachedModelInfo).toBeNull();
   });
 
-  it('restores the last selected guid assistant before falling back to the aionrs default', async () => {
+  it('restores the last selected guid assistant before using the natural enabled fallback', async () => {
     mockAssistants = [
       assistantFixture({ id: 'bare-aionrs', runtimeKey: 'aionrs', source: 'generated', sortOrder: 1 }),
       assistantFixture({ id: 'assistant-claude', runtimeKey: 'claude', source: 'builtin', sortOrder: 2 }),
@@ -156,9 +145,21 @@ describe('useGuidAssistantSelection', () => {
 
   it('persists manual guid assistant selections for the next visit', async () => {
     mockAssistants = [
-      assistantFixture({ id: 'bare-aionrs', runtimeKey: 'aionrs', source: 'generated', sortOrder: 1 }),
-      assistantFixture({ id: 'assistant-claude', runtimeKey: 'claude', source: 'builtin', sortOrder: 2 }),
-      assistantFixture({ id: 'assistant-codex', runtimeKey: 'codex', source: 'builtin', sortOrder: 3 }),
+      assistantFixture({
+        id: 'bare-aionrs',
+        runtimeKey: 'aionrs',
+        source: 'generated',
+        sortOrder: 1,
+        enabled: false,
+      }),
+      assistantFixture({
+        id: 'assistant-claude',
+        runtimeKey: 'claude',
+        source: 'builtin',
+        sortOrder: 2,
+        enabled: false,
+      }),
+      assistantFixture({ id: 'assistant-codex', runtimeKey: 'codex', source: 'generated', sortOrder: 3 }),
     ];
 
     const { result } = renderHook(() =>
@@ -168,22 +169,33 @@ describe('useGuidAssistantSelection', () => {
     );
 
     await waitFor(() => {
-      // FORK-CUSTOM: default resolves to the codex backend (XAIWORK_DEFAULTS.defaultAssistantBackend)
       expect(result.current.selectedAssistantId).toBe('assistant-codex');
     });
 
     act(() => {
-      result.current.setSelectedAssistantId('bare-aionrs');
+      result.current.setSelectedAssistantId('assistant-codex');
     });
 
-    expect(configSetMock).toHaveBeenCalledWith('guid.lastAssistantId', 'bare-aionrs');
+    expect(configSetMock).toHaveBeenCalledWith('guid.lastAssistantId', 'assistant-codex');
   });
 
   it('falls back to the default assistant when the persisted guid assistant no longer exists', async () => {
     mockAssistants = [
-      assistantFixture({ id: 'bare-aionrs', runtimeKey: 'aionrs', source: 'generated', sortOrder: 1 }),
-      assistantFixture({ id: 'assistant-claude', runtimeKey: 'claude', source: 'builtin', sortOrder: 2 }),
-      assistantFixture({ id: 'assistant-codex', runtimeKey: 'codex', source: 'builtin', sortOrder: 3 }),
+      assistantFixture({
+        id: 'bare-aionrs',
+        runtimeKey: 'aionrs',
+        source: 'generated',
+        sortOrder: 1,
+        enabled: false,
+      }),
+      assistantFixture({
+        id: 'assistant-claude',
+        runtimeKey: 'claude',
+        source: 'builtin',
+        sortOrder: 2,
+        enabled: false,
+      }),
+      assistantFixture({ id: 'assistant-codex', runtimeKey: 'codex', source: 'generated', sortOrder: 3 }),
     ];
     configGetMock.mockImplementation((key: string) =>
       key === 'guid.lastAssistantId' ? 'removed-assistant' : undefined
@@ -196,9 +208,24 @@ describe('useGuidAssistantSelection', () => {
     );
 
     await waitFor(() => {
-      // FORK-CUSTOM: fallback resolves to the codex backend (XAIWORK_DEFAULTS.defaultAssistantBackend)
       expect(result.current.selectedAssistantId).toBe('assistant-codex');
     });
+  });
+
+  it('ignores attempts to select the hidden Aion CLI assistant', async () => {
+    mockAssistants = [
+      assistantFixture({ id: 'bare-aionrs', runtimeKey: 'aionrs', source: 'generated', sortOrder: 1 }),
+      assistantFixture({ id: 'assistant-codex', runtimeKey: 'codex', source: 'generated', sortOrder: 2 }),
+    ];
+
+    const { result } = renderHook(() => useGuidAssistantSelection({ resetAssistant: false }));
+    await waitFor(() => expect(result.current.selectedAssistantId).toBe('assistant-codex'));
+    configSetMock.mockClear();
+
+    act(() => result.current.setSelectedAssistantId('bare-aionrs'));
+
+    expect(result.current.selectedAssistantId).toBe('assistant-codex');
+    expect(configSetMock).not.toHaveBeenCalled();
   });
 
   it('does not synthesize a backend slug when no assistants exist', async () => {
@@ -206,8 +233,6 @@ describe('useGuidAssistantSelection', () => {
     vi.doMock('@/renderer/pages/guid/hooks/useCustomAgentsLoader', () => ({
       useCustomAgentsLoader: () => ({
         assistants: [],
-        // FORK-CUSTOM: allAssistants required for fallback logic
-        allAssistants: [],
       }),
     }));
 
@@ -292,15 +317,8 @@ describe('useGuidAssistantSelection', () => {
       expect(result.current.selectedAssistantId).toBe('custom-1781258588874-26ad');
     });
 
-    expect(result.current.selectedAcpModel).toBe('global.anthropic.claude-opus-4-8');
-    expect(result.current.currentAcpCachedModelInfo).toEqual({
-      current_model_id: 'global.anthropic.claude-opus-4-8',
-      current_model_label: 'Opus 4.8',
-      available_models: [
-        { id: 'default', label: 'Default' },
-        { id: 'global.anthropic.claude-opus-4-8', label: 'Opus 4.8' },
-      ],
-    });
+    expect(result.current.selectedAcpModel).toBeNull();
+    expect(result.current.currentAcpCachedModelInfo).toBeNull();
     expect(result.current.selectedMode).toBe('bypassPermissions');
     expect(result.current.currentAgentModeOptions).toEqual([
       { value: 'default', label: 'Default', description: undefined },
@@ -308,7 +326,40 @@ describe('useGuidAssistantSelection', () => {
     ]);
   });
 
-  it('keeps the full runtime model list when assistant models only contain a default', async () => {
+  it('uses XAIWork models for Codex instead of the runtime or assistant catalog', async () => {
+    mockAssistants = [
+      {
+        ...assistantFixture({ id: 'assistant-codex-xaiwork', runtimeKey: 'codex', source: 'generated', sortOrder: 1 }),
+        models: ['assistant-codex-model'],
+      },
+    ];
+    mockXaiworkModels = [
+      { modelId: 'codex-x-1', name: 'Codex X One' },
+      { modelId: 'codex-x-2', name: 'Codex X Two' },
+    ];
+    mockManagedAgents = [
+      {
+        id: 'agent-codex',
+        backend: 'codex',
+        available_models: {
+          current_model_id: 'runtime-codex-model',
+          current_model_label: 'Runtime Codex',
+          available_models: [{ id: 'runtime-codex-model', label: 'Runtime Codex' }],
+        },
+      } as unknown as ManagedAgent,
+    ];
+
+    const { result } = renderHook(() => useGuidAssistantSelection({ resetAssistant: false }));
+
+    await waitFor(() => expect(result.current.selectedAcpModel).toBe('codex-x-1'));
+    expect(result.current.xaiworkModelIds).toEqual(['codex-x-1', 'codex-x-2']);
+    expect(result.current.currentAcpCachedModelInfo?.available_models.map((model) => model.id)).toEqual([
+      'codex-x-1',
+      'codex-x-2',
+    ]);
+  });
+
+  it('does not fall back to runtime models when XAIWork has no models', async () => {
     mockAssistants = [
       {
         id: 'assistant-with-default-model',
@@ -362,14 +413,11 @@ describe('useGuidAssistantSelection', () => {
       expect(result.current.selectedAssistantId).toBe('assistant-with-default-model');
     });
 
-    expect(result.current.currentAcpCachedModelInfo?.available_models.map((model) => model.id)).toEqual([
-      'default',
-      'claude-opus',
-      'claude-sonnet',
-    ]);
+    expect(result.current.selectedAcpModel).toBeNull();
+    expect(result.current.currentAcpCachedModelInfo).toBeNull();
   });
 
-  it('keeps a guid-page model selection in memory across same-assistant runtime catalog refreshes', async () => {
+  it('rejects runtime model selections when XAIWork has no models', async () => {
     mockAssistants = [
       {
         id: 'assistant-with-runtime-models',
@@ -418,20 +466,18 @@ describe('useGuidAssistantSelection', () => {
       })
     );
 
-    await waitFor(() => {
-      expect(result.current.selectedAcpModel).toBe('default');
-    });
+    await waitFor(() => expect(result.current.selectedAssistantId).toBe('assistant-with-runtime-models'));
 
     act(() => {
       result.current.setSelectedAcpModel('global.anthropic.claude-opus-4-8');
     });
 
-    expect(result.current.selectedAcpModel).toBe('global.anthropic.claude-opus-4-8');
+    expect(result.current.selectedAcpModel).toBeNull();
 
     mockManagedAgents = [buildManagedAgent()];
     rerender();
 
-    expect(result.current.selectedAcpModel).toBe('global.anthropic.claude-opus-4-8');
+    expect(result.current.selectedAcpModel).toBeNull();
   });
 
   // FORK-CUSTOM: regression for preserving the user's XAIWork model choice on the new-conversation page.
@@ -517,7 +563,7 @@ describe('useGuidAssistantSelection', () => {
     expect(result.current.selectedMode).toBe('default');
   });
 
-  it('reads aionrs mode options from the managed agent catalog', async () => {
+  it('does not expose the hidden Aion CLI assistant', async () => {
     mockAssistants = [
       {
         id: 'bare:632f31d2',
@@ -562,13 +608,8 @@ describe('useGuidAssistantSelection', () => {
       })
     );
 
-    await waitFor(() => {
-      expect(result.current.selectedAssistantId).toBe('bare:632f31d2');
-    });
-
-    expect(result.current.selectedAssistantBackend).toBe('aionrs');
-    expect(result.current.selectedMode).toBe('default');
-    expect(result.current.currentAgentModeOptions.map((mode) => mode.value)).toEqual(['default', 'auto_edit', 'yolo']);
+    await waitFor(() => expect(result.current.selectedAssistantId).toBeNull());
+    expect(result.current.assistants).toEqual([]);
   });
 });
 
@@ -577,11 +618,13 @@ function assistantFixture({
   runtimeKey,
   source,
   sortOrder,
+  enabled = true,
 }: {
   id: string;
   runtimeKey: string;
   source: Assistant['source'];
   sortOrder: number;
+  enabled?: boolean;
 }): Assistant {
   const isAionrs = runtimeKey === 'aionrs';
   return {
@@ -590,7 +633,7 @@ function assistantFixture({
     name: id,
     name_i18n: {},
     description_i18n: {},
-    enabled: true,
+    enabled,
     sort_order: sortOrder,
     agent_id: `agent-${runtimeKey}`,
     agent: isAionrs
@@ -717,34 +760,4 @@ describe('assistant model helpers', () => {
     });
   });
 
-  it('builds ACP model info from assistant models', () => {
-    expect(buildAssistantModelInfo(['claude-opus', 'claude-sonnet'])).toEqual({
-      current_model_id: 'claude-opus',
-      current_model_label: 'claude-opus',
-      available_models: [
-        { id: 'claude-opus', label: 'claude-opus' },
-        { id: 'claude-sonnet', label: 'claude-sonnet' },
-      ],
-    });
-  });
-
-  it('builds Codex ACP model info from assistant models', () => {
-    expect(buildAssistantModelInfo(['gpt-5.5', 'gpt-5.4'])).toEqual({
-      current_model_id: 'gpt-5.5',
-      current_model_label: 'gpt-5.5',
-      available_models: [
-        { id: 'gpt-5.5', label: 'gpt-5.5' },
-        { id: 'gpt-5.4', label: 'gpt-5.4' },
-      ],
-    });
-  });
-
-  it('defaults to the first assistant model when no assistant preference has been applied yet', () => {
-    expect(resolveInitialAssistantModel(['claude-opus', 'claude-sonnet'])).toBe('claude-opus');
-  });
-
-  it('does not synthesize Codex models when the assistant catalog has none', () => {
-    expect(buildAssistantModelInfo([])).toBeNull();
-    expect(resolveInitialAssistantModel([])).toBeNull();
-  });
 });

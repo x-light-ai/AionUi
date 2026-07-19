@@ -1,5 +1,9 @@
 {
   "cron": {
     "description": "按計畫自動執行任務。你也可以在任意對話中直接讓 XAIWork 幫你建立一個定時任務。"
+  },
+  "myAssistant": {
+    "groupGeneral": "通用助手",
+    "groupDedicated": "專有助手"
   }
 }
