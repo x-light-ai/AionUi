@@ -14,7 +14,4 @@ export const XAIWORK_BRAND = {
   //   'sa'          = 公众号(服务号)扫码：后端 SAAuth 直接返回可显示的二维码图片 URL，前端 <img> 展示；
   //   'miniprogram' = 小程序扫码：后端 MiniProgramAuth 返回二维码内容文本，前端自行生成二维码图片。
   wechatLoginMode: 'miniprogram' as 'sa' | 'miniprogram',
-  // XAIWork OpenApi 绝对地址。AionCore 服务端出站请求 {apiHost}/openapi/agent/config
-  // 需要绝对 URL（不能用 same-origin）。调试阶段指向本地代理/服务，发布时改为生产域名。
-  apiHost: 'http://localhost:5330',
 };

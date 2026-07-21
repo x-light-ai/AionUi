@@ -14,10 +14,9 @@
 // no-op (no `/api/agents/xaiwork/apply` request was sent). This hook restores
 // parity: a click on a distributed model applies it right away.
 //
-// Non-XAIWork cases (host unset, not logged in, empty distribution, or a model
+// Non-XAIWork cases (not logged in, empty distribution, or a model
 // that is not in the distributed list) are left untouched — the returned
 // callback becomes a no-op and the original local-state behaviour is preserved.
-import { XAIWORK_BRAND } from '@/common/config/xaiworkBrand';
 import { applyXaiworkModelConfig } from '@/renderer/hooks/market/applyXaiworkModelConfig';
 import { readXaiworkRemoteAuth } from '@/renderer/hooks/xaiworkRemoteAuth';
 import { Message } from '@arco-design/web-react';
@@ -65,13 +64,11 @@ export function useXaiworkGuidModelApply(
         return;
       }
 
-      const host = XAIWORK_BRAND.apiHost?.trim() || '';
       const authToken = readXaiworkRemoteAuth()?.accessToken ?? '';
-      if (!host || !authToken) {
-        console.warn('[XAIWork] skip guid model apply: host/token unavailable', {
+      if (!authToken) {
+        console.warn('[XAIWork] skip guid model apply: token unavailable', {
           backend,
           modelId,
-          hasHost: Boolean(host),
           hasToken: Boolean(authToken),
         });
         return;
@@ -80,7 +77,7 @@ export function useXaiworkGuidModelApply(
       // Optimistically record the key so rapid double-clicks don't double-apply;
       // reset it on failure so the user can retry.
       appliedKeyRef.current = key;
-      void applyXaiworkModelConfig(backend, modelId, host, authToken)
+      void applyXaiworkModelConfig(backend, modelId, authToken)
         .then(() => {
           Message.success(t('agent.model.switchSuccess'));
         })

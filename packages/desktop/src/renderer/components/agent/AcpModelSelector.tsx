@@ -52,12 +52,25 @@ const AcpModelSelector: React.FC<{
   loadConfigOptions?: AcpConfigOptionsLoader;
   /** Deprecated: runtime config loading now ensures the conversation runtime. */
   waitForWarmup?: boolean;
-}> = ({ conversation_id, backend, initialModelId, prepareRuntime, prepareSetRuntime, loadConfigOptions }) => {
+  /** FORK-CUSTOM: narrow lifecycle policy injection; defaults preserve upstream behavior. */
+  useModelInfo?: typeof useAcpModelInfo;
+  modelUnavailableTooltip?: React.ReactNode;
+}> = ({
+  conversation_id,
+  backend,
+  initialModelId,
+  prepareRuntime,
+  prepareSetRuntime,
+  loadConfigOptions,
+  useModelInfo = useAcpModelInfo,
+  modelUnavailableTooltip,
+}) => {
   const { t } = useTranslation();
   const layout = useLayoutContext();
   const isMobileHeaderCompact = Boolean(layout?.isMobile);
+  // FORK-CUSTOM: consume the injected lifecycle at the shared selector boundary.
   const { model_info, canSwitch, isLoading, isSetting, selectModel, thoughtLevel, setStatus, setConfigOption } =
-    useAcpModelInfo({
+    useModelInfo({
       conversation_id,
       backend,
       initialModelId,
@@ -111,8 +124,10 @@ const AcpModelSelector: React.FC<{
   }
 
   if (!model_info) {
+    // FORK-CUSTOM: allow a wrapper to replace only the unavailable-model copy.
+    const unavailableTooltip = modelUnavailableTooltip ?? t('conversation.welcome.modelSwitchNotSupported');
     return (
-      <Tooltip content={t('conversation.welcome.modelSwitchNotSupported')} position='top'>
+      <Tooltip content={unavailableTooltip} position='top'>
         <RuntimeSelectorPill
           className='sendbox-model-btn header-model-btn agent-mode-compact-pill'
           label={t('conversation.welcome.useCliModel')}

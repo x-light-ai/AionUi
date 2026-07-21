@@ -5,7 +5,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
+import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Assistant } from '@/common/types/agent/assistantTypes';
 import type { ManagedAgent } from '@/renderer/utils/model/agentTypes';
@@ -17,11 +18,12 @@ import {
 
 let mockAssistants: Assistant[] = [];
 let mockManagedAgents: ManagedAgent[] = [];
-let mockXaiworkModels: Array<{ modelId: string; name: string }> = [];
+let mockXaiworkModels: Array<{ modelId: string; name: string; reasoningEfforts?: string[] }> = [];
 
-const { configGetMock, configSetMock } = vi.hoisted(() => ({
+const { configGetMock, configSetMock, guidModelSelectorPropsMock } = vi.hoisted(() => ({
   configGetMock: vi.fn(),
   configSetMock: vi.fn(),
+  guidModelSelectorPropsMock: vi.fn(),
 }));
 
 vi.mock('@/common/config/configService', () => ({
@@ -51,9 +53,48 @@ vi.mock('@/renderer/hooks/agent/useXaiworkAgentModels', async (importOriginal) =
       models: mockXaiworkModels,
       byModelId: new Map(mockXaiworkModels.map((model) => [model.modelId, model])),
       hasModels: mockXaiworkModels.length > 0,
+      isLoading: false,
     }),
   };
 });
+
+vi.mock('@/renderer/pages/guid/components/GuidModelSelector', () => ({
+  default: (props: unknown) => {
+    guidModelSelectorPropsMock(props);
+    return null;
+  },
+}));
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => {
+      if (key === 'common.loading') return 'Please wait...';
+      if (key === 'settings.noAvailableModels') return 'No available models';
+      if (key === 'common.defaultModel') return 'Default';
+      return key;
+    },
+  }),
+}));
+
+vi.mock('@icon-park/react', () => ({
+  Brain: () => null,
+}));
+
+vi.mock('@arco-design/web-react', async () => {
+  const ReactModule = await import('react');
+  return {
+    Button: ({ children, loading: _loading, ...props }: React.ComponentProps<'button'> & { loading?: boolean }) =>
+      ReactModule.createElement('button', props, children),
+    Tooltip: ({ children, content }: { children?: React.ReactNode; content?: React.ReactNode }) =>
+      ReactModule.createElement(
+        'span',
+        { 'data-tooltip-content': typeof content === 'string' ? content : undefined },
+        children
+      ),
+  };
+});
+
+import XaiworkGuidModelSelector from '@/renderer/pages/guid/xaiwork/XaiworkGuidModelSelector';
 
 describe('useGuidAssistantSelection', () => {
   beforeEach(() => {
@@ -100,6 +141,141 @@ describe('useGuidAssistantSelection', () => {
     expect(result.current.selectedAssistantAvailable).toBe(true);
     expect(result.current.selectedAcpModel).toBeNull();
     expect(result.current.currentAcpCachedModelInfo).toBeNull();
+  });
+
+  it('shows the selected model reasoning efforts before the ACP runtime catalog is available', async () => {
+    mockAssistants = [
+      assistantFixture({ id: 'assistant-codex', runtimeKey: 'codex', source: 'generated', sortOrder: 1 }),
+    ];
+    mockXaiworkModels = [
+      { modelId: 'gpt-5.4', name: 'GPT-5.4', reasoningEfforts: ['minimal', 'low', 'medium', 'high', 'xhigh'] },
+    ];
+
+    const { result } = renderHook(() =>
+      useGuidAssistantSelection({
+        resetAssistant: false,
+      })
+    );
+
+    await waitFor(() => {
+      expect(result.current.selectedAssistantId).toBe('assistant-codex');
+      expect(result.current.selectedThoughtLevelValue).toBe('medium');
+    });
+
+    expect(result.current.currentThoughtLevelOption).toEqual({
+      id: 'reasoning_effort',
+      category: 'thought_level',
+      currentValue: 'medium',
+      options: [
+        { value: 'minimal', label: 'Minimal' },
+        { value: 'low', label: 'Low' },
+        { value: 'medium', label: 'Medium' },
+        { value: 'high', label: 'High' },
+        { value: 'xhigh', label: 'Extra High' },
+      ],
+    });
+  });
+
+  it('keeps the displayed default model selected when automatic assistant defaults clear the selection', async () => {
+    mockAssistants = [
+      assistantFixture({ id: 'assistant-codex', runtimeKey: 'codex', source: 'generated', sortOrder: 1 }),
+    ];
+    mockXaiworkModels = [
+      { modelId: 'gpt-5.6-sol', name: 'GPT-5.6 Sol', reasoningEfforts: ['low', 'medium', 'high'] },
+      { modelId: 'gpt-5.6-terra', name: 'GPT-5.6 Terra', reasoningEfforts: ['low', 'medium'] },
+    ];
+
+    const { result } = renderHook(() => useGuidAssistantSelection({ resetAssistant: false }));
+
+    await waitFor(() => {
+      expect(result.current.selectedAcpModel).toBe('gpt-5.6-sol');
+    });
+
+    act(() => {
+      result.current.setSelectedAcpModel(null);
+    });
+
+    expect(result.current.selectedAcpModel).toBe('gpt-5.6-sol');
+    expect(result.current.currentThoughtLevelOption?.currentValue).toBe('medium');
+  });
+
+  it('updates thought levels when the selected XAIWork model changes', async () => {
+    mockAssistants = [
+      assistantFixture({ id: 'assistant-codex', runtimeKey: 'codex', source: 'generated', sortOrder: 1 }),
+    ];
+    mockXaiworkModels = [
+      { modelId: 'model-balanced', name: 'Balanced', reasoningEfforts: ['low', 'medium', 'high'] },
+      { modelId: 'model-deep', name: 'Deep', reasoningEfforts: ['high', 'xhigh'] },
+    ];
+
+    const { result } = renderHook(() => useGuidAssistantSelection({ resetAssistant: false }));
+
+    await waitFor(() => {
+      expect(result.current.selectedAcpModel).toBe('model-balanced');
+      expect(result.current.selectedThoughtLevelValue).toBe('medium');
+    });
+
+    act(() => {
+      result.current.setSelectedAcpModel('model-deep');
+    });
+
+    await waitFor(() => {
+      expect(result.current.selectedThoughtLevelValue).toBe('high');
+    });
+    expect(result.current.currentThoughtLevelOption?.options).toEqual([
+      { value: 'high', label: 'High' },
+      { value: 'xhigh', label: 'Extra High' },
+    ]);
+  });
+
+  it('prefers ACP runtime thought levels over the selected model capabilities', async () => {
+    mockAssistants = [
+      assistantFixture({ id: 'assistant-codex', runtimeKey: 'codex', source: 'generated', sortOrder: 1 }),
+    ];
+    mockXaiworkModels = [{ modelId: 'gpt-5.4', name: 'GPT-5.4', reasoningEfforts: ['low'] }];
+    mockManagedAgents = [
+      {
+        id: 'agent-codex',
+        config_options: {
+          config_options: [
+            {
+              id: 'reasoning_effort',
+              category: 'thought_level',
+              type: 'select',
+              current_value: 'high',
+              options: [
+                { value: 'medium', name: 'Medium' },
+                { value: 'high', name: 'High' },
+                { value: 'xhigh', name: 'Extra High' },
+              ],
+            },
+          ],
+        },
+      } as ManagedAgent,
+    ];
+
+    const { result } = renderHook(() => useGuidAssistantSelection({ resetAssistant: false }));
+
+    await waitFor(() => {
+      expect(result.current.selectedThoughtLevelValue).toBe('high');
+    });
+
+    expect(result.current.currentThoughtLevelOption?.options).toEqual([
+      { value: 'medium', label: 'Medium', description: undefined },
+      { value: 'high', label: 'High', description: undefined },
+      { value: 'xhigh', label: 'Extra High', description: undefined },
+    ]);
+  });
+
+  it('does not invent thought levels when the selected model declares none', async () => {
+    const { result } = renderHook(() => useGuidAssistantSelection({ resetAssistant: false }));
+
+    await waitFor(() => {
+      expect(result.current.selectedAssistantId).toBe('assistant-claude');
+    });
+
+    expect(result.current.currentThoughtLevelOption).toBeNull();
+    expect(result.current.selectedThoughtLevelValue).toBe('');
   });
 
   it('restores the last selected guid assistant before using the natural enabled fallback', async () => {
@@ -613,6 +789,67 @@ describe('useGuidAssistantSelection', () => {
   });
 });
 
+describe('XaiworkGuidModelSelector', () => {
+  const renderSelector = (options: { isLoading: boolean; hasModels?: boolean }) => {
+    const modelInfo = options.hasModels
+      ? {
+          current_model_id: 'xaiwork-1',
+          current_model_label: 'XAIWork One',
+          available_models: [{ id: 'xaiwork-1', label: 'XAIWork One' }],
+        }
+      : null;
+
+    return render(
+      React.createElement(XaiworkGuidModelSelector, {
+        isGeminiMode: false,
+        modelList: [],
+        current_model: undefined,
+        setCurrentModel: vi.fn(),
+        currentAcpCachedModelInfo: modelInfo,
+        selectedAcpModel: modelInfo?.current_model_id ?? null,
+        setSelectedAcpModel: vi.fn(),
+        isModelCatalogLoading: options.isLoading,
+      })
+    );
+  };
+
+  beforeEach(() => {
+    guidModelSelectorPropsMock.mockClear();
+  });
+
+  it('shows API loading state without delegating to the upstream selector', () => {
+    renderSelector({ isLoading: true });
+
+    const button = screen.getByTestId('guid-model-selector-loading');
+    expect(button).toBeDisabled();
+    expect(button.closest('[data-tooltip-content]')).toHaveAttribute('data-tooltip-content', 'Please wait...');
+    expect(guidModelSelectorPropsMock).not.toHaveBeenCalled();
+  });
+
+  it('shows the API empty state after loading finishes', () => {
+    renderSelector({ isLoading: false });
+
+    expect(screen.getByText('Default').closest('[data-tooltip-content]')).toHaveAttribute(
+      'data-tooltip-content',
+      'No available models'
+    );
+    expect(guidModelSelectorPropsMock).not.toHaveBeenCalled();
+  });
+
+  it('delegates normal model rendering to the upstream selector', () => {
+    renderSelector({ isLoading: false, hasModels: true });
+
+    const delegatedProps = guidModelSelectorPropsMock.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(delegatedProps).toEqual(
+      expect.objectContaining({
+        isGeminiMode: false,
+        selectedAcpModel: 'xaiwork-1',
+      })
+    );
+    expect(delegatedProps).not.toHaveProperty('isModelCatalogLoading');
+  });
+});
+
 function assistantFixture({
   id,
   runtimeKey,
@@ -759,5 +996,4 @@ describe('assistant model helpers', () => {
       ],
     });
   });
-
 });

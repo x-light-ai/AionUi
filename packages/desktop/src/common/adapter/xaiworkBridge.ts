@@ -28,19 +28,17 @@ export const xaiworkBridge = {
   },
   agents: {
     listModels: httpPost<
-      Array<{ modelId: string; name: string }>,
-      { backend: string; xaiworkHost: string; xaiworkAuthToken: string }
+      Array<{ modelId: string; name: string; reasoningEfforts: string[] }>,
+      { backend: string; xaiworkAuthToken: string }
     >('/api/agents/xaiwork/models', (params) => ({
       backend: params.backend,
-      xaiwork_host: params.xaiworkHost,
       xaiwork_auth_token: params.xaiworkAuthToken,
     })),
-    applyModel: httpPost<void, { backend: string; modelId: string; xaiworkHost: string; xaiworkAuthToken: string }>(
+    applyModel: httpPost<void, { backend: string; modelId: string; xaiworkAuthToken: string }>(
       '/api/agents/xaiwork/apply',
       (params) => ({
         backend: params.backend,
         model_id: params.modelId,
-        xaiwork_host: params.xaiworkHost,
         xaiwork_auth_token: params.xaiworkAuthToken,
       })
     ),

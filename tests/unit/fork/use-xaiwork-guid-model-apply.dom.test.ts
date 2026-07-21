@@ -7,7 +7,7 @@
  * model immediately when the user switches models on the guid page. It must:
  * - apply only when the id belongs to the distribution for the active backend
  * - skip non-XAIWork ids and no-distribution backends (upstream behaviour intact)
- * - skip when host/token are unavailable
+ * - skip when the XAIWork token is unavailable
  * - apply Codex models through the same distribution path
  * - dedupe repeated clicks on the same backend+model
  * - reset dedupe on failure so the user can retry
@@ -16,8 +16,6 @@
 import { renderHook } from '@testing-library/react';
 import { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-
-import { XAIWORK_BRAND } from '@/common/config/xaiworkBrand';
 
 const { applyMock, readRemoteAuthMock, messageSuccessMock, messageErrorMock, useXaiworkAgentModelsMock } = vi.hoisted(
   () => ({
@@ -68,7 +66,7 @@ describe('renderer/useXaiworkGuidModelApply', () => {
       await Promise.resolve();
     });
 
-    expect(applyMock).toHaveBeenCalledWith('claude', 'x-1', XAIWORK_BRAND.apiHost, 'jwt-1234567890abcdef');
+    expect(applyMock).toHaveBeenCalledWith('claude', 'x-1', 'jwt-1234567890abcdef');
     expect(messageSuccessMock).toHaveBeenCalledWith('agent.model.switchSuccess');
   });
 
@@ -103,7 +101,7 @@ describe('renderer/useXaiworkGuidModelApply', () => {
       await Promise.resolve();
     });
 
-    expect(applyMock).toHaveBeenCalledWith('codex', 'codex-x-1', XAIWORK_BRAND.apiHost, 'jwt-1234567890abcdef');
+    expect(applyMock).toHaveBeenCalledWith('codex', 'codex-x-1', 'jwt-1234567890abcdef');
   });
 
   it('dedupes repeated clicks on the same backend+model', async () => {
@@ -158,7 +156,7 @@ describe('renderer/useXaiworkCreateGuard', () => {
     await act(async () => result.current('codex-x-1'));
 
     expect(useXaiworkAgentModelsMock).toHaveBeenCalledWith('codex');
-    expect(applyMock).toHaveBeenCalledWith('codex', 'codex-x-1', XAIWORK_BRAND.apiHost, 'jwt-1234567890abcdef');
+    expect(applyMock).toHaveBeenCalledWith('codex', 'codex-x-1', 'jwt-1234567890abcdef');
   });
 
   it('rejects a model missing from the Codex distribution', async () => {

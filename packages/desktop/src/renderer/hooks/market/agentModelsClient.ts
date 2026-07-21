@@ -11,15 +11,15 @@ import { xaiworkBridge } from '@/common/adapter/xaiworkBridge';
 export interface XaiworkAgentModel {
   modelId: string;
   name: string;
+  reasoningEfforts: string[];
 }
 
-export function createAgentModelsClient(host: string, authToken: string) {
+export function createAgentModelsClient(authToken: string) {
   return {
-    /** Fetch public model info (id + name) for a builtin agent backend. */
+    /** Fetch public model identity + reasoning capabilities for a builtin agent backend. */
     listModels(backend: string): Promise<XaiworkAgentModel[]> {
       return xaiworkBridge.agents.listModels.invoke({
         backend,
-        xaiworkHost: host,
         xaiworkAuthToken: authToken,
       });
     },

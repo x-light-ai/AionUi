@@ -14,13 +14,12 @@
 // When XAIWork has no models for the backend, expose no model instead of
 // falling back to the CLI handshake catalog.
 import type { AcpModelInfo } from '@/common/types/platform/acpTypes';
-import { XAIWORK_BRAND } from '@/common/config/xaiworkBrand';
 import { useCallback, useMemo, useState } from 'react';
 import { applyXaiworkModelConfig } from '../market/applyXaiworkModelConfig';
 import { readXaiworkRemoteAuth } from '../xaiworkRemoteAuth';
 import { useAcpModelInfo, type UseAcpModelInfoResult } from './useAcpModelInfo';
 import type { AcpConfigOptionsLoader } from './useAcpConfigOptions';
-import { buildXaiworkModelInfo, useXaiworkAgentModels } from './useXaiworkAgentModels';
+import { buildXaiworkModelInfo, buildXaiworkThoughtLevelOption, useXaiworkAgentModels } from './useXaiworkAgentModels';
 
 type UseAcpModelInfoParams = {
   conversation_id: string;
@@ -38,10 +37,13 @@ export const useAcpModelInfoXaiwork = (params: UseAcpModelInfoParams): UseAcpMod
   const { backend, initialModelId, enabled = true, onSelectModelSuccess, onSelectModelFailed } = params;
 
   const base = useAcpModelInfo(params);
-  const { models, byModelId, hasModels } = useXaiworkAgentModels(enabled ? backend : undefined);
+  const {
+    models,
+    byModelId,
+    hasModels,
+    isLoading: isXaiworkModelsLoading,
+  } = useXaiworkAgentModels(enabled ? backend : undefined);
   const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
-  // FORK-CUSTOM: fixed XAIWork host from brand config (see XAIWORK_BRAND.apiHost).
-  const host = XAIWORK_BRAND.apiHost;
 
   // Build the overridden model_info from the XAIWork distribution.
   // Priority: user's explicit selection → base hook's current (if still valid)
@@ -51,6 +53,12 @@ export const useAcpModelInfoXaiwork = (params: UseAcpModelInfoParams): UseAcpMod
     () => buildXaiworkModelInfo(models, [selectedModelId, baseCurrentModelId, initialModelId]),
     [models, selectedModelId, baseCurrentModelId, initialModelId]
   );
+  const xaiworkThoughtLevel = useMemo(() => {
+    const currentModel = xaiworkModelInfo?.current_model_id
+      ? byModelId.get(xaiworkModelInfo.current_model_id)
+      : undefined;
+    return buildXaiworkThoughtLevelOption(currentModel?.reasoningEfforts, base.thoughtLevel ?? undefined);
+  }, [base.thoughtLevel, byModelId, xaiworkModelInfo?.current_model_id]);
 
   const selectModelXaiwork = useCallback(
     (model_id: string) => {
@@ -60,15 +68,14 @@ export const useAcpModelInfoXaiwork = (params: UseAcpModelInfoParams): UseAcpMod
         onSelectModelFailed?.(model_id, new Error('model not found in XAIWork distribution'));
         return;
       }
-      const effectiveHost = host?.trim() || '';
       const authToken = readXaiworkRemoteAuth()?.accessToken ?? '';
-      if (!effectiveHost || !authToken) {
-        onSelectModelFailed?.(model_id, new Error('XAIWork host/token not configured'));
+      if (!authToken) {
+        onSelectModelFailed?.(model_id, new Error('XAIWork token not configured'));
         return;
       }
       void (async () => {
         try {
-          await applyXaiworkModelConfig(backend, model_id, effectiveHost, authToken);
+          await applyXaiworkModelConfig(backend, model_id, authToken);
           setSelectedModelId(model_id);
           onSelectModelSuccess?.(model_id);
         } catch (error) {
@@ -76,7 +83,7 @@ export const useAcpModelInfoXaiwork = (params: UseAcpModelInfoParams): UseAcpMod
         }
       })();
     },
-    [enabled, backend, byModelId, host, setSelectedModelId, onSelectModelSuccess, onSelectModelFailed]
+    [enabled, backend, byModelId, setSelectedModelId, onSelectModelSuccess, onSelectModelFailed]
   );
 
   if (!enabled || !backend) {
@@ -88,7 +95,9 @@ export const useAcpModelInfoXaiwork = (params: UseAcpModelInfoParams): UseAcpMod
       ...base,
       model_info: null,
       canSwitch: false,
+      isLoading: isXaiworkModelsLoading,
       selectModel: selectModelXaiwork,
+      thoughtLevel: null,
     };
   }
 
@@ -97,5 +106,6 @@ export const useAcpModelInfoXaiwork = (params: UseAcpModelInfoParams): UseAcpMod
     model_info: xaiworkModelInfo,
     canSwitch: true,
     selectModel: selectModelXaiwork,
+    thoughtLevel: xaiworkThoughtLevel,
   };
 };

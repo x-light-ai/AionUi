@@ -16,7 +16,6 @@ describe('config/xaiworkBrand', () => {
   it('exposes every branding key consumers depend on', () => {
     expect(Object.keys(XAIWORK_BRAND).toSorted()).toEqual(
       [
-        'apiHost',
         'appDescription',
         'appName',
         'changelogUrl',
@@ -33,11 +32,6 @@ describe('config/xaiworkBrand', () => {
   it('keeps updateRepo as a bare owner/name slug (no scheme)', () => {
     // updateBridge builds a GitHub release feed URL from this slug.
     expect(XAIWORK_BRAND.updateRepo).toMatch(/^[\w.-]+\/[\w.-]+$/);
-  });
-
-  it('uses an absolute http(s) apiHost for server-to-server config fetch', () => {
-    // AionCore requests {apiHost}/openapi/agent/config server-side, so it must be absolute.
-    expect(XAIWORK_BRAND.apiHost).toMatch(/^https?:\/\//);
   });
 
   it('keeps a non-empty wechat appCode for login attribution', () => {

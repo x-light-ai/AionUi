@@ -1,5 +1,4 @@
 // FORK-CUSTOM: apply a distributed model before creating a conversation.
-import { XAIWORK_BRAND } from '@/common/config/xaiworkBrand';
 import { useXaiworkAgentModels } from '@/renderer/hooks/agent/useXaiworkAgentModels';
 import { applyXaiworkModelConfig } from '@/renderer/hooks/market/applyXaiworkModelConfig';
 import { readXaiworkRemoteAuth } from '@/renderer/hooks/xaiworkRemoteAuth';
@@ -19,13 +18,12 @@ export function useXaiworkCreateGuard(backend: string) {
       if (!modelId || !relayModel) {
         throw new Error(`Model '${modelId ?? ''}' is not available from XAIWork for backend '${backend}'`);
       }
-      const host = XAIWORK_BRAND.apiHost.trim();
       const authToken = readXaiworkRemoteAuth()?.accessToken ?? '';
-      if (!backend || !host || !authToken) {
-        throw new Error('XAIWork host/token not configured');
+      if (!backend || !authToken) {
+        throw new Error('XAIWork token not configured');
       }
 
-      await applyXaiworkModelConfig(backend, relayModel.modelId, host, authToken);
+      await applyXaiworkModelConfig(backend, relayModel.modelId, authToken);
     },
     [backend, byModelId, hasModels]
   );

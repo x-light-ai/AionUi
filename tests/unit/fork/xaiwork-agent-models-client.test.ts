@@ -28,29 +28,30 @@ describe('market/agentModelsClient', () => {
     vi.clearAllMocks();
   });
 
-  it('forwards backend + host + token to the XAIWork bridge', async () => {
-    const models = [{ modelId: 'm1', name: 'Model One' }];
+  it('forwards backend + token to the XAIWork bridge', async () => {
+    const models = [{ modelId: 'm1', name: 'Model One', reasoningEfforts: ['low', 'medium', 'high'] }];
     listXaiworkModelsInvoke.mockResolvedValue(models);
 
-    const client = createAgentModelsClient('https://api.xaiwork.com', 'jwt-token');
+    const client = createAgentModelsClient('jwt-token');
     const result = await client.listModels('claude');
 
     expect(listXaiworkModelsInvoke).toHaveBeenCalledWith({
       backend: 'claude',
-      xaiworkHost: 'https://api.xaiwork.com',
       xaiworkAuthToken: 'jwt-token',
     });
     expect(result).toBe(models);
   });
 
   it('does not leak credentials into the returned model shape', async () => {
-    // Contract guard: the renderer-facing model must stay {modelId, name} only.
-    listXaiworkModelsInvoke.mockResolvedValue([{ modelId: 'm1', name: 'Model One' }]);
+    // Contract guard: only public model identity + capabilities reach the renderer.
+    listXaiworkModelsInvoke.mockResolvedValue([
+      { modelId: 'm1', name: 'Model One', reasoningEfforts: ['low', 'high'] },
+    ]);
 
-    const client = createAgentModelsClient('https://api.xaiwork.com', 'jwt-token');
+    const client = createAgentModelsClient('jwt-token');
     const [model] = await client.listModels('codex');
 
-    expect(Object.keys(model).toSorted()).toEqual(['modelId', 'name'].toSorted());
+    expect(Object.keys(model).toSorted()).toEqual(['modelId', 'name', 'reasoningEfforts'].toSorted());
   });
 });
 
@@ -59,15 +60,14 @@ describe('market/applyXaiworkModelConfig', () => {
     vi.clearAllMocks();
   });
 
-  it('forwards backend + modelId + host + token to the XAIWork bridge', async () => {
+  it('forwards backend + modelId + token to the XAIWork bridge', async () => {
     applyXaiworkModelInvoke.mockResolvedValue(undefined);
 
-    await applyXaiworkModelConfig('claude', 'model-42', 'https://api.xaiwork.com', 'jwt-token');
+    await applyXaiworkModelConfig('claude', 'model-42', 'jwt-token');
 
     expect(applyXaiworkModelInvoke).toHaveBeenCalledWith({
       backend: 'claude',
       modelId: 'model-42',
-      xaiworkHost: 'https://api.xaiwork.com',
       xaiworkAuthToken: 'jwt-token',
     });
   });
@@ -75,8 +75,6 @@ describe('market/applyXaiworkModelConfig', () => {
   it('propagates IPC rejection to the caller', async () => {
     applyXaiworkModelInvoke.mockRejectedValue(new Error('apply failed'));
 
-    await expect(applyXaiworkModelConfig('codex', 'm1', 'https://api.xaiwork.com', 'jwt-token')).rejects.toThrow(
-      'apply failed'
-    );
+    await expect(applyXaiworkModelConfig('codex', 'm1', 'jwt-token')).rejects.toThrow('apply failed');
   });
 });

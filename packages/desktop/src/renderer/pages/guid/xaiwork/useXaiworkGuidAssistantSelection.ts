@@ -23,6 +23,7 @@ import { buildXaiworkModelInfo, useXaiworkAgentModels } from '@/renderer/hooks/a
 import { isXaiworkHiddenAssistant } from '@/renderer/utils/model/xaiworkAssistantPresentation';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useCustomAgentsLoader } from '../hooks/useCustomAgentsLoader';
+import { resolveXaiworkThoughtLevelOption } from './xaiworkThoughtLevelPolicy';
 
 export {
   buildAgentRuntimeModeState,
@@ -44,6 +45,7 @@ export type GuidAssistantSelectionResult = {
   selectedAcpModel: string | null;
   setSelectedAcpModel: (model: React.SetStateAction<string | null>, options?: { persistPreference?: boolean }) => void;
   currentAcpCachedModelInfo: AcpModelInfo | null;
+  isXaiworkModelsLoading: boolean;
   xaiworkModelIds: string[];
   currentAgentAvailableCommands: SlashCommandItem[];
   currentAgentModeOptions: AgentModeOption[];
@@ -187,17 +189,22 @@ export const useXaiworkGuidAssistantSelection = ({
   );
   const selectedAssistantId = selectedAssistant?.id ?? null;
   const selectedAssistantBackend = assistantRuntimeKey(selectedAssistant);
-  const { models: xaiworkModels } = useXaiworkAgentModels(selectedAssistantBackend || undefined);
+  const { models: xaiworkModels, isLoading: isXaiworkModelsLoading } = useXaiworkAgentModels(
+    selectedAssistantBackend || undefined
+  );
   const xaiworkModelIds = useMemo(() => xaiworkModels.map((model) => model.modelId), [xaiworkModels]);
   const xaiworkModelIdSet = useMemo(() => new Set(xaiworkModelIds), [xaiworkModelIds]);
   const setSelectedAcpModel = useCallback(
     (modelId: React.SetStateAction<string | null>, _options?: { persistPreference?: boolean }) => {
       _setSelectedAcpModel((prev) => {
         const nextModelId = typeof modelId === 'function' ? modelId(prev) : modelId;
-        return nextModelId === null || xaiworkModelIdSet.has(nextModelId) ? nextModelId : prev;
+        if (nextModelId === null) {
+          return xaiworkModels[0]?.modelId ?? null;
+        }
+        return xaiworkModelIdSet.has(nextModelId) ? nextModelId : prev;
       });
     },
-    [xaiworkModelIdSet]
+    [xaiworkModelIdSet, xaiworkModels]
   );
   const selectedManagedAgentRuntimeCatalog = useMemo(
     () =>
@@ -214,9 +221,17 @@ export const useXaiworkGuidAssistantSelection = ({
     () => buildAgentRuntimeModeState(selectedManagedAgentRuntimeCatalog),
     [selectedManagedAgentRuntimeCatalog]
   );
+  const selectedXaiworkModel = useMemo(
+    () => xaiworkModels.find((model) => model.modelId === selectedAcpModel),
+    [selectedAcpModel, xaiworkModels]
+  );
   const selectedAgentRuntimeThoughtLevelOption = useMemo(
-    () => buildAgentRuntimeThoughtLevelOption(selectedManagedAgentRuntimeCatalog),
-    [selectedManagedAgentRuntimeCatalog]
+    () =>
+      resolveXaiworkThoughtLevelOption(
+        buildAgentRuntimeThoughtLevelOption(selectedManagedAgentRuntimeCatalog),
+        selectedXaiworkModel?.reasoningEfforts
+      ),
+    [selectedManagedAgentRuntimeCatalog, selectedXaiworkModel?.reasoningEfforts]
   );
   const currentThoughtLevelOption = useMemo<AgentRuntimeDerivedOption | null>(() => {
     if (!selectedAgentRuntimeThoughtLevelOption) return null;
@@ -297,6 +312,7 @@ export const useXaiworkGuidAssistantSelection = ({
     selectedAcpModel,
     setSelectedAcpModel,
     currentAcpCachedModelInfo,
+    isXaiworkModelsLoading,
     xaiworkModelIds,
     currentAgentAvailableCommands,
     currentAgentModeOptions,

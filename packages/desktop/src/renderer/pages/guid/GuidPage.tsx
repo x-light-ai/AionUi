@@ -19,11 +19,12 @@ import AssistantSelectionArea from './components/AssistantSelectionArea';
 // FORK-CUSTOM: use the isolated XAIWork action row without modifying the upstream component.
 import XaiworkGuidActionRow from './xaiwork/XaiworkGuidActionRow';
 import GuidInputCard from './components/GuidInputCard';
-import GuidModelSelector from './components/GuidModelSelector';
 import QuickActionButtons from './components/QuickActionButtons';
 import FeedbackReportModal from '@/renderer/components/settings/SettingsModal/contents/FeedbackReportModal';
 // FORK-CUSTOM: use the isolated assistant/model selection policy.
 import { useXaiworkGuidAssistantSelection } from './xaiwork/useXaiworkGuidAssistantSelection';
+// FORK-CUSTOM: select the API-backed model wrapper at the GuidPage composition boundary.
+import XaiworkGuidModelSelector from './xaiwork/XaiworkGuidModelSelector';
 // FORK-CUSTOM: adapt assistant labels at the existing XAIWork composition boundary.
 import { presentXaiworkAssistants } from '@/renderer/utils/model/xaiworkAssistantPresentation';
 import { useGuidInput } from './hooks/useGuidInput';
@@ -585,13 +586,15 @@ const GuidPage: React.FC = () => {
 
   // Build the mention dropdown node
   // Build the model selector node
+  // FORK-CUSTOM: XAIWork models come from the API before the first conversation message.
   const modelSelectorNode = (
-    <GuidModelSelector
+    <XaiworkGuidModelSelector
       isGeminiMode={isGeminiMode}
       modelList={modelSelection.modelList}
       current_model={modelSelection.current_model}
       setCurrentModel={setGuidCurrentModel}
       currentAcpCachedModelInfo={agentSelection.currentAcpCachedModelInfo}
+      isModelCatalogLoading={agentSelection.isXaiworkModelsLoading}
       selectedAcpModel={agentSelection.selectedAcpModel}
       setSelectedAcpModel={setGuidSelectedAcpModel}
       thoughtLevelOption={isGeminiMode ? null : agentSelection.currentThoughtLevelOption}

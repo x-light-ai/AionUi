@@ -7,9 +7,9 @@
 
 // FORK-CUSTOM: Fetch the model list a builtin agent may use via AionCore's
 // XAIWork config broker (`POST /api/agents/xaiwork/models`). The renderer
-// only receives `{modelId, name}`; credentials stay server-side.
+// only receives public model identity + reasoning capabilities; credentials stay server-side.
 import type { AcpModelInfo } from '@/common/types/platform/acpTypes';
-import { XAIWORK_BRAND } from '@/common/config/xaiworkBrand';
+import type { AgentRuntimeDerivedOption } from '@/renderer/utils/model/agentRuntimeCatalog';
 import { createAgentModelsClient, type XaiworkAgentModel } from '@/renderer/hooks/market/agentModelsClient';
 import { readXaiworkRemoteAuth } from '@/renderer/hooks/xaiworkRemoteAuth';
 import { useMemo } from 'react';
@@ -19,9 +19,56 @@ export interface UseXaiworkAgentModelsResult {
   models: XaiworkAgentModel[];
   byModelId: Map<string, XaiworkAgentModel>;
   hasModels: boolean;
+  isLoading: boolean;
 }
 
 const EMPTY: XaiworkAgentModel[] = [];
+
+type XaiworkThoughtLevelOption = Omit<AgentRuntimeDerivedOption, 'currentValue'> & { currentValue: string };
+
+const REASONING_EFFORT_LABELS: Record<string, string> = {
+  minimal: 'Minimal',
+  low: 'Low',
+  medium: 'Medium',
+  high: 'High',
+  xhigh: 'Extra High',
+};
+
+function getReasoningEffortLabel(value: string): string {
+  return (
+    REASONING_EFFORT_LABELS[value.toLowerCase()] ||
+    value.replaceAll(/[-_]+/g, ' ').replaceAll(/\b\w/g, (character) => character.toUpperCase())
+  );
+}
+
+export function buildXaiworkThoughtLevelOption(
+  modelReasoningEfforts: string[] | null | undefined,
+  runtimeOption?: { id: string; category: string; currentValue?: string | null }
+): XaiworkThoughtLevelOption | null {
+  const seen = new Set<string>();
+  const options = (modelReasoningEfforts ?? [])
+    .map((value) => value.trim())
+    .filter((value) => {
+      const key = value.toLowerCase();
+      if (!value || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .map((value) => ({ value, label: getReasoningEffortLabel(value) }));
+
+  if (options.length === 0) return null;
+
+  const runtimeCurrentValue = options.find((option) => option.value === runtimeOption?.currentValue)?.value;
+  return {
+    id: runtimeOption?.id ?? 'reasoning_effort',
+    category: runtimeOption?.category ?? 'thought_level',
+    currentValue:
+      runtimeCurrentValue ??
+      options.find((option) => option.value.toLowerCase() === 'medium')?.value ??
+      options[0].value,
+    options,
+  };
+}
 
 /**
  * Build an AcpModelInfo from XAIWork-distributed models. Shared by the ACP
@@ -48,8 +95,6 @@ export function buildXaiworkModelInfo(
 }
 
 export function useXaiworkAgentModels(backend?: string): UseXaiworkAgentModelsResult {
-  // FORK-CUSTOM: fixed XAIWork host from brand config (see XAIWORK_BRAND.apiHost).
-  const effectiveHost = XAIWORK_BRAND.apiHost;
   const remote = readXaiworkRemoteAuth();
   const authToken = remote?.accessToken ?? '';
   // Trailing 16 chars of the JWT act as a stable-per-user cache tag so account
@@ -57,14 +102,11 @@ export function useXaiworkAgentModels(backend?: string): UseXaiworkAgentModelsRe
   // user's model list. Never log or render this tag.
   const tokenTag = authToken.slice(-16);
 
-  const key =
-    backend && effectiveHost && authToken
-      ? (['xaiwork-agent-models', effectiveHost, backend, tokenTag] as const)
-      : null;
+  const key = backend && authToken ? (['xaiwork-agent-models', backend, tokenTag] as const) : null;
 
-  const { data } = useSWR(
+  const { data, isLoading } = useSWR(
     key,
-    ([, h, b]) => createAgentModelsClient(h, authToken).listModels(b),
+    ([, b]) => createAgentModelsClient(authToken).listModels(b),
     // Distribution rarely changes; avoid hammering the relay on focus.
     { revalidateOnFocus: false, shouldRetryOnError: false }
   );
@@ -72,5 +114,5 @@ export function useXaiworkAgentModels(backend?: string): UseXaiworkAgentModelsRe
   const models = data ?? EMPTY;
   const byModelId = useMemo(() => new Map(models.map((m) => [m.modelId, m])), [models]);
 
-  return { models, byModelId, hasModels: models.length > 0 };
+  return { models, byModelId, hasModels: models.length > 0, isLoading };
 }

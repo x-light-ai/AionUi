@@ -3,14 +3,12 @@
  * FORK-CUSTOM: tests for the XAIWork agent models SWR hook.
  * @vitest-environment jsdom
  *
- * useXaiworkAgentModels uses the fixed XAIWORK_BRAND.apiHost and gates the fetch
- * on backend + a logged-in XAIWork token, exposing models + byModelId + hasModels.
+ * useXaiworkAgentModels gates the Core broker request on backend + a logged-in
+ * XAIWork token, exposing models + lookup + loading state.
  */
 
 import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-
-import { XAIWORK_BRAND } from '@/common/config/xaiworkBrand';
 
 const { readRemoteAuthMock, listModelsMock, createClientMock } = vi.hoisted(() => {
   const listModels = vi.fn();
@@ -26,7 +24,7 @@ vi.mock('@/renderer/hooks/xaiworkRemoteAuth', () => ({
 }));
 
 vi.mock('@/renderer/hooks/market/agentModelsClient', () => ({
-  createAgentModelsClient: (host: string, token: string) => createClientMock(host, token),
+  createAgentModelsClient: (token: string) => createClientMock(token),
 }));
 
 import { useXaiworkAgentModels } from '@renderer/hooks/agent/useXaiworkAgentModels';
@@ -41,26 +39,39 @@ describe('renderer/useXaiworkAgentModels', () => {
     });
   });
 
-  it('fetches with the fixed brand host + token when backend is present', async () => {
-    listModelsMock.mockResolvedValue([{ modelId: 'x-1', name: 'X One' }]);
+  it('fetches through the Core-owned host when backend and token are present', async () => {
+    const model = { modelId: 'x-1', name: 'X One', reasoningEfforts: ['low', 'medium', 'high'] };
+    listModelsMock.mockResolvedValue([model]);
 
     const { result } = renderHook(() => useXaiworkAgentModels('claude'));
 
     await waitFor(() => expect(result.current.hasModels).toBe(true));
-    expect(result.current.models).toEqual([{ modelId: 'x-1', name: 'X One' }]);
-    expect(result.current.byModelId.get('x-1')).toEqual({ modelId: 'x-1', name: 'X One' });
-    // Host is the fixed XAIWORK_BRAND.apiHost, not a runtime config value.
-    expect(createClientMock).toHaveBeenCalledWith(XAIWORK_BRAND.apiHost, 'jwt-token-1234567890abcdef');
+    expect(result.current.models).toEqual([model]);
+    expect(result.current.byModelId.get('x-1')).toEqual(model);
+    expect(createClientMock).toHaveBeenCalledWith('jwt-token-1234567890abcdef');
   });
 
   it('fetches Codex models through the XAIWork broker', async () => {
-    listModelsMock.mockResolvedValue([{ modelId: 'codex-x-1', name: 'Codex X One' }]);
+    listModelsMock.mockResolvedValue([
+      { modelId: 'codex-x-1', name: 'Codex X One', reasoningEfforts: ['medium', 'high', 'xhigh'] },
+    ]);
 
     const { result } = renderHook(() => useXaiworkAgentModels('codex'));
 
     await waitFor(() => expect(result.current.hasModels).toBe(true));
     expect(listModelsMock).toHaveBeenCalledWith('codex');
-    expect(result.current.models).toEqual([{ modelId: 'codex-x-1', name: 'Codex X One' }]);
+    expect(result.current.models).toEqual([
+      { modelId: 'codex-x-1', name: 'Codex X One', reasoningEfforts: ['medium', 'high', 'xhigh'] },
+    ]);
+  });
+
+  it('reports loading while the API model request is pending', () => {
+    listModelsMock.mockReturnValue(new Promise(() => {}));
+
+    const { result } = renderHook(() => useXaiworkAgentModels('pending-backend'));
+
+    expect(result.current.isLoading).toBe(true);
+    expect(result.current.models).toEqual([]);
   });
 
   it('does not fetch when backend is missing', () => {
@@ -69,6 +80,7 @@ describe('renderer/useXaiworkAgentModels', () => {
     expect(listModelsMock).not.toHaveBeenCalled();
     expect(result.current.hasModels).toBe(false);
     expect(result.current.models).toEqual([]);
+    expect(result.current.isLoading).toBe(false);
   });
 
   it('does not fetch when the XAIWork session token is missing', () => {
@@ -78,5 +90,6 @@ describe('renderer/useXaiworkAgentModels', () => {
 
     expect(listModelsMock).not.toHaveBeenCalled();
     expect(result.current.hasModels).toBe(false);
+    expect(result.current.isLoading).toBe(false);
   });
 });

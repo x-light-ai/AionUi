@@ -17,19 +17,12 @@ import { xaiworkBridge } from '@/common/adapter/xaiworkBridge';
  *
  * @param backend - builtin agent backend, e.g. 'claude' or 'codex'
  * @param modelId - the selected XAIWork model id
- * @param host - XAIWork OpenApi base URL
  * @param authToken - XAIWork user JWT (forwarded once per request, not persisted)
  */
-export async function applyXaiworkModelConfig(
-  backend: string,
-  modelId: string,
-  host: string,
-  authToken: string
-): Promise<void> {
+export async function applyXaiworkModelConfig(backend: string, modelId: string, authToken: string): Promise<void> {
   await xaiworkBridge.agents.applyModel.invoke({
     backend,
     modelId,
-    xaiworkHost: host,
     xaiworkAuthToken: authToken,
   });
 }
