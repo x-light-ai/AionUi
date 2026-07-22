@@ -1,0 +1,134 @@
+# FORK-CUSTOM: XAIWork fork release workflow; keep manual publishing separate from upstream automation.
+# Manually builds Linux and Windows x64 web-cli packages from dev, then publishes v<version>.
+name: XAIWork Release Web
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version without a leading v (for example, 1.0.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+env:
+  BUN_INSTALL_REGISTRY: 'https://registry.npmjs.org/'
+
+jobs:
+  prepare:
+    name: Resolve version and commit
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.metadata.outputs.version }}
+      tag: ${{ steps.metadata.outputs.tag }}
+      sha: ${{ steps.metadata.outputs.sha }}
+    steps:
+      - name: Checkout dev
+        uses: actions/checkout@v6
+        with:
+          ref: dev
+
+      - name: Resolve version, tag and commit
+        id: metadata
+        shell: bash
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          version="${INPUT_VERSION#v}"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "tag=v${version}" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build web-cli ${{ matrix.platform }}-x64
+    runs-on: ${{ matrix.os }}
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+          - os: windows-latest
+            platform: win32
+    steps:
+      - name: Checkout dev
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Stamp release version
+        shell: bash
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: npm pkg set "version=${VERSION}"
+
+      - name: Build desktop renderer (static files)
+        run: bunx electron-vite build --config packages/desktop/electron.vite.config.ts
+        env:
+          NODE_OPTIONS: '--max-old-space-size=8192'
+
+      - name: Pack web-cli tarball
+        shell: bash
+        run: node scripts/pack-web-cli.js
+        env:
+          PACK_PLATFORM: ${{ matrix.platform }}
+          PACK_ARCH: x64
+          # aioncore version is pinned by aioncoreVersion in the root package.json.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: web-cli-${{ matrix.platform }}-x64
+          path: |
+            dist-web-cli/*.tar.gz
+            dist-web-cli/*.sha256
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    name: Upload GitHub Release assets
+    runs-on: ubuntu-latest
+    needs:
+      - prepare
+      - build
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Upload GitHub Release assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+          RELEASE_TARGET: ${{ needs.prepare.outputs.sha }}
+        run: |
+          if gh release view "${RELEASE_TAG}" --repo "${REPOSITORY}" > /dev/null 2>&1; then
+            gh release upload "${RELEASE_TAG}" dist/* --repo "${REPOSITORY}" --clobber
+          else
+            gh release create "${RELEASE_TAG}" dist/* \
+              --repo "${REPOSITORY}" \
+              --target "${RELEASE_TARGET}" \
+              --title "${RELEASE_TAG}" \
+              --generate-notes
+          fi
